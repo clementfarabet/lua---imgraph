@@ -228,10 +228,207 @@ static int imgraph_(watershed)(lua_State *L) {
   return 1;
 }
 
+int imgraph_(spatialhistpooling)(lua_State *L) {
+  // get args
+  THTensor *vectors = luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *segm = luaT_checkudata(L, 2, torch_(Tensor_id));
+  int minConfidence = 0;
+  if (lua_isnumber(L,3)) minConfidence = lua_tonumber(L, 3);
+
+  // check dims
+  if ((vectors->nDimension != 3) || (segm->nDimension != 2))
+    THError("<imgraph.spatialhist> vectors must be KxHxW and segm HxW");
+
+  // get dims
+  int nbClasses = vectors->size[0];
+  int height = vectors->size[1];
+  int width = vectors->size[2];
+
+  // final cluster list
+  lua_newtable(L);  // f = {}
+  int table_clean = lua_gettop(L);
+
+  // temporary geometry list
+  lua_newtable(L);  // g = {}
+  int table_geometry = lua_gettop(L);
+
+  // temporary histogram list
+  lua_newtable(L);  // c = {}
+  int table_hists = lua_gettop(L);
+
+  // optional confidence map
+  THTensor *confidence = THTensor_(newWithSize2d)(width, height);
+  THTensor *helper = THTensor_(newWithSize1d)(nbClasses);
+
+  // loop over segm, and accumulate histograms of vectors pixels
+  int x,y,k;
+  THTensor *histo = NULL;
+  THTensor *select1 = THTensor_(new)();
+  THTensor *select2 = THTensor_(new)();
+  for (y=0; y<height; y++) {
+    for (x=0; x<width; x++) {
+      // compute hash codes for vectors and segm
+      int segm_id = THTensor_(get2d)(segm,y,x);
+      // is this hash already registered ?
+      lua_pushinteger(L,segm_id);
+      lua_rawget(L,table_hists);   // c[segm_id]
+      if (lua_isnil(L,-1)) {    // c[segm_id] == nil ?
+        lua_pop(L,1);
+        // then create a vector to accumulate an histogram of classes,
+        // for this cluster
+        histo = THTensor_(newWithSize1d)(nbClasses);
+        THTensor_(zero)(histo);
+        lua_pushinteger(L,segm_id);
+        luaT_pushudata(L, histo, torch_(Tensor_id));
+        lua_rawset(L,table_hists); // c[segm_id] = histo
+      } else {
+        // retrieve histo
+        histo = luaT_toudata(L, -1, torch_(Tensor_id));
+        lua_pop(L,1);
+      }
+
+      // slice the class vector
+      THTensor_(select)(select1, vectors, 2, x);
+      THTensor_(select)(select2, select1, 1, y);
+
+      // measure confidence
+      THTensor_(copy)(helper, select2);
+      real max = -1000;
+      real idx = 0;
+      for (k=0; k<nbClasses; k++) {
+        real val = THTensor_(get1d)(helper, k);
+        if (val > max) {
+          max = val; idx = k;
+        }
+      }
+      THTensor_(set1d)(helper, idx, -1000);
+      real max2 = -1000;
+      for (k=0; k<nbClasses; k++) {
+        real val = THTensor_(get1d)(helper, k);
+        if (val > max2) {
+          max2 = val;
+        }
+      }
+      real local_conf = max-max2;
+      if (local_conf < 0) THError("assert error : max < 2nd max");
+
+      // accumulate current vector into histo
+      if (local_conf >= minConfidence)
+        THTensor_(cadd)(histo, 1, select2);
+
+      // store confidence
+      THTensor_(set2d)(confidence, y, x, local_conf);
+    }
+  }
+
+  // then merge vectors into segm, based on the histogram's winners
+  THTensor_(zero)(vectors);
+  for (y=0; y<height; y++) {
+    for (x=0; x<width; x++) {
+      // compute hash codes for vectors and segm
+      int segm_id = THTensor_(get2d)(segm,y,x);
+      // get max
+      int argmax = 0, max = -1;
+      // get geometry entry
+      lua_pushinteger(L,segm_id);
+      lua_rawget(L,table_geometry);
+      if (lua_isnil(L,-1)) {    // g[segm_id] == nil ?
+        lua_pop(L,1);
+        // retrieve histogram
+        lua_pushinteger(L,segm_id);
+        lua_rawget(L,table_hists);   // c[segm_id]  (= histo)
+        histo = luaT_toudata(L, -1, torch_(Tensor_id));
+        lua_pop(L,1);
+        // compute max
+        int i;
+        for (i=0; i<nbClasses; i++) {
+          if (max <= THTensor_(get1d)(histo,i)) { 
+            argmax = i; max = THTensor_(get1d)(histo,i); 
+          }
+        }
+        // then create a table to store geometry of component:
+        // x,y,size,class,hash
+        lua_pushinteger(L,segm_id);
+        lua_newtable(L);
+        int entry = lua_gettop(L);
+        lua_pushnumber(L, x+1);
+        lua_rawseti(L,entry,1); // entry[1] = x
+        lua_pushnumber(L, y+1);
+        lua_rawseti(L,entry,2); // entry[2] = y
+        lua_pushnumber(L, 1);
+        lua_rawseti(L,entry,3); // entry[3] = size (=1)
+        lua_pushnumber(L, argmax+1);
+        lua_rawseti(L,entry,4); // entry[4] = class (=argmax+1)
+        lua_pushnumber(L, segm_id);
+        lua_rawseti(L,entry,5); // entry[5] = hash
+        // store entry
+        lua_rawset(L,table_geometry); // g[segm_id] = entry
+      } else {
+        // retrieve entry
+        int entry = lua_gettop(L);
+        lua_rawgeti(L, entry, 1);
+        long cx = lua_tonumber(L, -1); lua_pop(L, 1);
+        lua_pushnumber(L, cx+x+1);
+        lua_rawseti(L, entry, 1); // entry[1] = cx + x + 1
+        lua_rawgeti(L, entry, 2);
+        long cy = lua_tonumber(L, -1); lua_pop(L, 1);
+        lua_pushnumber(L, cy+y+1);
+        lua_rawseti(L, entry, 2); // entry[2] = cy + y + 1
+        lua_rawgeti(L, entry, 3);
+        long size = lua_tonumber(L, -1) + 1; lua_pop(L, 1);
+        lua_pushnumber(L, size);
+        lua_rawseti(L, entry, 3); // entry[3] = size + 1
+        lua_rawgeti(L, entry, 4);
+        argmax = lua_tonumber(L, -1) - 1; lua_pop(L, 1);
+        // and clear entry
+        lua_pop(L,1);
+      }
+      // set argmax (winning class) to 1
+      THTensor_(set3d)(vectors, argmax, y, x, 1);
+    }
+  }
+
+  // traverse geometry table to produce final component list
+  lua_pushnil(L);
+  int cur = 1;
+  while (lua_next(L, table_geometry) != 0) {
+    // uses 'key' (at index -2) and 'value' (at index -1)
+
+    // normalize cx and cy, by component's size
+    int entry = lua_gettop(L);
+    lua_rawgeti(L, entry, 3);
+    long size = lua_tonumber(L, -1) + 1; lua_pop(L, 1);
+    lua_rawgeti(L, entry, 1);
+    long cx = lua_tonumber(L, -1); lua_pop(L, 1);
+    lua_pushnumber(L, cx/size);
+    lua_rawseti(L, entry, 1); // entry[1] = cx/size
+    lua_rawgeti(L, entry, 2);
+    long cy = lua_tonumber(L, -1); lua_pop(L, 1);
+    lua_pushnumber(L, cy/size);
+    lua_rawseti(L, entry, 2); // entry[2] = cy/size
+
+    // store entry table into clean table
+    lua_rawseti(L, table_clean, cur++);
+  }
+
+  // pop/remove histograms
+  lua_pop(L, 1);
+
+  // cleanup
+  THTensor_(free)(select1);
+  THTensor_(free)(select2);
+  THTensor_(free)(helper);
+
+  // return two tables: indexed and hashed, plus the confidence map
+  luaT_pushudata(L, confidence, torch_(Tensor_id));
+  return 3;
+}
+
 static const struct luaL_Reg imgraph_(methods__) [] = {
   {"tensor2graph", imgraph_(tensor2graph)},
   {"graph2tensor", imgraph_(graph2tensor)},
   {"watershed", imgraph_(watershed)},
+  {"spatialhistpooling", imgraph_(spatialhistpooling)},
   {NULL, NULL}
 };
 
