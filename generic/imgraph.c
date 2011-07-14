@@ -212,9 +212,26 @@ static int imgraph_(graph2tensor)(lua_State *L) {
   return 1;
 }
 
+static int imgraph_(watershed)(lua_State *L) {
+  // get args
+  THTensor *output = luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *input = luaT_checkudata(L, 2, torch_(Tensor_id));
+  int color = lua_toboolean(L, 3);
+
+  // dims
+  long nedges = input->size[0];
+  long height = input->size[1];
+  long width = input->size[2];
+
+  // return number of components
+  lua_pushnumber(L, 0);
+  return 1;
+}
+
 static const struct luaL_Reg imgraph_(methods__) [] = {
   {"tensor2graph", imgraph_(tensor2graph)},
   {"graph2tensor", imgraph_(graph2tensor)},
+  {"watershed", imgraph_(watershed)},
   {NULL, NULL}
 };
 

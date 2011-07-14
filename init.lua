@@ -88,7 +88,7 @@ end
 function imgraph.graph2tensor(...)
    --get args
    local args = {...}
-   local dest, graph, threshold, colorize
+   local dest, graph, threshold, colorize, watershed
    if arg2 and arg2:find('Tensor') then
       dest = args[1]
       graph = args[2]
@@ -102,6 +102,7 @@ function imgraph.graph2tensor(...)
    end
 
    -- defaults
+   if threshold == 'watershed' then watershed = true end
    threshold = threshold or 0.5
 
    -- usage
@@ -109,18 +110,23 @@ function imgraph.graph2tensor(...)
       print(xlua.usage('imgraph.graph2tensor',
                        'generates an image from an edge-weighted graph (connected components)', nil,
                        {type='torch.Tensor', help='input graph', req=true},
-                       {type='number', help='threshold, to  determine connected components', default=0.5},
+                       {type='number | string', help='threshold for connected components, or "watershed"', default=0.5},
                        {type='boolean', help='replace components id by random colors', default=false},
                        "",
                        {type='torch.Tensor', help='destination tensor', req=true},
                        {type='torch.Tensor', help='input graph', req=true},
-                       {type='number', help='threshold, to  determine connected components', default=0.5},
+                       {type='number | string', help='threshold for connected components, or "watershed"', default=0.5},
                        {type='boolean', help='replace components id by random colors', default=false}))
       xlua.error('incorrect arguments', 'imgraph.graph2tensor')
    end
 
    -- compute image
-   local nelts = graph.imgraph.graph2tensor(dest, graph, threshold, colorize)
+   local nelts
+   if watershed then
+      nelts = graph.imgraph.watershed(dest, graph, colorize)
+   else
+      nelts = graph.imgraph.graph2tensor(dest, graph, threshold, colorize)
+   end
 
    -- return image
    return dest, nelts
@@ -132,8 +138,9 @@ end
 function imgraph.testme()
    -- load an image, compute its graph, and convert back to an image
    local lena = image.lena()
+   lena = image.convolve(lena, image.gaussian(3))
    local graph = imgraph.tensor2graph(lena)
-   local imaged = imgraph.graph2tensor(graph,0.05,true)
+   local imaged = imgraph.graph2tensor(graph,0.1,true)
    image.display{image=graph, legend='left: horizontal edges, right: vertical edges'}
    image.display{image=imaged, legend='thresholded graph'}
 end
