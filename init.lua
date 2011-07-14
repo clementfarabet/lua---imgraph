@@ -2,33 +2,33 @@
 --
 -- Copyright (c) 2011 Clement Farabet
 --               2006 Pedro Felzenszwalb
--- 
+--
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
 -- the Free Software Foundation; either version 2 of the License, or
 -- (at your option) any later version.
--- 
+--
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 -- GNU General Public License for more details.
--- 
+--
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, write to the Free Software
 -- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
--- 
+--
 ----------------------------------------------------------------------
 -- description:
 --     imgraph - a graph package for images:
 --               this package contains several routines to build graphs
 --               on images, and then compute their connected components,
 --               watershed, min-spanning trees, and so on.
---               
+--
 --               The min-spanning three based segmentation (segmentmst)
 --               originates from Felzenszwalb's 2004 paper:
 --               "Efficient Graph-Based Image Segmentation".
--- 
--- history: 
+--
+-- history:
 --     July 14, 2011, 12:49PM - MST + HistPooling    - Clement Farabet
 --     July 13, 2011, 6:16PM  - first draft          - Clement Farabet
 ----------------------------------------------------------------------
@@ -44,7 +44,7 @@ imgraph = {}
 require 'libimgraph'
 
 ----------------------------------------------------------------------
--- convert image <-> graph
+-- computes a graph from an 2D or 3D image
 --
 function imgraph.graph(...)
    -- get args
@@ -70,7 +70,7 @@ function imgraph.graph(...)
    -- usage
    if not img or (connex ~= 4 and connex ~= 8) or (distance ~= 'e' and distance ~= 'a') then
       print(xlua.usage('imgraph.graph',
-                       'computes an edge-weighted graph of an image', nil,
+                       'compute an edge-weighted graph on an image', nil,
                        {type='torch.Tensor', help='input tensor (for now KxHxW or HxW)', req=true},
                        {type='number', help='connexity (edges per vertex): 4 | 8', default=4},
                        {type='string', help='distance metric: euclid | angle', req='euclid'},
@@ -89,6 +89,9 @@ function imgraph.graph(...)
    return dest
 end
 
+----------------------------------------------------------------------
+-- compute the connected components of a graph
+--
 function imgraph.connectcomponents(...)
    --get args
    local args = {...}
@@ -111,7 +114,7 @@ function imgraph.connectcomponents(...)
    -- usage
    if not graph then
       print(xlua.usage('imgraph.connectcomponents',
-                       'simple connected components on an edge-weighted graph', nil,
+                       'compute the connected components of an edge-weighted graph', nil,
                        {type='torch.Tensor', help='input graph', req=true},
                        {type='number', help='threshold for connecting components', default=0.5},
                        {type='boolean', help='replace components id by random colors', default=false},
@@ -130,6 +133,9 @@ function imgraph.connectcomponents(...)
    return dest, nelts
 end
 
+----------------------------------------------------------------------
+-- compute the watershed of a graph
+--
 function imgraph.watershed(...)
    --get args
    local args = {...}
@@ -147,7 +153,7 @@ function imgraph.watershed(...)
    -- usage
    if not graph then
       print(xlua.usage('imgraph.watershed',
-                       'copmutes the watershed of an edge-weighted graph', nil,
+                       'compute the watershed of an edge-weighted graph', nil,
                        {type='torch.Tensor', help='input graph', req=true},
                        {type='boolean', help='replace components id by random colors', default=false},
                        "",
@@ -164,6 +170,10 @@ function imgraph.watershed(...)
    return dest, nelts
 end
 
+----------------------------------------------------------------------
+-- segment a graph, by computing its min-spanning tree and
+-- merging vertices based on a dynamic threshold
+--
 function imgraph.segmentmst(...)
    --get args
    local args = {...}
@@ -185,7 +195,7 @@ function imgraph.segmentmst(...)
    -- usage
    if not graph then
       print(xlua.usage('imgraph.segmentmst',
-                       'segments an edge-weighted graph, using a surface adaptive criterion\n'
+                       'segment an edge-weighted graph, using a surface adaptive criterion\n'
                           .. 'on the min-spanning tree of the graph (see Felzenszwalb et al. 2004)',
                        nil,
                        {type='torch.Tensor', help='input graph', req=true},
@@ -208,6 +218,9 @@ function imgraph.segmentmst(...)
    return dest, nelts
 end
 
+----------------------------------------------------------------------
+-- pool the features (or pixels) of an image into a segmentation map
+--
 function imgraph.histpooling(...)
    --get args
    local args = {...}
@@ -222,12 +235,9 @@ function imgraph.histpooling(...)
    minconfidence = minconfidence or 0
 
    -- usage
-   if not srcdest or not segmentation
-      or not torch.typename(srcdest):find('Tensor')
-      or not torch.typename(segmentation):find('Tensor')
-   then
+   if not srcdest or not segmentation or not torch.typename(srcdest):find('Tensor') or not torch.typename(segmentation):find('Tensor') then
       print(xlua.usage('imgraph.histpooling',
-                       'pools the features (or pixels) of an image into a segmentation map,\n'
+                       'pool the features (or pixels) of an image into a segmentation map,\n'
                           .. 'using histogram accumulation. this is useful for colorazing a\n'
                           .. 'segmentation with the original pixel colors, or for cleaning up\n'
                           .. 'a dense prediction map.\n'
@@ -250,26 +260,66 @@ function imgraph.histpooling(...)
 end
 
 ----------------------------------------------------------------------
+-- colorize a segmentation map
+--
+function imgraph.colorize(...)
+   -- get args
+   local args = {...}
+   local segmentation, colorized
+   if select('#',...) == 2 then
+      colorized = args[1]
+      segmentation = args[2]
+   else
+      colorized = torch.Tensor()
+      segmentation = args[1]
+   end
+
+   -- usage
+   if not segmentation then
+      print(xlua.usage('imgraph.colorize',
+                       'colorize a segmentation map',
+                       'graph = imgraph.graph(image.lena())\n'
+                          .. 'segm = imgraph.segmentmst(graph)\n'
+                          .. 'colored = imgraph.colorize(segm)',
+                       {type='torch.Tensor', help='input segmentation map (must be HxW)', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.colorize')
+   end
+
+   -- colorize !
+   segmentation.imgraph.colorize(colorized, segmentation)
+
+   -- return colorized segmentation
+   return colorized
+end
+
+----------------------------------------------------------------------
 -- a simple test me function
 --
+imgraph._example = [[
+      -- (1) load an image & compute its graph
+      local lena = image.lena()
+      local lenag = image.convolve(lena, image.gaussian(3), 'full')
+      local graph = imgraph.graph(lenag)
+
+      -- (2) compute its connected components, and mst segmentation
+      local cc = imgraph.connectcomponents(graph, 0.1, true)
+      local mstsegm = imgraph.segmentmst(graph, 3, 20)
+      local mstsegmcolor = imgraph.colorize(mstsegm)
+
+      -- (3) do a histogram pooling of the original image:
+      local pool = imgraph.histpooling(lena, mstsegm)
+
+      -- (4) display results
+      image.display{image=image.lena(), legend='input image'}
+      image.display{image=graph, legend='left: horizontal edges, right: vertical edges'}
+      image.display{image=cc, legend='thresholded graph'}
+      image.display{image=mstsegmcolor, legend='segmented graph, using min-spanning tree'}
+      image.display{image=pool, legend='original imaged hist-pooled by segmentation'}
+]]
 function imgraph.testme()
-   -- (1) load an image & compute its graph
-   local lena = image.lena()
-   local lenag = image.convolve(lena, image.gaussian(3), 'full')
-   local graph = imgraph.graph(lenag)
-
-   -- (2) compute its connected components, and mst segmentation
-   local cc = imgraph.connectcomponents(graph, 0.1, true)
-   local mstsegm = imgraph.segmentmst(graph, 3, 20, true)
-
-   -- (3) do a histogram pooling of the original image:
-   local mst = imgraph.segmentmst(graph, 3, 20)
-   local pool = imgraph.histpooling(lena, mst)
-
-   -- (4) display results
-   image.display{image=image.lena(), legend='input image'}
-   image.display{image=graph, legend='left: horizontal edges, right: vertical edges'}
-   image.display{image=cc, legend='thresholded graph'}
-   image.display{image=mstsegm, legend='segmented graph, using min-spanning tree'}
-   image.display{image=pool, legend='original imaged hist-pooled by segmentation'}
+   local example = loadstring(imgraph._example)
+   print 'imgraph sample code {\n'
+   print (imgraph._example)
+   print '}'
+   example()
 end

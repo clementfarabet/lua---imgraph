@@ -386,6 +386,42 @@ static int imgraph_(watershed)(lua_State *L) {
   return 1;
 }
 
+int imgraph_(colorize)(lua_State *L) {
+  // get args
+  THTensor *output = luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *input = luaT_checkudata(L, 2, torch_(Tensor_id));
+
+  // dims
+  long height = input->size[0];
+  long width = input->size[1];
+
+  // generate output
+  THTensor *colormap = THTensor_(newWithSize2d)(width*height, 3);
+  THTensor_(fill)(colormap, -1);
+  THTensor_(resize3d)(output, 3, height, width);
+  int x,y;
+  for (y = 0; y < height; y++) {
+    for (x = 0; x < width; x++) {
+      int id = THTensor_(get2d)(input, y, x);
+      real check = THTensor_(get2d)(colormap, id, 0);
+      if (check == -1) {
+        THTensor_(set2d)(colormap, id, 0, random());
+        THTensor_(set2d)(colormap, id, 1, random());
+        THTensor_(set2d)(colormap, id, 2, random());
+      }
+      real r = THTensor_(get2d)(colormap, id, 0);
+      real g = THTensor_(get2d)(colormap, id, 1);
+      real b = THTensor_(get2d)(colormap, id, 2);
+      THTensor_(set3d)(output, 0, y, x, r);
+      THTensor_(set3d)(output, 1, y, x, g);
+      THTensor_(set3d)(output, 2, y, x, b);
+    }
+  }
+
+  // dont return anything
+  return  0;
+}
+
 int imgraph_(histpooling)(lua_State *L) {
   // get args
   THTensor *vectors = luaT_checkudata(L, 1, torch_(Tensor_id));
@@ -618,6 +654,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"segmentmst", imgraph_(segmentmst)},
   {"watershed", imgraph_(watershed)},
   {"histpooling", imgraph_(histpooling)},
+  {"colorize", imgraph_(colorize)},
   {NULL, NULL}
 };
 
