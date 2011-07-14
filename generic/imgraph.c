@@ -426,8 +426,9 @@ int imgraph_(histpooling)(lua_State *L) {
   // get args
   THTensor *vectors = luaT_checkudata(L, 1, torch_(Tensor_id));
   THTensor *segm = luaT_checkudata(L, 2, torch_(Tensor_id));
-  int histmax = lua_toboolean(L, 3);
-  real minConfidence = lua_tonumber(L, 4);
+  int computeLists = lua_toboolean(L, 3);
+  int histmax = lua_toboolean(L, 4);
+  real minConfidence = lua_tonumber(L, 5);
 
   // check dims
   if ((vectors->nDimension != 3) || (segm->nDimension != 2))
@@ -635,8 +636,8 @@ int imgraph_(histpooling)(lua_State *L) {
     lua_rawseti(L, table_clean, cur++);
   }
 
-  // pop/remove histograms
-  lua_pop(L, 1);
+  // pop/remove histograms + sizes
+  lua_pop(L, 2);
 
   // cleanup
   THTensor_(free)(select1);

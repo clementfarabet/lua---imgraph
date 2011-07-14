@@ -29,6 +29,7 @@
 --               "Efficient Graph-Based Image Segmentation".
 --
 -- history:
+--     July 14, 2011, 5:52PM  - colorizing function  - Clement Farabet
 --     July 14, 2011, 12:49PM - MST + HistPooling    - Clement Farabet
 --     July 13, 2011, 6:16PM  - first draft          - Clement Farabet
 ----------------------------------------------------------------------
@@ -224,7 +225,7 @@ end
 function imgraph.histpooling(...)
    --get args
    local args = {...}
-   local srcdest, segmentation, histmax, minconfidence
+   local srcdest, segmentation, lists, histmax, minconfidence
    srcdest = args[1]
    segmentation = args[2]
    histmax = args[3]
@@ -240,10 +241,12 @@ function imgraph.histpooling(...)
                        'pool the features (or pixels) of an image into a segmentation map,\n'
                           .. 'using histogram accumulation. this is useful for colorazing a\n'
                           .. 'segmentation with the original pixel colors, or for cleaning up\n'
-                          .. 'a dense prediction map.\n'
-                          .. 'the pooling is done in place (the input is replaced), and two\n'
-                          .. 'extra lists are returned, that contain the geometry of all components\n'
-                          .. 'found in the process.',
+                          .. 'a dense prediction map.\n\n'
+                          .. 'the pooling is done in place (the input is replaced)\n\n'
+                          .. 'two extra lists of components are optionally generated:\n'
+                          .. 'the first list is an array of these components, \n'
+                          .. 'while the second is a hash table; each entry has this format:\n'
+                          .. 'entry = {centroid_x, centroid_y, surface, hist_max, id}',
                        nil,
                        {type='torch.Tensor', help='input image/map/matrix to pool (must be KxHxW)', req=true},
                        {type='torch.Tensor', help='segmentation to guide pooling (must be HxW)', req=true},
@@ -253,7 +256,8 @@ function imgraph.histpooling(...)
    end
 
    -- compute image
-   local iresults, hresults = srcdest.imgraph.histpooling(srcdest, segmentation, histmax, minconfidence)
+   local iresults, hresults = srcdest.imgraph.histpooling(srcdest, segmentation, 
+                                                          true, histmax, minconfidence)
 
    -- return image
    return srcdest, iresults, hresults
