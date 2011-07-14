@@ -143,7 +143,7 @@ static int imgraph_(tensor2graph)(lua_State *L) {
   return 0;
 }
 
-static int imgraph_(graph2tensor)(lua_State *L) {
+static int imgraph_(connectedcomponents)(lua_State *L) {
   // get args
   THTensor *dst = luaT_checkudata(L, 1, torch_(Tensor_id));
   THTensor *src = luaT_checkudata(L, 2, torch_(Tensor_id));
@@ -426,7 +426,7 @@ int imgraph_(spatialhistpooling)(lua_State *L) {
 
 static const struct luaL_Reg imgraph_(methods__) [] = {
   {"tensor2graph", imgraph_(tensor2graph)},
-  {"graph2tensor", imgraph_(graph2tensor)},
+  {"connectedcomponents", imgraph_(connectedcomponents)},
   {"watershed", imgraph_(watershed)},
   {"spatialhistpooling", imgraph_(spatialhistpooling)},
   {NULL, NULL}

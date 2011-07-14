@@ -125,7 +125,7 @@ function imgraph.graph2tensor(...)
    if watershed then
       nelts = graph.imgraph.watershed(dest, graph, colorize)
    else
-      nelts = graph.imgraph.graph2tensor(dest, graph, threshold, colorize)
+      nelts = graph.imgraph.connectedcomponents(dest, graph, threshold, colorize)
    end
 
    -- return image
