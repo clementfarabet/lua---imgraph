@@ -11,10 +11,12 @@ description = {
    detailed = [[
             This package provides standard functions to
             create and manipulate edge-weighted graphs 
-            of images.
+            of images: create a graph, segment it, 
+            compute its watershed, or its connected
+            components...
    ]],
    homepage = "",
-   license = "MIT/X11" -- or whatever you like
+   license = "GNU GPL"
 }
 
 dependencies = {
