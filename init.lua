@@ -202,10 +202,10 @@ function imgraph.watershed(...)
    end
 
    -- compute image
-   local nelts = graph.imgraph.watershed(dest, graph, colorize)
+   local nelts, minimas = graph.imgraph.watershed(dest, graph, colorize)
 
    -- return image
-   return dest, nelts
+   return dest, nelts, minimas
 end
 
 ----------------------------------------------------------------------

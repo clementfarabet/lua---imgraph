@@ -432,18 +432,43 @@ static int imgraph_(gradient)(lua_State *L) {
 
 static int imgraph_(watershed)(lua_State *L) {
   // get args
-  THTensor *output = luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *watershed = luaT_checkudata(L, 1, torch_(Tensor_id));
   THTensor *input = luaT_checkudata(L, 2, torch_(Tensor_id));
   int color = lua_toboolean(L, 3);
+  real minimaTolerance = 0.01;
 
   // dims
-  long nedges = input->size[0];
-  long height = input->size[1];
-  long width = input->size[2];
+  long height = input->size[0];
+  long width = input->size[1];
 
-  // return number of components
+  // make input contiguous
+  THTensor *inputc = THTensor_(newContiguous)(input);
+
+  // first compute minimas of the gradient map
+  real absmin = THTensor_(min)(input);
+  real absmax = THTensor_(max)(input);
+  real eps = (absmax-absmin)*minimaTolerance;
+  THTensor *minimas = THTensor_(newWithSize2d)(height, width);
+  THTensor_(zero)(minimas);
+  real *input_data = THTensor_(data)(inputc);
+  real *minimas_data = THTensor_(data)(minimas);
+  int i;
+  for (i=0; i<(width*height); i++) {
+    if ((*input_data) < (absmin+eps)) *minimas_data = 1;
+    else *minimas_data = 0;
+    input_data++;
+    minimas_data++;
+  }
+
+  // compute watershed of input, using minimas
+
+  // cleanup
+  THTensor_(free)(inputc);
+
+  // return number of components + minimas
   lua_pushnumber(L, 0);
-  return 1;
+  luaT_pushudata(L, minimas, torch_(Tensor_id));
+  return 2;
 }
 
 int imgraph_(colorize)(lua_State *L) {
