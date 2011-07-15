@@ -193,6 +193,11 @@ function imgraph.segmentmst(...)
       colorize = args[4]
    end
 
+   -- defaults
+   thres = thres or 3
+   minsize = minsize or 20
+   colorize = colorize or false
+
    -- usage
    if not graph then
       print(xlua.usage('imgraph.segmentmst',
