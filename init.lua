@@ -183,13 +183,11 @@ function imgraph.watershed(...)
       gradient = args[2]
       minHeight = args[3]
       connex = args[4]
-      colorize = args[5]
    else
       dest = torch.Tensor()
       gradient = args[1]
       minHeight = args[2]
       connex = args[3]
-      colorize = args[4]
    end
 
    -- defaults
@@ -203,18 +201,16 @@ function imgraph.watershed(...)
                        {type='torch.Tensor', help='input gradient map (HxW tensor)', req=true},
                        {type='number', help='filter minimas by imposing a minimum height', default=0.05},
                        {type='number', help='connexity: 4 | 8', default=4},
-                       {type='boolean', help='replace components id by random colors', default=false},
                        "",
                        {type='torch.Tensor', help='destination tensor', req=true},
                        {type='torch.Tensor', help='input gradient map (HxW tensor)', req=true},
                        {type='number', help='filter minimas by imposing a minimum height', default=0.05},
-                       {type='number', help='connexity: 4 | 8', default=4},
-                       {type='boolean', help='replace components id by random colors', default=false}))
+                       {type='number', help='connexity: 4 | 8', default=4}))
       xlua.error('incorrect arguments', 'imgraph.watershed')
    end
 
    -- compute image
-   local nelts = gradient.imgraph.watershed(dest, gradient, minHeight, connex, colorize)
+   local nelts = gradient.imgraph.watershed(dest, gradient, minHeight, connex)
 
    -- return image
    return dest, nelts
@@ -367,10 +363,18 @@ imgraph._example = [[
       -- (3) do a histogram pooling of the original image:
       local pool = imgraph.histpooling(lena, mstsegm)
 
-      -- (4) display results
+      -- (4) compute the watershed of the graph
+      local gradient = imgraph.gradient(graph)
+      local watershed = imgraph.watershed(gradient, 0.07)
+      local watershedgraph = imgraph.graph(watershed)
+      local watershedcc = imgraph.connectcomponents(watershedgraph, 0.5, true)
+
+      -- (5) display results
       image.display{image=image.lena(), legend='input image'}
       image.display{image=graph, legend='left: horizontal edges, right: vertical edges'}
       image.display{image=cc, legend='thresholded graph'}
+      image.display{image=watershed, legend='watershed on the graph'}
+      image.display{image=watershedcc, legend='components of watershed'}
       image.display{image=mstsegmcolor, legend='segmented graph, using min-spanning tree'}
       image.display{image=pool, legend='original imaged hist-pooled by segmentation'}
 ]]
