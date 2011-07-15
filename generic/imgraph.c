@@ -430,11 +430,60 @@ static int imgraph_(gradient)(lua_State *L) {
   return 1;
 }
 
+// conversion functions
+static struct xvimage * imgraph_(tensor2xv)(THTensor *src, struct xvimage *dst) {
+  // create output
+  if (dst == NULL)
+    dst = allocimage((char *)NULL, src->size[1], src->size[0], 1, VFF_TYP_1_BYTE);
+
+  // get pointer to dst
+  uint8_t *dst_data = UCHARDATA(dst);
+
+  // get pointer to src
+  THTensor *src_c = THTensor_(newContiguous)(src);
+  real *src_data = THTensor_(data)(src_c);
+
+  // copy data
+  long i;
+  for (i=0; i<(src->size[0]*src->size[1]); i++) {
+    real val = ((*src_data++) * 255);
+    val = (val < 0) ? 0 : val;
+    val = (val > 1) ? 1 : val;
+    *dst_data++ = val;
+  }
+
+  // cleanup
+  THTensor_(free)(src_c);
+
+  // return copy
+  return dst;
+}
+
+static THTensor * imgraph_(xv2tensor)(struct xvimage *src, THTensor *dst) {
+  // create/resize output
+  if (dst == NULL) dst = THTensor_(new)();
+  THTensor_(resize2d)(dst, src->col_size, src->row_size);
+  real *dst_data = THTensor_(data)(dst);
+
+  // get pointer
+  uint8_t *src_data = UCHARDATA(src);
+
+  // copy data
+  long i;
+  for (i=0; i<(src->col_size*src->row_size); i++) {
+    *dst_data++ = (real)*src_data++ / 255.0;
+  }
+
+  // return copy
+  return dst;
+}
+
 static int imgraph_(watershed)(lua_State *L) {
   // get args
   THTensor *watershed = luaT_checkudata(L, 1, torch_(Tensor_id));
   THTensor *input = luaT_checkudata(L, 2, torch_(Tensor_id));
   int color = lua_toboolean(L, 3);
+  int connex = 4;
   real minimaTolerance = 0.01;
 
   // dims
@@ -461,6 +510,10 @@ static int imgraph_(watershed)(lua_State *L) {
   }
 
   // compute watershed of input, using minimas
+  struct xvimage *input_xv = imgraph_(tensor2xv)(input, NULL);
+  struct xvimage *minimas_xv = imgraph_(tensor2xv)(minimas, NULL);
+  lwshedtopobin(input_xv, minimas_xv, connex);
+  imgraph_(xv2tensor)(input_xv, watershed);
 
   // cleanup
   THTensor_(free)(inputc);

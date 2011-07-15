@@ -1,6 +1,10 @@
 #include "TH.h"
 #include "luaT.h"
 
+#include "stdint.h"
+#include "mccodimage.h"
+#include "mcimage.h"
+#include "lwshedtopo.h"
 #include "set.h"
 
 #define torch_(NAME) TH_CONCAT_3(torch_, Real, NAME)

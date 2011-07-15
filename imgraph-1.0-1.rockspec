@@ -43,10 +43,12 @@ build = {
 
          set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-         include_directories (${TORCH_INCLUDE_DIR} ${PROJECT_SOURCE_DIR})
+         add_subdirectory (pink)
+
+         include_directories (${TORCH_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/pink)
          add_library (imgraph SHARED init.c)
          link_directories (${TORCH_LIBRARY_DIR})
-         target_link_libraries (imgraph ${TORCH_LIBRARIES})
+         target_link_libraries (imgraph ${TORCH_LIBRARIES} pink)
 
          install_files(/lua/imgraph init.lua)
          install_targets(/lib imgraph)
