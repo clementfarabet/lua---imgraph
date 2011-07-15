@@ -35,7 +35,7 @@ static inline real imgraph_(ndiff)(THTensor *img,
   return res;
 }
 
-static int imgraph_(tensor2graph)(lua_State *L) {
+static int imgraph_(graph)(lua_State *L) {
   // get args
   THTensor *dst = luaT_checkudata(L, 1, torch_(Tensor_id));
   THTensor *src = luaT_checkudata(L, 2, torch_(Tensor_id));
@@ -370,6 +370,66 @@ static int imgraph_(segmentmst)(lua_State *L) {
   return 1;
 }
 
+real imgraph_(max)(real *a, int n) {
+  int i;
+  real max = -1;
+  for (i = 0; i < n; i++)
+    if (a[i] > max) max = a[i];
+  return max;
+}
+
+static int imgraph_(gradient)(lua_State *L) {
+  // get args
+  THTensor *output = luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *input = luaT_checkudata(L, 2, torch_(Tensor_id));
+
+  // dims
+  long nmaps = input->size[0];
+  long height = input->size[1];
+  long width = input->size[2];
+
+  // resize output
+  THTensor_(resize2d)(output, height, width);
+
+  // compute max gradient
+  int x,y;
+  if (nmaps == 2) { // 4-connex
+    for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+        real edges[] = {-1,-1,-1,-1};
+        if (x > 0) edges[0] = THTensor_(get3d)(input, 0, y, x-1);
+        if (x < (width-1)) edges[1] = THTensor_(get3d)(input, 0, y, x);
+        if (y > 0) edges[2] = THTensor_(get3d)(input, 1, y-1, x);
+        if (y < (height-1)) edges[3] = THTensor_(get3d)(input, 1, y, x);
+        real max = imgraph_(max)(edges, 4);
+        THTensor_(set2d)(output, y, x, max);
+      }
+    }
+  } else if (nmaps == 4) { // 8-connex
+    for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+        real edges[] = {-1,-1,-1,-1,-1,-1,-1,-1};
+        if (x > 0) edges[0] = THTensor_(get3d)(input, 0, y, x-1);
+        if (x < (width-1)) edges[1] = THTensor_(get3d)(input, 0, y, x);
+        if (y > 0) edges[2] = THTensor_(get3d)(input, 1, y-1, x);
+        if (y < (height-1)) edges[3] = THTensor_(get3d)(input, 1, y, x);
+
+        if ((x > 0) && (y > 0)) edges[4] = THTensor_(get3d)(input, 0, y-1, x-1);
+        if ((x < (width-1)) && (y > 0)) edges[5] = THTensor_(get3d)(input, 0, y-1, x);
+        if ((y < (height-1)) && (x > 0)) edges[6] = THTensor_(get3d)(input, 1, y, x-1);
+        if ((x < (width-1)) && (y < (height-1))) edges[7] = THTensor_(get3d)(input, 1, y, x);
+
+        real max = imgraph_(max)(edges, 8);
+        THTensor_(set2d)(output, y, x, max);
+      }
+    }
+  }
+
+  // return number of components
+  lua_pushnumber(L, 0);
+  return 1;
+}
+
 static int imgraph_(watershed)(lua_State *L) {
   // get args
   THTensor *output = luaT_checkudata(L, 1, torch_(Tensor_id));
@@ -650,7 +710,8 @@ int imgraph_(histpooling)(lua_State *L) {
 }
 
 static const struct luaL_Reg imgraph_(methods__) [] = {
-  {"tensor2graph", imgraph_(tensor2graph)},
+  {"graph", imgraph_(graph)},
+  {"gradient", imgraph_(gradient)},
   {"connectedcomponents", imgraph_(connectedcomponents)},
   {"segmentmst", imgraph_(segmentmst)},
   {"watershed", imgraph_(watershed)},

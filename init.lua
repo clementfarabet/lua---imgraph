@@ -84,7 +84,7 @@ function imgraph.graph(...)
    end
 
    -- compute graph
-   img.imgraph.tensor2graph(dest, img, connex, distance)
+   img.imgraph.graph(dest, img, connex, distance)
 
    -- return result
    return dest
@@ -132,6 +132,43 @@ function imgraph.connectcomponents(...)
 
    -- return image
    return dest, nelts
+end
+
+----------------------------------------------------------------------
+-- compute the gradient amplitude of a graph
+--
+function imgraph.gradient(...)
+   -- get args
+   local args = {...}
+   local gradient, graph
+   local arg2 = torch.typename(args[2])
+   if arg2 and arg2:find('Tensor') then
+      gradient = args[1]
+      graph = args[2]
+   else
+      gradient = torch.Tensor()
+      graph = args[1]
+   end
+
+   -- usage
+   if not graph then
+      print(xlua.usage('imgraph.gradient',
+                       'compute an approximated gradient map of a graph\n'
+                          .. 'the map has the size of the original image on which the graph\n'
+                          .. 'was constructed',
+                       nil,
+                       {type='torch.Tensor', help='input graph', req=true},
+                       "",
+                       {type='torch.Tensor', help='destination tensor', req=true},
+                       {type='torch.Tensor', help='input graph', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.gradient')
+   end
+
+   -- compute graph
+   graph.imgraph.gradient(gradient, graph)
+
+   -- return result
+   return gradient
 end
 
 ----------------------------------------------------------------------
