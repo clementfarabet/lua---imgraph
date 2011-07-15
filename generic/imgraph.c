@@ -448,8 +448,8 @@ static struct xvimage * imgraph_(tensor2xv)(THTensor *src, struct xvimage *dst) 
   for (i=0; i<(src->size[0]*src->size[1]); i++) {
     real val = ((*src_data++) * 255);
     val = (val < 0) ? 0 : val;
-    val = (val > 1) ? 1 : val;
-    *dst_data++ = val;
+    val = (val > 255) ? 255 : val;
+    *dst_data++ = (uint8_t)val;
   }
 
   // cleanup
@@ -471,7 +471,7 @@ static THTensor * imgraph_(xv2tensor)(struct xvimage *src, THTensor *dst) {
   // copy data
   long i;
   for (i=0; i<(src->col_size*src->row_size); i++) {
-    *dst_data++ = (real)*src_data++ / 255.0;
+    dst_data[i] = ((real)src_data[i]) / 255.0;
   }
 
   // return copy
@@ -482,9 +482,9 @@ static int imgraph_(watershed)(lua_State *L) {
   // get args
   THTensor *watershed = luaT_checkudata(L, 1, torch_(Tensor_id));
   THTensor *input = luaT_checkudata(L, 2, torch_(Tensor_id));
-  int color = lua_toboolean(L, 3);
-  int connex = 4;
-  real minimaTolerance = 0.01;
+  int minHeight = (lua_tonumber(L, 3)) * 255;
+  int connex = lua_tonumber(L, 4);
+  int color = lua_toboolean(L, 5);
 
   // dims
   long height = input->size[0];
@@ -493,35 +493,33 @@ static int imgraph_(watershed)(lua_State *L) {
   // make input contiguous
   THTensor *inputc = THTensor_(newContiguous)(input);
 
-  // first compute minimas of the gradient map
-  real absmin = THTensor_(min)(input);
-  real absmax = THTensor_(max)(input);
-  real eps = (absmax-absmin)*minimaTolerance;
-  THTensor *minimas = THTensor_(newWithSize2d)(height, width);
-  THTensor_(zero)(minimas);
-  real *input_data = THTensor_(data)(inputc);
-  real *minimas_data = THTensor_(data)(minimas);
-  int i;
-  for (i=0; i<(width*height); i++) {
-    if ((*input_data) < (absmin+eps)) *minimas_data = 1;
-    else *minimas_data = 0;
-    input_data++;
-    minimas_data++;
-  }
+  // (1) filter out noisy minimas
+  struct xvimage *filtered_xv = imgraph_(tensor2xv)(inputc, NULL);
+  lheightmaxima(filtered_xv, connex, minHeight);
 
-  // compute watershed of input, using minimas
-  struct xvimage *input_xv = imgraph_(tensor2xv)(input, NULL);
-  struct xvimage *minimas_xv = imgraph_(tensor2xv)(minimas, NULL);
-  lwshedtopobin(input_xv, minimas_xv, connex);
+  // (2) compute minimas of the gradient map
+  int nblabels;
+  struct xvimage *labels_xv = allocimage(NULL, rowsize(filtered_xv), colsize(filtered_xv), 1, VFF_TYP_4_BYTE);
+  llabelextrema(filtered_xv, connex, LABMIN, labels_xv, &nblabels);
+
+  uint8_t *filtered_data = UCHARDATA(filtered_xv);
+  uint32_t *labels_data = SLONGDATA(labels_xv);
+  int i;
+  for (i = 0; i < (rowsize(filtered_xv)*colsize(filtered_xv)); i++)
+    if (labels_data[i]) filtered_data[i] = 255; 
+    else filtered_data[i] = 0;
+
+  // (3) compute watershed of input, using minimas
+  struct xvimage *input_xv = imgraph_(tensor2xv)(inputc, NULL);
+  lwshedtopobin(input_xv, filtered_xv, connex);
   imgraph_(xv2tensor)(input_xv, watershed);
 
   // cleanup
   THTensor_(free)(inputc);
 
-  // return number of components + minimas
-  lua_pushnumber(L, 0);
-  luaT_pushudata(L, minimas, torch_(Tensor_id));
-  return 2;
+  // return number of components
+  lua_pushnumber(L, nblabels);
+  return 1;
 }
 
 int imgraph_(colorize)(lua_State *L) {

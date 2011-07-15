@@ -16,7 +16,7 @@ description = {
             components...
    ]],
    homepage = "",
-   license = "GNU GPL"
+   license = "GNU GPL + CeCILL"
 }
 
 dependencies = {

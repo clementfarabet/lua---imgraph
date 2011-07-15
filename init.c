@@ -4,6 +4,7 @@
 #include "stdint.h"
 #include "mccodimage.h"
 #include "mcimage.h"
+#include "llabelextrema.h"
 #include "lwshedtopo.h"
 #include "set.h"
 

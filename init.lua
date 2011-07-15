@@ -177,35 +177,47 @@ end
 function imgraph.watershed(...)
    --get args
    local args = {...}
-   local dest, graph, colorize
+   local dest, gradient, minHeight, connex, colorize
    if arg2 and arg2:find('Tensor') then
       dest = args[1]
-      graph = args[2]
-      colorize = args[3]
+      gradient = args[2]
+      minHeight = args[3]
+      connex = args[4]
+      colorize = args[5]
    else
       dest = torch.Tensor()
-      graph = args[1]
-      colorize = args[2]
+      gradient = args[1]
+      minHeight = args[2]
+      connex = args[3]
+      colorize = args[4]
    end
 
+   -- defaults
+   minHeight = minHeight or 0.05
+   connex = connex or 4
+
    -- usage
-   if not graph then
+   if not gradient or (gradient:nDimension() ~= 2) then
       print(xlua.usage('imgraph.watershed',
-                       'compute the watershed of an edge-weighted graph', nil,
-                       {type='torch.Tensor', help='input graph', req=true},
+                       'compute the watershed of a gradient map (or arbitrary grayscale image)', nil,
+                       {type='torch.Tensor', help='input gradient map (HxW tensor)', req=true},
+                       {type='number', help='filter minimas by imposing a minimum height', default=0.05},
+                       {type='number', help='connexity: 4 | 8', default=4},
                        {type='boolean', help='replace components id by random colors', default=false},
                        "",
                        {type='torch.Tensor', help='destination tensor', req=true},
-                       {type='torch.Tensor', help='input graph', req=true},
+                       {type='torch.Tensor', help='input gradient map (HxW tensor)', req=true},
+                       {type='number', help='filter minimas by imposing a minimum height', default=0.05},
+                       {type='number', help='connexity: 4 | 8', default=4},
                        {type='boolean', help='replace components id by random colors', default=false}))
       xlua.error('incorrect arguments', 'imgraph.watershed')
    end
 
    -- compute image
-   local nelts, minimas = graph.imgraph.watershed(dest, graph, colorize)
+   local nelts = gradient.imgraph.watershed(dest, gradient, minHeight, connex, colorize)
 
    -- return image
-   return dest, nelts, minimas
+   return dest, nelts
 end
 
 ----------------------------------------------------------------------
