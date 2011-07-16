@@ -364,9 +364,10 @@ imgraph._example = [[
       local pool = imgraph.histpooling(lena, mstsegm)
 
       -- (4) compute the watershed of the graph
+      local graph = imgraph.graph(lenag, 8)
       local gradient = imgraph.gradient(graph)
-      local watershed = imgraph.watershed(gradient, 0.07)
-      local watershedgraph = imgraph.graph(watershed)
+      local watershed = imgraph.watershed(gradient, 0.07, 8)
+      local watershedgraph = imgraph.graph(watershed, 8)
       local watershedcc = imgraph.connectcomponents(watershedgraph, 0.5, true)
 
       -- (5) display results

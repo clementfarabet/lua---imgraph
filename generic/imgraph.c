@@ -162,11 +162,21 @@ static int imgraph_(connectedcomponents)(lua_State *L) {
   int x,y;
   for (y = 0; y < height-1; y++) {
     for (x = 0; x < width-1; x++) {
+      // 4-connex:
       int a = set_find(set, y*width + x);
       int b = set_find(set, y*width + x+1);
       int c = set_find(set, (y+1)*width + x);
       if ((a != b) && (THTensor_(get3d)(src, 0, y, x) < threshold)) set_join(set, a, b);
       if ((a != c) && (THTensor_(get3d)(src, 1, y, x) < threshold)) set_join(set, a, c);
+      // 8-connex:
+      if (edges >= 4) {
+        int d = set_find(set, (y+1)*width + x+1);
+        if ((a != d) && (THTensor_(get3d)(src, 2, y, x) < threshold)) set_join(set, a, d);
+        if (y > 0) {
+          int e = set_find(set, (y-1)*width + x+1);
+          if ((a != e) && (THTensor_(get3d)(src, 3, y, x) < threshold)) set_join(set, a, e);
+        }
+      }
     }
   }
 
