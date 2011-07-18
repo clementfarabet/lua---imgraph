@@ -300,7 +300,7 @@ function imgraph.histpooling(...)
                        nil,
                        {type='torch.Tensor', help='input image/map/matrix to pool (must be KxHxW)', req=true},
                        {type='torch.Tensor', help='segmentation to guide pooling (must be HxW)', req=true},
-                       {type='number', help='hist max: replace histograms by their max bin', default=false},
+                       {type='boolean', help='hist max: replace histograms by their max bin', default=false},
                        {type='number', help='min confidence: vectors with a low confidence are not accumulated', default=0}))
       xlua.error('incorrect arguments', 'imgraph.histpooling')
    end
