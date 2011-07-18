@@ -60,6 +60,11 @@ imgraph.watershed(          imgraph.gradient(
 ```
 
 To get quickly started, run the testme() function:
+
 ``` lua
 > imgraph.testme()
 ```
+
+which computes a few things on the famous image of Lena:
+
+![results](http://data.neuflow.org/share/imgraph-testme.png)
