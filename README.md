@@ -8,6 +8,8 @@ components...
 
 ## Install dependencies 
 
+1/ third-party libraries:
+
 On Linux (Ubuntu > 9.04):
 
 ``` sh
@@ -20,9 +22,7 @@ On Mac OS (Leopard, or more), using [Homebrew](http://mxcl.github.com/homebrew/)
 $ brew install git readline cmake wget qt
 ```
 
-## Install Lua, Luarocks and Torch7
-
-1/ Lua 5.1 + Luarocks + xLua 
+2/ Lua 5.1 + Luarocks + xLua:
 
 ``` sh
 $ git clone https://github.com/clementfarabet/lua4torch
@@ -30,14 +30,36 @@ $ cd lua4torch
 $ make install PREFIX=/usr/local
 ```
 
-2/ Torch7 (a numeric package for Lua)
-
-``` sh
-$ luarocks install torch
-```
-
-## Install imgraph
+3/ imgraph:
 
 ``` sh
 $ luarocks install imgraph
+```
+
+## Use the library
+
+First run xlua, and load imgraph:
+
+``` sh
+$ xlua
+``` 
+
+``` lua
+> require 'imgraph'
+```
+
+Once loaded, tab-completion will help you navigate through the
+library:
+
+``` lua
+> imgraph. + TAB
+imgraph.colorize(           imgraph.connectcomponents(  
+imgraph.graph(              imgraph.histpooling(        
+imgraph.segmentmst(         imgraph.testme(             
+imgraph.watershed(          imgraph.gradient(
+```
+
+To get quickly started, run the testme() function:
+``` lua
+> imgraph.testme()
 ```
