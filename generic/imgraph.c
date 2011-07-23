@@ -7,6 +7,11 @@
 #endif
 #define square(x) ((x)*(x))
 
+#ifdef rand0to1
+#undef rand0to1
+#endif
+#define rand0to1() ((float)rand()/(float)RAND_MAX)
+
 #ifdef epsilon
 #undef epsilon
 #endif epsilon
@@ -190,9 +195,9 @@ static int imgraph_(connectedcomponents)(lua_State *L) {
         int comp = set_find(set, y * width + x);
         real check = THTensor_(get2d)(colormap, comp, 0);
         if (check == -1) {
-          THTensor_(set2d)(colormap, comp, 0, random());
-          THTensor_(set2d)(colormap, comp, 1, random());
-          THTensor_(set2d)(colormap, comp, 2, random());
+          THTensor_(set2d)(colormap, comp, 0, rand0to1());
+          THTensor_(set2d)(colormap, comp, 1, rand0to1());
+          THTensor_(set2d)(colormap, comp, 2, rand0to1());
         }
         real r = THTensor_(get2d)(colormap, comp, 0);
         real g = THTensor_(get2d)(colormap, comp, 1);
@@ -346,9 +351,9 @@ static int imgraph_(segmentmst)(lua_State *L) {
         int comp = set_find(set, y * width + x);
         real check = THTensor_(get2d)(colormap, comp, 0);
         if (check == -1) {
-          THTensor_(set2d)(colormap, comp, 0, random());
-          THTensor_(set2d)(colormap, comp, 1, random());
-          THTensor_(set2d)(colormap, comp, 2, random());
+          THTensor_(set2d)(colormap, comp, 0, rand0to1());
+          THTensor_(set2d)(colormap, comp, 1, rand0to1());
+          THTensor_(set2d)(colormap, comp, 2, rand0to1());
         }
         real r = THTensor_(get2d)(colormap, comp, 0);
         real g = THTensor_(get2d)(colormap, comp, 1);
@@ -549,14 +554,19 @@ int imgraph_(colorize)(lua_State *L) {
   // get args
   THTensor *output = luaT_checkudata(L, 1, torch_(Tensor_id));
   THTensor *input = luaT_checkudata(L, 2, torch_(Tensor_id));
+  THTensor *colormap = luaT_checkudata(L, 3, torch_(Tensor_id));
 
   // dims
   long height = input->size[0];
   long width = input->size[1];
 
+  // generate color map if not given
+  if (THTensor_(nElement)(colormap) == 0) {
+    THTensor_(resize2d)(colormap, width*height, 3);
+    THTensor_(fill)(colormap, -1);
+  }
+
   // generate output
-  THTensor *colormap = THTensor_(newWithSize2d)(width*height, 3);
-  THTensor_(fill)(colormap, -1);
   THTensor_(resize3d)(output, 3, height, width);
   int x,y;
   for (y = 0; y < height; y++) {
@@ -564,9 +574,9 @@ int imgraph_(colorize)(lua_State *L) {
       int id = THTensor_(get2d)(input, y, x);
       real check = THTensor_(get2d)(colormap, id, 0);
       if (check == -1) {
-        THTensor_(set2d)(colormap, id, 0, random());
-        THTensor_(set2d)(colormap, id, 1, random());
-        THTensor_(set2d)(colormap, id, 2, random());
+        THTensor_(set2d)(colormap, id, 0, rand0to1());
+        THTensor_(set2d)(colormap, id, 1, rand0to1());
+        THTensor_(set2d)(colormap, id, 2, rand0to1());
       }
       real r = THTensor_(get2d)(colormap, id, 0);
       real g = THTensor_(get2d)(colormap, id, 1);
@@ -577,8 +587,8 @@ int imgraph_(colorize)(lua_State *L) {
     }
   }
 
-  // dont return anything
-  return  0;
+  // return nothing
+  return 0;
 }
 
 int imgraph_(histpooling)(lua_State *L) {

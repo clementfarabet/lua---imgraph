@@ -319,31 +319,32 @@ end
 function imgraph.colorize(...)
    -- get args
    local args = {...}
-   local segmentation, colorized
-   if select('#',...) == 2 then
-      colorized = args[1]
-      segmentation = args[2]
-   else
-      colorized = torch.Tensor()
-      segmentation = args[1]
-   end
+   local grayscale = args[1]
+   local colormap = args[2] or torch.Tensor()
+   local colorized = torch.Tensor()
 
    -- usage
-   if not segmentation then
+   if not grayscale or grayscale:dim() ~= 2 then
       print(xlua.usage('imgraph.colorize',
                        'colorize a segmentation map',
                        'graph = imgraph.graph(image.lena())\n'
                           .. 'segm = imgraph.segmentmst(graph)\n'
                           .. 'colored = imgraph.colorize(segm)',
-                       {type='torch.Tensor', help='input segmentation map (must be HxW)', req=true}))
+                       {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be [1,width*height]', req=true},
+                       {type='torch.Tensor', help='color map (must be Nx3), if not provided, auto generated'}))
       xlua.error('incorrect arguments', 'imgraph.colorize')
    end
 
+   -- support LongTensors
+   if torch.typename(grayscale) == 'torch.LongTensor' then
+      grayscale = torch.Tensor(grayscale:size(1), grayscale:size(2)):copy(grayscale)
+   end
+
    -- colorize !
-   segmentation.imgraph.colorize(colorized, segmentation)
+   grayscale.imgraph.colorize(colorized, grayscale, colormap)
 
    -- return colorized segmentation
-   return colorized
+   return colorized, colormap
 end
 
 ----------------------------------------------------------------------
