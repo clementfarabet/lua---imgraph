@@ -348,6 +348,38 @@ function imgraph.colorize(...)
 end
 
 ----------------------------------------------------------------------
+-- create a color map from a table
+--
+function imgraph.colormap(colors, verbose)
+   -- usage
+   if not colors then
+      print(xlua.usage('imgraph.colormap',
+                       'create a color map, from a table {id1={r,g,b}, id2={r,g,b}, ...}', nil,
+                       {type='table', help='a table of RGB triplets', req=true},
+                       {type='boolean', help='verbose', default=false}))
+      xlua.error('incorrect arguments', 'imgraph.colormap')
+   end
+
+   -- found max in table
+   local max = -1/0
+   for k,entry in pairs(colors) do
+      if k > max then max = k end
+   end
+
+   -- make map
+   local nentries = max+1
+   if verbose then print('<imgraph.colormap> creating map with ' .. nentries .. ' entries') end
+   local colormap = torch.Tensor(nentries, 3):fill(-1)
+   for k,color in pairs(colors) do
+      local c = colormap[k+1]
+      c[1] = color[1]; c[2] = color[2]; c[3] = color[3]
+   end
+
+   -- return color map
+   return colormap
+end
+
+----------------------------------------------------------------------
 -- a simple test me function
 --
 imgraph._example = [[
