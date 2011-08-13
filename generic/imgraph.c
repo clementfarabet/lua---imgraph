@@ -709,7 +709,8 @@ int imgraph_(histpooling)(lua_State *L) {
       // compute hash codes for vectors and segm
       int segm_id = THTensor_(get2d)(segm,y,x);
       // get max
-      int argmax = 0, max = -1;
+      int argmax = 0;
+      real max = -1000000;
       // retrieve histogram
       lua_rawgeti(L,table_hists,segm_id);   // c[segm_id]  (= histo)
       histo = luaT_toudata(L, -1, torch_(Tensor_id));
