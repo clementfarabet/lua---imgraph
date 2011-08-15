@@ -626,7 +626,7 @@ int imgraph_(histpooling)(lua_State *L) {
   int table_sizes = lua_gettop(L);
 
   // optional confidence map
-  THTensor *confidence = THTensor_(newWithSize2d)(width, height);
+  THTensor *confidence = THTensor_(newWithSize2d)(height, width);
   THTensor *helper = THTensor_(newWithSize1d)(depth);
 
   // (1) loop over segm, and accumulate histograms of vectors pixels
@@ -670,7 +670,7 @@ int imgraph_(histpooling)(lua_State *L) {
       real local_conf = 1;
       if (minConfidence > 0 ) {
         THTensor_(copy)(helper, select2);
-        real max = -1000;
+        real max = -1000000;
         real idx = 0;
         for (k=0; k<depth; k++) {
           real val = THTensor_(get1d)(helper, k);
@@ -678,8 +678,8 @@ int imgraph_(histpooling)(lua_State *L) {
             max = val; idx = k;
           }
         }
-        THTensor_(set1d)(helper, idx, -1000);
-        real max2 = -1000;
+        THTensor_(set1d)(helper, idx, -1000000);
+        real max2 = -1000000;
         for (k=0; k<depth; k++) {
           real val = THTensor_(get1d)(helper, k);
           if (val > max2) {
