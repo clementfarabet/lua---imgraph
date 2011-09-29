@@ -591,6 +591,64 @@ int imgraph_(colorize)(lua_State *L) {
   return 0;
 }
 
+#ifndef __setneighbor__
+#define __setneighbor__
+static inline void setneighbor(lua_State *L, long matrix, long id, long idn) {
+  // retrieve or create table at index 'id'
+  lua_rawgeti(L, matrix, id);
+  if (lua_isnil(L, -1)) {
+    lua_pop(L, 1);
+    lua_createtable(L, 32, 32); // pre-alloc for 32 neighbors
+  }
+  // append idn
+  lua_pushboolean(L, 1);
+  lua_rawseti(L, -2, idn);
+  // write table back
+  lua_rawseti(L, matrix, id);
+}
+#endif
+
+int imgraph_(adjacency)(lua_State *L) {
+  // get args
+  THTensor *input = THTensor_(newContiguous)(luaT_checkudata(L, 1, torch_(Tensor_id)));
+  long matrix = 2;
+
+  // dims
+  long height = input->size[0];
+  long width = input->size[1];
+
+  // raw pointers
+  real *input_data = THTensor_(data)(input);
+
+  // generate output
+  int x,y;
+  for (y = 0; y < height; y++) {
+    for (x = 0; x < width; x++) {
+      long id = input_data[width*y+x];
+      if (x < (width-1)) {
+        long id_east = input_data[width*y+x+1];
+        if (id != id_east) {
+          setneighbor(L, matrix, id, id_east);
+          setneighbor(L, matrix, id_east, id);
+        }
+      }
+      if (y < (height-1)) {
+        long id_south = input_data[width*(y+1)+x];
+        if (id != id_south) {
+          setneighbor(L, matrix, id, id_south);
+          setneighbor(L, matrix, id_south, id);
+        }
+      }
+    }
+  }
+
+  // cleanup
+  THTensor_(free)(input);
+
+  // return matrix
+  return 1;
+}
+
 int imgraph_(histpooling)(lua_State *L) {
   // get args
   THTensor *vectors = luaT_checkudata(L, 1, torch_(Tensor_id));
@@ -827,6 +885,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"watershed", imgraph_(watershed)},
   {"histpooling", imgraph_(histpooling)},
   {"colorize", imgraph_(colorize)},
+  {"adjacency", imgraph_(adjacency)},
   {NULL, NULL}
 };
 

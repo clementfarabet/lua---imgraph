@@ -314,6 +314,37 @@ function imgraph.histpooling(...)
 end
 
 ----------------------------------------------------------------------
+-- return the adjacency matrix of a segmentation map
+--
+function imgraph.adjacency(...)
+   -- get args
+   local args = {...}
+   local grayscale = args[1]
+
+   -- usage
+   if not grayscale or grayscale:dim() ~= 2 then
+      print(xlua.usage('imgraph.colorize',
+                       'return the adjacency matrix of a segmentation map',
+                       'graph = imgraph.graph(image.lena())\n'
+                          .. 'segm = imgraph.segmentmst(graph)\n'
+                          .. 'matrix = imgraph.adjacency(segm)',
+                       {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be in [1,NCLASSES]', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.adjacency')
+   end
+
+   -- support LongTensors
+   if torch.typename(grayscale) == 'torch.LongTensor' then
+      grayscale = torch.Tensor(grayscale:size(1), grayscale:size(2)):copy(grayscale)
+   end
+
+   -- fill matrix
+   local matrix = grayscale.imgraph.adjacency(grayscale, {})
+
+   -- return matrix
+   return matrix
+end
+
+----------------------------------------------------------------------
 -- colorize a segmentation map
 --
 function imgraph.colorize(...)
@@ -330,7 +361,7 @@ function imgraph.colorize(...)
                        'graph = imgraph.graph(image.lena())\n'
                           .. 'segm = imgraph.segmentmst(graph)\n'
                           .. 'colored = imgraph.colorize(segm)',
-                       {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be [1,width*height]', req=true},
+                       {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be in [1,width*height]', req=true},
                        {type='torch.Tensor', help='color map (must be Nx3), if not provided, auto generated'}))
       xlua.error('incorrect arguments', 'imgraph.colorize')
    end
