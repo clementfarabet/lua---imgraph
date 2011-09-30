@@ -351,29 +351,17 @@ function imgraph.extractcomponents(...)
    -- get args
    local args = {...}
    local grayscale = args[1]
+   local img = args[2]
 
    -- usage
    if not grayscale or grayscale:dim() ~= 2 then
       print(xlua.usage('imgraph.extractcomponents',
-                       'return a list of structures describing the components of a segmentation\n'
-                          .. 'each component contains the following fields:\n'
-                          .. '  comp[1]  == centroid x \n'
-                          .. '  comp[2]  == centroid y \n'
-                          .. '  comp[3]  == size (nb of pixels) \n'
-                          .. '  comp[4]  == void \n'
-                          .. '  comp[5]  == component ID (grayscale value) \n'
-                          .. '  comp[6]  == bounding box left x \n'
-                          .. '  comp[7]  == bounding box right x \n'
-                          .. '  comp[8]  == bounding box top y \n'
-                          .. '  comp[9]  == bounding box bottom y \n'
-                          .. '  comp[10] == bounding box width \n'
-                          .. '  comp[11] == bounding box height \n'
-                          .. '  comp[12] == bounding box center x \n'
-                          .. '  comp[13] == bounding box center y',
+                       'return a list of structures describing the components of a segmentation',
                        'graph = imgraph.graph(image.lena())\n'
                           .. 'segm = imgraph.segmentmst(graph)\n'
-                          .. 'components,hashed = imgraph.extractcomponents(segm)',
-                       {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be in [1,NCLASSES]', req=true}))
+                          .. 'components = imgraph.extractcomponents(segm)',
+                       {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be in [1,NCLASSES]', req=true},
+                       {type='torch.Tensor', help='auxiliary image: if given, then components are cropped from it (must be KxHxW)'}))
       xlua.error('incorrect arguments', 'imgraph.extractcomponents')
    end
 
@@ -383,10 +371,44 @@ function imgraph.extractcomponents(...)
    end
 
    -- generate lists
-   local icomponents, hcomponents = grayscale.imgraph.extractcomponents(grayscale)
+   local hcomponents = grayscale.imgraph.extractcomponents(grayscale)
+
+   -- reorganize
+   local components = {centroid_x={}, centroid_y={}, size={}, 
+                       id = {}, revid = {},
+                       bbox_width = {}, bbox_height = {},
+                       bbox_top = {}, bbox_bottom = {}, bbox_left = {}, bbox_right = {},
+                       bbox_x = {}, bbox_y = {}, patch = {}}
+   local i = 0
+   for _,comp in pairs(hcomponents) do
+      i = i + 1
+      components.centroid_x[i]  = comp[1]
+      components.centroid_y[i]  = comp[2]
+      components.size[i]        = comp[3]
+      components.id[i]          = comp[5]
+      components.revid[comp[5]] = i
+      components.bbox_left[i]   = comp[6]
+      components.bbox_right[i]  = comp[7]
+      components.bbox_top[i]    = comp[8]
+      components.bbox_bottom[i] = comp[9]
+      components.bbox_width[i]  = comp[10]
+      components.bbox_height[i] = comp[11]
+      components.bbox_x[i]      = comp[12]
+      components.bbox_y[i]      = comp[13]
+   end
+
+   -- auxiliary image given ?
+   if img and img:nDimension() == 3 then
+      local c = components
+      for k = 1,i do
+         local patch = img:narrow(2,c.bbox_top[k],c.bbox_height[k])
+         patch = patch:narrow(3,c.bbox_left[k],c.bbox_width[k])
+         c.patch[k] = patch
+      end
+   end
 
    -- return both lists
-   return icomponents, hcomponents
+   return components
 end
 
 ----------------------------------------------------------------------

@@ -876,8 +876,6 @@ int imgraph_(extractcomponents)(lua_State *L) {
   // (0) create two tables, one indexable, the other one hash-indexable
   lua_newtable(L);
   int table_hash = lua_gettop(L);
-  lua_newtable(L);
-  int table_index = lua_gettop(L);
 
   // (1) extra components' info
   long x,y;
@@ -888,7 +886,7 @@ int imgraph_(extractcomponents)(lua_State *L) {
 
       // get geometry entry
       lua_pushinteger(L,segm_id);
-      lua_rawget(L,table_index);
+      lua_rawget(L,table_hash);
       if (lua_isnil(L,-1)) {
         // g[segm_id] = nil
         lua_pop(L,1);
@@ -910,7 +908,7 @@ int imgraph_(extractcomponents)(lua_State *L) {
         // store entry
         lua_pushinteger(L,segm_id);
         luaT_pushudata(L, entry, torch_(Tensor_id));
-        lua_rawset(L,table_index); // g[segm_id] = entry
+        lua_rawset(L,table_hash); // g[segm_id] = entry
 
       } else {
         // retrieve entry
@@ -933,9 +931,9 @@ int imgraph_(extractcomponents)(lua_State *L) {
   // (2) traverse geometry table to produce final component list
   lua_pushnil(L);
   int cur = 1;
-  while (lua_next(L, table_index) != 0) {
+  while (lua_next(L, table_hash) != 0) {
     // retrieve entry
-    THTensor *entry = luaT_toudata(L, -1, torch_(Tensor_id));
+    THTensor *entry = luaT_toudata(L, -1, torch_(Tensor_id)); lua_pop(L,1);
     real *data = THTensor_(data)(entry);
 
     // normalize cx and cy, by component's size
@@ -948,13 +946,10 @@ int imgraph_(extractcomponents)(lua_State *L) {
     data[10] = data[8] - data[7] + 1;    // box height
     data[11] = (data[6] + data[5]) / 2;  // box center x
     data[12] = (data[8] + data[7]) / 1;  // box center y
-
-    // store entry table into clean table
-    lua_rawseti(L, table_hash, cur++);
   }
 
-  // return 2 tables: icomponents, and hcomponents
-  return 2;
+  // return component table
+  return 1;
 }
 
 static const struct luaL_Reg imgraph_(methods__) [] = {
