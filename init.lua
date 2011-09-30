@@ -396,14 +396,17 @@ function imgraph.extractcomponents(...)
       components.bbox_x[i]      = comp[12]
       components.bbox_y[i]      = comp[13]
    end
+   components.size = function(self) return #self.id end
 
    -- auxiliary image given ?
    if img and img:nDimension() == 3 then
       local c = components
       for k = 1,i do
-         local patch = img:narrow(2,c.bbox_top[k],c.bbox_height[k])
-         patch = patch:narrow(3,c.bbox_left[k],c.bbox_width[k])
-         c.patch[k] = patch
+         local top = c.bbox_top[k]
+         local height = c.bbox_height[k]
+         local left = c.bbox_left[k]
+         local width = c.bbox_width[k]
+         c.patch[k] = img:narrow(2,top,height):narrow(3,left,width)
       end
    end
 
