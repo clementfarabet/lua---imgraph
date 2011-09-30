@@ -728,7 +728,7 @@ int imgraph_(histpooling)(lua_State *L) {
       real local_conf = 1;
       if (minConfidence > 0 ) {
         THTensor_(copy)(helper, select2);
-        real max = -1000000;
+        real max = -THInf;
         real idx = 0;
         for (k=0; k<depth; k++) {
           real val = THTensor_(get1d)(helper, k);
@@ -736,8 +736,8 @@ int imgraph_(histpooling)(lua_State *L) {
             max = val; idx = k;
           }
         }
-        THTensor_(set1d)(helper, idx, -1000000);
-        real max2 = -1000000;
+        THTensor_(set1d)(helper, idx, -THInf);
+        real max2 = -THInf;
         for (k=0; k<depth; k++) {
           real val = THTensor_(get1d)(helper, k);
           if (val > max2) {
@@ -768,7 +768,7 @@ int imgraph_(histpooling)(lua_State *L) {
       int segm_id = THTensor_(get2d)(segm,y,x);
       // get max
       int argmax = 0;
-      real max = -1000000;
+      real max = -THInf;
       // retrieve histogram
       lua_rawgeti(L,table_hists,segm_id);   // c[segm_id]  (= histo)
       histo = luaT_toudata(L, -1, torch_(Tensor_id));
@@ -794,38 +794,27 @@ int imgraph_(histpooling)(lua_State *L) {
         }
         // then create a table to store geometry of component:
         // x,y,size,class,hash
-        lua_pushinteger(L,segm_id);
-        lua_newtable(L);
-        int entry = lua_gettop(L);
-        lua_pushnumber(L, x+1);
-        lua_rawseti(L,entry,1); // entry[1] = x
-        lua_pushnumber(L, y+1);
-        lua_rawseti(L,entry,2); // entry[2] = y
-        lua_pushnumber(L, 1);
-        lua_rawseti(L,entry,3); // entry[3] = size (=1)
-        lua_pushnumber(L, argmax+1);
-        lua_rawseti(L,entry,4); // entry[4] = class (=argmax+1)
-        lua_pushnumber(L, segm_id);
-        lua_rawseti(L,entry,5); // entry[5] = hash
+        THTensor *entry = THTensor_(newWithSize1d)(10);
+        real *data = THTensor_(data)(entry);
+        data[0] = x+1;       // x
+        data[1] = y+1;       // y
+        data[2] = 1;         // size
+        data[3] = argmax+1;  // class
+        data[4] = segm_id;   // hash
+
         // store entry
+        lua_pushinteger(L,segm_id);
+        luaT_pushudata(L, entry, torch_(Tensor_id));
         lua_rawset(L,table_geometry); // g[segm_id] = entry
       } else {
         // retrieve entry
-        int entry = lua_gettop(L);
-        lua_rawgeti(L, entry, 1);
-        long cx = lua_tonumber(L, -1); lua_pop(L, 1);
-        lua_pushnumber(L, cx+x+1);
-        lua_rawseti(L, entry, 1); // entry[1] = cx + x + 1
-        lua_rawgeti(L, entry, 2);
-        long cy = lua_tonumber(L, -1); lua_pop(L, 1);
-        lua_pushnumber(L, cy+y+1);
-        lua_rawseti(L, entry, 2); // entry[2] = cy + y + 1
-        lua_rawgeti(L, entry, 3);
-        long size = lua_tonumber(L, -1) + 1; lua_pop(L, 1);
-        lua_pushnumber(L, size);
-        lua_rawseti(L, entry, 3); // entry[3] = size + 1
-        lua_rawgeti(L, entry, 4);
-        argmax = lua_tonumber(L, -1) - 1; lua_pop(L, 1);
+        THTensor *entry = luaT_toudata(L, -1, torch_(Tensor_id));
+        real *data = THTensor_(data)(entry);
+        data[0] += x+1;       // cx + x + 1
+        data[1] += y+1;       // cy + y + 1
+        data[2] += 1;         // csize + size + 1
+        argmax = data[3]-1;   // retrieve argmax
+
         // and clear entry
         lua_pop(L,1);
       }
@@ -847,18 +836,12 @@ int imgraph_(histpooling)(lua_State *L) {
   while (lua_next(L, table_geometry) != 0) {
     // uses 'key' (at index -2) and 'value' (at index -1)
 
-    // normalize cx and cy, by component's size
-    int entry = lua_gettop(L);
-    lua_rawgeti(L, entry, 3);
-    long size = lua_tonumber(L, -1); lua_pop(L, 1);
-    lua_rawgeti(L, entry, 1);
-    long cx = lua_tonumber(L, -1); lua_pop(L, 1);
-    lua_pushnumber(L, cx/size);
-    lua_rawseti(L, entry, 1); // entry[1] = cx/size
-    lua_rawgeti(L, entry, 2);
-    long cy = lua_tonumber(L, -1); lua_pop(L, 1);
-    lua_pushnumber(L, cy/size);
-    lua_rawseti(L, entry, 2); // entry[2] = cy/size
+    // normalize cx and cy, by component's size */
+    THTensor *entry = luaT_toudata(L, -1, torch_(Tensor_id));
+    real *data = THTensor_(data)(entry);
+    long size = data[2];
+    data[0] /= size;  // cx/size
+    data[1] /= size;  // cy/size
 
     // store entry table into clean table
     lua_rawseti(L, table_clean, cur++);
@@ -877,6 +860,103 @@ int imgraph_(histpooling)(lua_State *L) {
   return 3;
 }
 
+int imgraph_(extractcomponents)(lua_State *L) {
+  // get args
+  THTensor *segm = luaT_checkudata(L, 1, torch_(Tensor_id));
+  real *segm_data = THTensor_(data)(segm);
+
+  // check dims
+  if ((segm->nDimension != 2))
+    THError("<imgraph.extractcomponents> segm must be HxW");
+
+  // get dims
+  int height = segm->size[0];
+  int width = segm->size[1];
+
+  // (0) create two tables, one indexable, the other one hash-indexable
+  lua_newtable(L);
+  int table_hash = lua_gettop(L);
+  lua_newtable(L);
+  int table_index = lua_gettop(L);
+
+  // (1) extra components' info
+  long x,y;
+  for (y=0; y<height; y++) {
+    for (x=0; x<width; x++) {
+      // get component ID
+      int segm_id = segm_data[width*y+x];
+
+      // get geometry entry
+      lua_pushinteger(L,segm_id);
+      lua_rawget(L,table_index);
+      if (lua_isnil(L,-1)) {
+        // g[segm_id] = nil
+        lua_pop(L,1);
+
+        // then create a table to store geometry of component:
+        // x,y,size,class,hash
+        THTensor *entry = THTensor_(newWithSize1d)(13);
+        real *data = THTensor_(data)(entry);
+        data[0] = x+1;       // x
+        data[1] = y+1;       // y
+        data[2] = 1;         // size
+        data[3] = 0;         // compat with 'histpooling' method
+        data[4] = segm_id;   // hash
+        data[5] = x+1;       // left_x
+        data[6] = x+1;       // right_x
+        data[7] = y+1;       // top_y
+        data[8] = y+1;       // bottom_y
+
+        // store entry
+        lua_pushinteger(L,segm_id);
+        luaT_pushudata(L, entry, torch_(Tensor_id));
+        lua_rawset(L,table_index); // g[segm_id] = entry
+
+      } else {
+        // retrieve entry
+        THTensor *entry = luaT_toudata(L, -1, torch_(Tensor_id)); 
+        lua_pop(L,1);
+
+        // update content
+        real *data = THTensor_(data)(entry);
+        data[0] += x+1;       // x += x + 1
+        data[1] += y+1;       // y += y + 1
+        data[2] += 1;         // size += 1
+        data[5] = (x+1)<data[5] ? x+1 : data[5];   // left_x
+        data[6] = (x+1)>data[6] ? x+1 : data[6];   // right_x
+        data[7] = (y+1)<data[7] ? y+1 : data[7];   // top_y
+        data[8] = (y+1)>data[8] ? y+1 : data[8];   // bottom_y
+      }
+    }
+  }
+
+  // (2) traverse geometry table to produce final component list
+  lua_pushnil(L);
+  int cur = 1;
+  while (lua_next(L, table_index) != 0) {
+    // retrieve entry
+    THTensor *entry = luaT_toudata(L, -1, torch_(Tensor_id));
+    real *data = THTensor_(data)(entry);
+
+    // normalize cx and cy, by component's size
+    long size = data[2];
+    data[0] /= size;  // cx/size
+    data[1] /= size;  // cy/size
+
+    // extra info
+    data[9] = data[6] - data[5] + 1;     // box width
+    data[10] = data[8] - data[7] + 1;    // box height
+    data[11] = (data[6] + data[5]) / 2;  // box center x
+    data[12] = (data[8] + data[7]) / 1;  // box center y
+
+    // store entry table into clean table
+    lua_rawseti(L, table_hash, cur++);
+  }
+
+  // return 2 tables: icomponents, and hcomponents
+  return 2;
+}
+
 static const struct luaL_Reg imgraph_(methods__) [] = {
   {"graph", imgraph_(graph)},
   {"gradient", imgraph_(gradient)},
@@ -886,6 +966,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"histpooling", imgraph_(histpooling)},
   {"colorize", imgraph_(colorize)},
   {"adjacency", imgraph_(adjacency)},
+  {"extractcomponents", imgraph_(extractcomponents)},
   {NULL, NULL}
 };
 

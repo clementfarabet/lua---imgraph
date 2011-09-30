@@ -323,7 +323,7 @@ function imgraph.adjacency(...)
 
    -- usage
    if not grayscale or grayscale:dim() ~= 2 then
-      print(xlua.usage('imgraph.colorize',
+      print(xlua.usage('imgraph.adjacency',
                        'return the adjacency matrix of a segmentation map',
                        'graph = imgraph.graph(image.lena())\n'
                           .. 'segm = imgraph.segmentmst(graph)\n'
@@ -342,6 +342,51 @@ function imgraph.adjacency(...)
 
    -- return matrix
    return matrix
+end
+
+----------------------------------------------------------------------
+-- extract information/geometry of a segmentation's components
+--
+function imgraph.extractcomponents(...)
+   -- get args
+   local args = {...}
+   local grayscale = args[1]
+
+   -- usage
+   if not grayscale or grayscale:dim() ~= 2 then
+      print(xlua.usage('imgraph.extractcomponents',
+                       'return a list of structures describing the components of a segmentation\n'
+                          .. 'each component contains the following fields:\n'
+                          .. '  comp[1]  == centroid x \n'
+                          .. '  comp[2]  == centroid y \n'
+                          .. '  comp[3]  == size (nb of pixels) \n'
+                          .. '  comp[4]  == void \n'
+                          .. '  comp[5]  == component ID (grayscale value) \n'
+                          .. '  comp[6]  == bounding box left x \n'
+                          .. '  comp[7]  == bounding box right x \n'
+                          .. '  comp[8]  == bounding box top y \n'
+                          .. '  comp[9]  == bounding box bottom y \n'
+                          .. '  comp[10] == bounding box width \n'
+                          .. '  comp[11] == bounding box height \n'
+                          .. '  comp[12] == bounding box center x \n'
+                          .. '  comp[13] == bounding box center y',
+                       'graph = imgraph.graph(image.lena())\n'
+                          .. 'segm = imgraph.segmentmst(graph)\n'
+                          .. 'components,hashed = imgraph.extractcomponents(segm)',
+                       {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be in [1,NCLASSES]', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.extractcomponents')
+   end
+
+   -- support LongTensors
+   if torch.typename(grayscale) == 'torch.LongTensor' then
+      grayscale = torch.Tensor(grayscale:size(1), grayscale:size(2)):copy(grayscale)
+   end
+
+   -- generate lists
+   local icomponents, hcomponents = grayscale.imgraph.extractcomponents(grayscale)
+
+   -- return both lists
+   return icomponents, hcomponents
 end
 
 ----------------------------------------------------------------------
