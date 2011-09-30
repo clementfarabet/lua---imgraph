@@ -850,7 +850,7 @@ int imgraph_(histpooling)(lua_State *L) {
     // normalize cx and cy, by component's size
     int entry = lua_gettop(L);
     lua_rawgeti(L, entry, 3);
-    long size = lua_tonumber(L, -1) + 1; lua_pop(L, 1);
+    long size = lua_tonumber(L, -1); lua_pop(L, 1);
     lua_rawgeti(L, entry, 1);
     long cx = lua_tonumber(L, -1); lua_pop(L, 1);
     lua_pushnumber(L, cx/size);
