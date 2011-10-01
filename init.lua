@@ -369,16 +369,30 @@ function imgraph.extractcomponents(...)
    local args = {...}
    local grayscale = args[1]
    local img = args[2]
+   local config = args[3] or 'bbox'
 
    -- usage
    if not grayscale or grayscale:dim() ~= 2 then
-      print(xlua.usage('imgraph.extractcomponents',
-                       'return a list of structures describing the components of a segmentation',
-                       'graph = imgraph.graph(image.lena())\n'
-                          .. 'segm = imgraph.segmentmst(graph)\n'
-                          .. 'components = imgraph.extractcomponents(segm)',
-                       {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be in [1,NCLASSES]', req=true},
-                       {type='torch.Tensor', help='auxiliary image: if given, then components are cropped from it (must be KxHxW)'}))
+      print(
+         xlua.usage(
+            'imgraph.extractcomponents',
+            'return a list of structures describing the components of a segmentation. \n'
+               .. 'if a KxHxW image is given, then patches can be extracted from it, \n'
+               .. 'and appended to the list returned. \n'
+               .. 'the optional config string specifies how these patches should be \n'
+               .. 'returned (bbox: raw bounding boxes, mask: binary segmentation mask, \n'
+               .. 'masked: bbox masked by segmentation mask)',
+            'graph = imgraph.graph(image.lena())\n'
+               .. 'segm = imgraph.segmentmst(graph)\n'
+               .. 'components = imgraph.extractcomponents(segm)',
+            {type='torch.Tensor', 
+             help='input segmentation map (must be HxW), and each element must be in [1,NCLASSES]', req=true},
+            {type='torch.Tensor', 
+             help='auxiliary image: if given, then components are cropped from it (must be KxHxW)'},
+            {type='string', 
+             help='configuration, one of: bbox | masked', default='bbox'}
+         )
+      )
       xlua.error('incorrect arguments', 'imgraph.extractcomponents')
    end
 
@@ -395,7 +409,7 @@ function imgraph.extractcomponents(...)
                        id = {}, revid = {},
                        bbox_width = {}, bbox_height = {},
                        bbox_top = {}, bbox_bottom = {}, bbox_left = {}, bbox_right = {},
-                       bbox_x = {}, bbox_y = {}, patch = {}}
+                       bbox_x = {}, bbox_y = {}, patch = {}, mask = {}}
    local i = 0
    for _,comp in pairs(hcomponents) do
       i = i + 1
@@ -418,12 +432,30 @@ function imgraph.extractcomponents(...)
    -- auxiliary image given ?
    if img and img:nDimension() == 3 then
       local c = components
+      local maskit = false
+      if config == 'masked' then maskit = true end
       for k = 1,i do
+         -- get bounding box corners:
          local top = c.bbox_top[k]
          local height = c.bbox_height[k]
          local left = c.bbox_left[k]
          local width = c.bbox_width[k]
-         c.patch[k] = img:narrow(2,top,height):narrow(3,left,width)
+
+         -- extract patch from image, and mask from segm map:
+         c.patch[k] = img:narrow(2,top,height):narrow(3,left,width):clone()
+         c.mask[k] = grayscale:narrow(1,top,height):narrow(2,left,width):clone()
+
+         -- transform the segm component into a binary mask:
+         local id = components.id[k]
+         local mask = function(x) if x == id then return 1 else return 0 end end
+         c.mask[k]:apply(mask)
+
+         -- mask box
+         if maskit then
+            for i = 1,c.patch[k]:size(1) do
+               c.patch[k][i]:cmul(c.mask[k])
+            end
+         end
       end
    end
 
