@@ -320,15 +320,19 @@ function imgraph.adjacency(...)
    -- get args
    local args = {...}
    local grayscale = args[1]
+   local components = args[2]
 
    -- usage
    if not grayscale or grayscale:dim() ~= 2 then
       print(xlua.usage('imgraph.adjacency',
-                       'return the adjacency matrix of a segmentation map',
+                       'return the adjacency matrix of a segmentation map.'
+                          .. 'a component list can be given, in which case the list'
+                          .. 'is updated to directly embed the neighboring relationships',
                        'graph = imgraph.graph(image.lena())\n'
                           .. 'segm = imgraph.segmentmst(graph)\n'
                           .. 'matrix = imgraph.adjacency(segm)',
-                       {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be in [1,NCLASSES]', req=true}))
+                       {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be in [1,NCLASSES]', req=true},
+                       {type='table', help='component list, as returned by imgraph.extractcomponents()'}))
       xlua.error('incorrect arguments', 'imgraph.adjacency')
    end
 
@@ -338,10 +342,23 @@ function imgraph.adjacency(...)
    end
 
    -- fill matrix
-   local matrix = grayscale.imgraph.adjacency(grayscale, {})
+   local adjacency = grayscale.imgraph.adjacency(grayscale, {})
+
+   -- update component list, if given
+   if components then
+      components.neighbors = {}
+      for i = 1,components:size() do
+         local neighbors = adjacency[components.id[i]]
+         local ntable = {}
+         for id in pairs(neighbors) do
+            table.insert(ntable, components.revid[id])
+         end
+         components.neighbors[i] = ntable
+      end
+   end
 
    -- return matrix
-   return matrix
+   return adjacency
 end
 
 ----------------------------------------------------------------------
