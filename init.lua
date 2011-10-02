@@ -474,7 +474,7 @@ function imgraph.colorize(...)
    local colorized = torch.Tensor()
 
    -- usage
-   if not grayscale or grayscale:dim() ~= 2 then
+   if not grayscale or not (grayscale:dim() == 2 or (grayscale:dim() == 3 and grayscale:size(1) == 1)) then
       print(xlua.usage('imgraph.colorize',
                        'colorize a segmentation map',
                        'graph = imgraph.graph(image.lena())\n'
@@ -483,6 +483,11 @@ function imgraph.colorize(...)
                        {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be in [1,width*height]', req=true},
                        {type='torch.Tensor', help='color map (must be Nx3), if not provided, auto generated'}))
       xlua.error('incorrect arguments', 'imgraph.colorize')
+   end
+
+   -- accept 3D grayscale
+   if grayscale:dim() == 3 and grayscale:size(1) == 1 then
+      grayscale = torch.Tensor(grayscale):resize(grayscale:size(2), grayscale:size(3))
    end
 
    -- support LongTensors
@@ -505,24 +510,29 @@ function imgraph.colormap(colors, verbose)
    if not colors then
       print(xlua.usage('imgraph.colormap',
                        'create a color map, from a table {id1={r,g,b}, id2={r,g,b}, ...}', nil,
-                       {type='table', help='a table of RGB triplets', req=true},
+                       {type='table', help='a table of RGB triplets (or more channels)', req=true},
                        {type='boolean', help='verbose', default=false}))
       xlua.error('incorrect arguments', 'imgraph.colormap')
    end
 
    -- found max in table
-   local max = -1/0
+   local max = -math.huge
    for k,entry in pairs(colors) do
       if k > max then max = k end
    end
 
+   -- nb of channels
+   local channels = #colors[max]
+
    -- make map
    local nentries = max+1
    if verbose then print('<imgraph.colormap> creating map with ' .. nentries .. ' entries') end
-   local colormap = torch.Tensor(nentries, 3):fill(-1)
+   local colormap = torch.Tensor(nentries, channels):zero()
    for k,color in pairs(colors) do
       local c = colormap[k+1]
-      c[1] = color[1]; c[2] = color[2]; c[3] = color[3]
+      for k = 1,channels do
+         c[k] = color[k]
+      end
    end
 
    -- return color map

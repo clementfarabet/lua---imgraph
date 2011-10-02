@@ -566,24 +566,25 @@ int imgraph_(colorize)(lua_State *L) {
     THTensor_(fill)(colormap, -1);
   }
 
+  // colormap channels
+  int channels = colormap->size[1];
+
   // generate output
-  THTensor_(resize3d)(output, 3, height, width);
-  int x,y;
+  THTensor_(resize3d)(output, channels, height, width);
+  int x,y,k;
   for (y = 0; y < height; y++) {
     for (x = 0; x < width; x++) {
       int id = THTensor_(get2d)(input, y, x);
       real check = THTensor_(get2d)(colormap, id, 0);
       if (check == -1) {
-        THTensor_(set2d)(colormap, id, 0, rand0to1());
-        THTensor_(set2d)(colormap, id, 1, rand0to1());
-        THTensor_(set2d)(colormap, id, 2, rand0to1());
+        for (k = 0; k < channels; k++) {
+          THTensor_(set2d)(colormap, id, k, rand0to1());
+        }
       }
-      real r = THTensor_(get2d)(colormap, id, 0);
-      real g = THTensor_(get2d)(colormap, id, 1);
-      real b = THTensor_(get2d)(colormap, id, 2);
-      THTensor_(set3d)(output, 0, y, x, r);
-      THTensor_(set3d)(output, 1, y, x, g);
-      THTensor_(set3d)(output, 2, y, x, b);
+      for (k = 0; k < channels; k++) {
+        real color = THTensor_(get2d)(colormap, id, k);
+        THTensor_(set3d)(output, k, y, x, color);
+      }
     }
   }
 
