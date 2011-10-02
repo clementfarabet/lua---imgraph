@@ -505,12 +505,13 @@ end
 ----------------------------------------------------------------------
 -- create a color map from a table
 --
-function imgraph.colormap(colors, verbose)
+function imgraph.colormap(colors, default, verbose)
    -- usage
    if not colors then
       print(xlua.usage('imgraph.colormap',
                        'create a color map, from a table {id1={r,g,b}, id2={r,g,b}, ...}', nil,
                        {type='table', help='a table of RGB triplets (or more channels)', req=true},
+                       {type='number', help='default value or triplet, for unspecified entries', default=0},
                        {type='boolean', help='verbose', default=false}))
       xlua.error('incorrect arguments', 'imgraph.colormap')
    end
@@ -524,10 +525,13 @@ function imgraph.colormap(colors, verbose)
    -- nb of channels
    local channels = #colors[max]
 
+   -- default val
+   default = default or 0
+
    -- make map
    local nentries = max+1
    if verbose then print('<imgraph.colormap> creating map with ' .. nentries .. ' entries') end
-   local colormap = torch.Tensor(nentries, channels):zero()
+   local colormap = torch.Tensor(nentries, channels):fill(default)
    for k,color in pairs(colors) do
       local c = colormap[k+1]
       for k = 1,channels do
