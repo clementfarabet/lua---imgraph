@@ -17,9 +17,9 @@
 #endif epsilon
 #define epsilon 1e-8
 
-static inline real imgraph_(ndiff)(THTensor *img,
+static inline real imgraph_(ndiff)(real *img,
+                                   int nfeats, int height, int width,
                                    int x1, int y1, int x2, int y2, char dt) {
-  int nfeats = img->size[0];
   real dist  = 0;
   real dot   = 0;
   real normx = 0;
@@ -28,11 +28,11 @@ static inline real imgraph_(ndiff)(THTensor *img,
   int i;
   for (i=0; i<nfeats; i++) {
     if (dt == 'e') {
-      dist  += square(THTensor_(get3d)(img, i, y1, x1)-THTensor_(get3d)(img, i, y2, x2));
+      dist  += square( img[(i*height+y1)*width+x1] - img[(i*height+y2)*width+x2] );
     } else if (dt == 'a') {
-      dot   += THTensor_(get3d)(img, i, y1, x1) * THTensor_(get3d)(img, i, y2, x2);
-      normx += square(THTensor_(get3d)(img, i, y1, x1));
-      normy += square(THTensor_(get3d)(img, i, y2, x2));
+      dot   += img[(i*height+y1)*width+x1] * img[(i*height+y2)*width+x2];
+      normx += square(img[(i*height+y1)*width+x1]);
+      normy += square(img[(i*height+y2)*width+x2]);
     }
   }
   if (dt == 'e') res = sqrt(dist);
@@ -48,28 +48,31 @@ static int imgraph_(graph)(lua_State *L) {
   const char *dist = lua_tostring(L, 4);
   char dt = dist[0];
 
+  // make sure input is contiguous
+  src = THTensor_(newContiguous)(src);
+
   // compute all edge weights
   if (connex == 4) {
 
     // get input dims
-    THTensor *src3d = NULL;
     long channels, height, width;
     if (src->nDimension == 3) {
       channels = src->size[0];
       height = src->size[1];
       width = src->size[2];
-      src3d = src;
     } else if (src->nDimension == 2) {
       channels = 1;
       height = src->size[0];
       width = src->size[1];
-      src3d = THTensor_(newWithTensor)(src);
-      THTensor_(resize3d)(src3d, channels, height, width);
     }
 
     // resize output, and fill it with -1 (which means non-valid edge)
     THTensor_(resize3d)(dst, 2, height, width);
     THTensor_(fill)(dst, -1);
+
+    // get raw pointers
+    real *src_data = THTensor_(data)(src);
+    real *dst_data = THTensor_(data)(dst);
 
     // build graph with 4-connexity
     long num = 0;
@@ -77,42 +80,39 @@ static int imgraph_(graph)(lua_State *L) {
     for (y = 0; y < height; y++) {
       for (x = 0; x < width; x++) {
         if (x < width-1) {
-          THTensor_(set3d)(dst, 0, y, x, imgraph_(ndiff)(src3d, x, y, x+1, y, dt));
+          dst_data[(0*height+y)*width+x] = imgraph_(ndiff)(src_data, channels, height, width,
+                                                           x, y, x+1, y, dt);
           num++;
         }
         if (y < height-1) {
-          THTensor_(set3d)(dst, 1, y, x, imgraph_(ndiff)(src3d, x, y, x, y+1, dt));
+          dst_data[(1*height+y)*width+x] = imgraph_(ndiff)(src_data, channels, height, width,
+                                                           x, y, x, y+1, dt);
           num++;
         }
       }
     }
 
-    // cleanup
-    if (src->nDimension == 2) {
-      THTensor_(free)(src3d);
-    }
-
   } else if (connex == 8) {
 
     // get input dims
-    THTensor *src3d = NULL;
     long channels, height, width;
     if (src->nDimension == 3) {
       channels = src->size[0];
       height = src->size[1];
       width = src->size[2];
-      src3d = src;
     } else if (src->nDimension == 2) {
       channels = 1;
       height = src->size[0];
       width = src->size[1];
-      src3d = THTensor_(newWithTensor)(src);
-      THTensor_(resize3d)(src3d, channels, height, width);
     }
 
     // resize output, and fill it with -1 (which means non-valid edge)
     THTensor_(resize3d)(dst, 4, height, width);
     THTensor_(fill)(dst, -1);
+
+    // get raw pointers
+    real *src_data = THTensor_(data)(src);
+    real *dst_data = THTensor_(data)(dst);
 
     // build graph with 8-connexity
     long num = 0;
@@ -120,30 +120,32 @@ static int imgraph_(graph)(lua_State *L) {
     for (y = 0; y < height; y++) {
       for (x = 0; x < width; x++) {
         if (x < width-1) {
-          THTensor_(set3d)(dst, 0, y, x, imgraph_(ndiff)(src3d, x, y, x+1, y, dt));
+          dst_data[(0*height+y)*width+x] = imgraph_(ndiff)(src_data, channels, height, width,
+                                                           x, y, x+1, y, dt);
           num++;
         }
         if (y < height-1) {
-          THTensor_(set3d)(dst, 1, y, x, imgraph_(ndiff)(src3d, x, y, x, y+1, dt));
+          dst_data[(1*height+y)*width+x] = imgraph_(ndiff)(src_data, channels, height, width,
+                                                           x, y, x, y+1, dt);
           num++;
         }
         if ((x < width-1) && (y < height-1)) {
-          THTensor_(set3d)(dst, 2, y, x, imgraph_(ndiff)(src3d, x, y, x+1, y+1, dt));
+          dst_data[(2*height+y)*width+x] = imgraph_(ndiff)(src_data, channels, height, width,
+                                                           x, y, x+1, y+1, dt);
           num++;
         }
         if ((x < width-1) && (y > 0)) {
-          THTensor_(set3d)(dst, 3, y, x, imgraph_(ndiff)(src3d, x, y, x+1, y-1, dt));
+          dst_data[(3*height+y)*width+x] = imgraph_(ndiff)(src_data, channels, height, width,
+                                                           x, y, x+1, y-1, dt);
           num++;
         }
       }
     }
 
-    // cleanup
-    if (src->nDimension == 2) {
-      THTensor_(free)(src3d);
-    }
-
   }
+
+  // cleanup
+  THTensor_(free)(src);
 
   return 0;
 }
