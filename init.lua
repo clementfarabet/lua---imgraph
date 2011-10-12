@@ -405,7 +405,7 @@ function imgraph.extractcomponents(...)
    local hcomponents = grayscale.imgraph.extractcomponents(grayscale)
 
    -- reorganize
-   local components = {centroid_x={}, centroid_y={}, size={}, 
+   local components = {centroid_x={}, centroid_y={}, surface={}, 
                        id = {}, revid = {},
                        bbox_width = {}, bbox_height = {},
                        bbox_top = {}, bbox_bottom = {}, bbox_left = {}, bbox_right = {},
@@ -415,7 +415,7 @@ function imgraph.extractcomponents(...)
       i = i + 1
       components.centroid_x[i]  = comp[1]
       components.centroid_y[i]  = comp[2]
-      components.size[i]        = comp[3]
+      components.surface[i]     = comp[3]
       components.id[i]          = comp[5]
       components.revid[comp[5]] = i
       components.bbox_left[i]   = comp[6]
