@@ -672,13 +672,18 @@ int imgraph_(histpooling)(lua_State *L) {
   real minConfidence = lua_tonumber(L, 5);
 
   // check dims
-  if ((vectors->nDimension != 3) || (segm->nDimension != 2))
+  if ((vectors->nDimension != 3) || (segm->nDimension != 2) 
+      || (segm->size[0] != vectors->size[1]) || (segm->size[1] != vectors->size[2]))
     THError("<imgraph.histpooling> vectors must be KxHxW and segm HxW");
 
   // get dims
   int depth = vectors->size[0];
   int height = vectors->size[1];
   int width = vectors->size[2];
+
+  // get raw pointers to tensors
+  segm = THTensor_(newContiguous)(segm);
+  real *segm_data = THTensor_(data)(segm);
 
   // (0) create all necessary tables
   // final cluster list
@@ -710,7 +715,7 @@ int imgraph_(histpooling)(lua_State *L) {
   for (y=0; y<height; y++) {
     for (x=0; x<width; x++) {
       // compute hash codes for vectors and segm
-      int segm_id = THTensor_(get2d)(segm,y,x);
+      int segm_id = segm_data[y*width+x];
       // is this hash already registered ?
       lua_rawgeti(L,table_hists,segm_id);   // c[segm_id]
       if (lua_isnil(L,-1)) {    // c[segm_id] == nil ?
@@ -779,7 +784,7 @@ int imgraph_(histpooling)(lua_State *L) {
   for (y=0; y<height; y++) {
     for (x=0; x<width; x++) {
       // compute hash codes for vectors and segm
-      int segm_id = THTensor_(get2d)(segm,y,x);
+      int segm_id = segm_data[y*width+x];
       // get max
       int argmax = 0;
       real max = -THInf;
@@ -868,6 +873,7 @@ int imgraph_(histpooling)(lua_State *L) {
   THTensor_(free)(select1);
   THTensor_(free)(select2);
   THTensor_(free)(helper);
+  THTensor_(free)(segm);
 
   // return two tables: indexed and hashed, plus the confidence map
   luaT_pushudata(L, confidence, torch_(Tensor_id));
