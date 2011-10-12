@@ -280,6 +280,10 @@ static int imgraph_(segmentmst)(lua_State *L) {
   long height = src->size[1];
   long width = src->size[2];
 
+  // make sure input is contiguous
+  src = THTensor_(newContiguous)(src);
+  real *src_data = THTensor_(data)(src);
+
   // create edge list from graph (src)
   Edge *edges = NULL; int nedges = 0;
   edges = calloc(width*height*nmaps, sizeof(Edge));
@@ -289,26 +293,26 @@ static int imgraph_(segmentmst)(lua_State *L) {
       if (x < width-1) {
         edges[nedges].a = y*width+x;
         edges[nedges].b = y*width+(x+1);
-        edges[nedges].w = THTensor_(get3d)(src, 0, y, x);
+        edges[nedges].w = src_data[(0*height+y)*width+x];
         nedges++;
       }
       if (y < height-1) {
         edges[nedges].a = y*width+x;
         edges[nedges].b = (y+1)*width+x;
-        edges[nedges].w = THTensor_(get3d)(src, 1, y, x);
+        edges[nedges].w = src_data[(1*height+y)*width+x];
         nedges++;
       }
       if (nmaps >= 4) {
         if ((x < width-1) && (y < height-1)) {
           edges[nedges].a = y * width + x;
           edges[nedges].b = (y+1) * width + (x+1);
-          edges[nedges].w = THTensor_(get3d)(src, 2, y, x);
+          edges[nedges].w = src_data[(2*height+y)*width+x];
           nedges++;
         }
         if ((x < width-1) && (y > 0)) {
           edges[nedges].a = y * width + x;
           edges[nedges].b = (y-1) * width + (x+1);
-          edges[nedges].w = THTensor_(get3d)(src, 3, y, x);
+          edges[nedges].w = src_data[(3*height+y)*width+x];
           nedges++;
         }
       }
@@ -373,10 +377,10 @@ static int imgraph_(segmentmst)(lua_State *L) {
     }
   } else {
     THTensor_(resize2d)(dst, height, width);
+    real *dst_data = THTensor_(data)(dst);
     for (y = 0; y < height; y++) {
       for (x = 0; x < width; x++) {
-        int comp = set_find(set, y * width + x);
-        THTensor_(set2d)(dst, y, x, comp);
+        dst_data[y*width+x] = set_find(set, y * width + x);
       }
     }
   }
@@ -388,6 +392,7 @@ static int imgraph_(segmentmst)(lua_State *L) {
   set_free(set);
   free(edges);
   free(threshold);
+  THTensor_(free)(src);
 
   // return
   return 1;
