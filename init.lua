@@ -97,6 +97,7 @@ function imgraph.connectcomponents(...)
    --get args
    local args = {...}
    local dest, graph, threshold, colorize
+   local arg2 = torch.typename(args[2])
    if arg2 and arg2:find('Tensor') then
       dest = args[1]
       graph = args[2]
@@ -178,6 +179,7 @@ function imgraph.watershed(...)
    --get args
    local args = {...}
    local dest, gradient, minHeight, connex, colorize
+   local arg2 = torch.typename(args[2])
    if arg2 and arg2:find('Tensor') then
       dest = args[1]
       gradient = args[2]
@@ -217,6 +219,97 @@ function imgraph.watershed(...)
 end
 
 ----------------------------------------------------------------------
+-- compute the saliency (hierarchical watershed) of a graph
+--
+function imgraph.saliency(...)
+   --get args
+   local args = {...}
+   local dest, graph, mode
+   local arg2 = torch.typename(args[2])
+   if arg2 and arg2:find('Tensor') then
+      dest = args[1]
+      graph = args[2]
+      mode = args[3]
+   else
+      dest = torch.Tensor()
+      graph = args[1]
+      mode = args[2]
+   end
+
+   -- defaults
+   if mode == 'saliency' then mode = 0
+   elseif mode == 'dynamic' then mode = 1
+   elseif mode == 'volume' then mode = 2
+   elseif mode == 'alphaomega' then mode = 3
+   else mode = 0 end
+
+   -- usage
+   if not graph or (graph:nDimension() ~= 3) then
+      print(xlua.usage('imgraph.saliency',
+                       'compute the saliency (hierarchical watershed) of a graph', nil,
+                       {type='torch.Tensor', help='input graph', req=true},
+                       {type='mode', help='mode: surface | dynamic | volume | alphaomega', 
+                        default='surface'},
+                       "",
+                       {type='torch.Tensor', help='destination tensor', req=true},
+                       {type='torch.Tensor', help='input graph', req=true},
+                       {type='mode', help='mode: surface | dynamic | volume | alphaomega', 
+                        default='surface'}))
+      xlua.error('incorrect arguments', 'imgraph.saliency')
+   end
+
+   -- compute saliency
+   local graphflat = graph:new():resize(graph:size(1)*graph:size(2),graph:size(3))
+   graph.imgraph.saliency(dest, graphflat, mode)
+   dest:resizeAs(graph)
+
+   -- return image
+   return dest
+end
+
+----------------------------------------------------------------------
+-- render a graph into an image
+--
+function imgraph.render(...)
+   --get args
+   local args = {...}
+   local dest, graph, method
+   local arg2 = torch.typename(args[2])
+   if arg2 and arg2:find('Tensor') then
+      dest = args[1]
+      graph = args[2]
+      method = args[3]
+   else
+      dest = torch.Tensor()
+      graph = args[1]
+      method = args[2]
+   end
+
+   -- defaults
+   method = method or 'khalimsky'
+
+   -- usage
+   if not graph or (graph:nDimension() ~= 3) then
+      print(xlua.usage('imgraph.render',
+                       'render a graph into a 2D image', nil,
+                       {type='torch.Tensor', help='input graph', req=true},
+                       {type='method', help='rendering method: khalimsky', default='khalimsky'},
+                       "",
+                       {type='torch.Tensor', help='destination tensor', req=true},
+                       {type='torch.Tensor', help='input graph', req=true},
+                       {type='method', help='rendering method: khalimsky', default='khalimsky'}))
+      xlua.error('incorrect arguments', 'imgraph.render')
+   end
+
+   -- render graph
+   local graphflat = graph:new():resize(graph:size(1)*graph:size(2),graph:size(3))
+   graph.imgraph.render(dest, graphflat, mode)
+
+   -- return image
+   return dest
+end
+
+----------------------------------------------------------------------
 -- segment a graph, by computing its min-spanning tree and
 -- merging vertices based on a dynamic threshold
 --
@@ -224,6 +317,7 @@ function imgraph.segmentmst(...)
    --get args
    local args = {...}
    local dest, graph, thres, minsize, colorize
+   local arg2 = torch.typename(args[2])
    if arg2 and arg2:find('Tensor') then
       dest = args[1]
       graph = args[2]
@@ -549,7 +643,7 @@ end
 imgraph._example = [[
       -- (1) load an image & compute its graph
       local lena = image.lena()
-      local lenag = image.convolve(lena, image.gaussian(3), 'full')
+      local lenag = image.convolve(lena, image.gaussian(3), 'same')
       local graph = imgraph.graph(lenag)
 
       -- (2) compute its connected components, and mst segmentation
@@ -567,14 +661,19 @@ imgraph._example = [[
       local watershedgraph = imgraph.graph(watershed, 8)
       local watershedcc = imgraph.connectcomponents(watershedgraph, 0.5, true)
 
-      -- (5) display results
+      -- (5) compute the saliency of a graph
+      local graph = imgraph.graph(lena)
+      local saliency = imgraph.saliency(graph,'surface')
+      local graphs = imgraph.render(saliency)
+
+      -- (7) display results
       image.display{image=image.lena(), legend='input image'}
-      image.display{image=graph, legend='left: horizontal edges, right: vertical edges'}
       image.display{image=cc, legend='thresholded graph'}
       image.display{image=watershed, legend='watershed on the graph'}
       image.display{image=watershedcc, legend='components of watershed'}
       image.display{image=mstsegmcolor, legend='segmented graph, using min-spanning tree'}
       image.display{image=pool, legend='original imaged hist-pooled by segmentation'}
+      image.display{image=graphs, legend='graph saliency'}
 ]]
 function imgraph.testme()
    local example = loadstring(imgraph._example)

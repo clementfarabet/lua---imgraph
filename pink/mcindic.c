@@ -32,7 +32,6 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL license and that you accept its terms.
 */
-/* $Id: mcindic.c,v 1.4 2006/02/28 07:49:16 michel Exp $ */
 /* gestion d'indicateurs binaires (jusqu'a 8) */
 /* les indicateurs sont numerotes de 0 a 7 */
 /* M. Couprie juillet 1996 */
@@ -46,18 +45,17 @@ knowledge of the CeCILL license and that you accept its terms.
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 #include <sys/types.h>
 #include <stdlib.h>
-#include <string.h>
 #include <mcindic.h>
 
 Indicstype *Indics = NULL;       /* en global pour etre efficace */
 
 /* ==================================== */
-void IndicsInit(int32_t Size)
+void IndicsInit(index_t Size)
 /* ==================================== */
 {
-  int32_t i;
   Indics = (Indicstype *)calloc(Size, sizeof(Indicstype));
   if (Indics == NULL)
   {
@@ -67,10 +65,9 @@ void IndicsInit(int32_t Size)
 }
 
 /* ==================================== */
-void Indics1bitInit(int32_t Size)
+void Indics1bitInit(index_t Size)
 /* ==================================== */
 {
-  int32_t i;
   Indics = (Indicstype *)calloc((Size-1)/8 + 1, sizeof(Indicstype));
   if (Indics == NULL)
   {
@@ -80,7 +77,7 @@ void Indics1bitInit(int32_t Size)
 }
 
 /* ==================================== */
-void Indics1bitReInit(int32_t Size)
+void Indics1bitReInit(index_t Size)
 /* ==================================== */
 {
   memset(Indics, 0, ((Size-1)/8 + 1) * sizeof(Indicstype));

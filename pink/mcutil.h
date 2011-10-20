@@ -32,21 +32,26 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL license and that you accept its terms.
 */
-/* $Id: mcutil.h,v 1.7 2006/02/28 07:49:12 michel Exp $ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define max(a,b) error_max_function_is_ambigous_use_mcmax_instead
+#define min(a,b) error_min_function_is_ambigous_use_mcmin_instead
+#define abs(b) error_abs_function_is_ambigous_use_mcabs_instead
+#define sign(b) error_sign_function_is_ambigous_use_mcsign_instead
+#define odd(b) error_odd_function_is_ambigous_use_mcodd_instead
+#define even(b) error_even_function_is_ambigous_use_mceven_instead
+#define sqr(b) error_sqr_function_is_ambigous_use_mcsqr_instead
+  
 #define mcabs(X) ((X)>=0?(X):-(X))
-#define max(X,Y) ((X)>=(Y)?(X):(Y))
-#define min(X,Y) ((X)<=(Y)?(X):(Y))
-#define odd(X) ((X)&1)
-#define even(X) (((X)&1)==0)
+#define mcmax(X,Y) ((X)>=(Y)?(X):(Y))
+#define mcmin(X,Y) ((X)<=(Y)?(X):(Y))
+#define mcodd(X) ((X)&1)
+#define mceven(X) (((X)&1)==0)
 #define arrondi(z) (((z)-(double)((int32_t)(z)))<=0.5?((int32_t)(z)):((int32_t)(z+1)))
 #define signe(z) (((z)>0.0)?1.0:-1.0)
-#define sqr(x) ((x)*(x))
-
-/* retourne VRAI si Z est plus proche de A que de B */
-#define PlusProche(Z,A,B) (abs((Z)-(A))<abs((Z)-(B)))
-
-#define TestNonNul(P) {if((P)==NULL){\
-perror("Erreur fatale : memoire insuffisante (malloc)\n");exit(0);}}
+#define mcsqr(x) ((x)*(x))
 
 #ifndef M_PI
 # define M_E		2.7182818284590452354	/* e */
@@ -62,4 +67,7 @@ perror("Erreur fatale : memoire insuffisante (malloc)\n");exit(0);}}
 # define M_2_SQRTPI	1.12837916709551257390	/* 2/sqrt(pi) */
 # define M_SQRT2	1.41421356237309504880	/* sqrt(2) */
 # define M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
+#endif
+#ifdef __cplusplus
+}
 #endif

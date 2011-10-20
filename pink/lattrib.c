@@ -571,7 +571,7 @@ static int32_t heightrec(CompactTree * cpct, uint32_t som, int32_t *na1)
     j = INDEXFILS(som, i);
     j = cpct->fils[j];
     h = heightrec(cpct, j, na1);
-    na1[som] = max(na1[som], h);
+    na1[som] = mcmax(na1[som], h);
   }
   return na1[som];
 } /* heightrec() */

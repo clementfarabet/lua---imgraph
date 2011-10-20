@@ -35,10 +35,34 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern int32_t lwshedtopo_lwshedtopo(struct xvimage *image, int32_t connex);
-extern int32_t lreconsdilat(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lreconseros(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lwshedtopobin(struct xvimage *image, struct xvimage *marqueur, int32_t connex);
+
+#ifndef _MCIMAGE_H
+#include <mcimage.h>
+#endif
+
+typedef struct {
+  index_t Max;          /* taille max de la fifo */
+  index_t In;           /* index ou ranger le prochain arrivant */
+  index_t Out;          /* index d'ou retirer le prochain sortant */
+  index_t Pts[1];
+} Fifo;
+
+/* ============== */
+/* prototypes     */
+/* ============== */
+
+extern Fifo * CreeFifoVide(index_t taillemax);
+extern void FifoFlush(Fifo * L);
+extern int32_t FifoVide(Fifo * L);
+extern index_t FifoPop(Fifo * L);
+extern void FifoPush(Fifo * L, index_t V);
+extern void FifoPushFirst(Fifo * L, index_t V);
+extern index_t FifoTaille(Fifo * L);
+extern void FifoPrint(Fifo * L);
+extern void FifoTermine(Fifo * L);
+
+
+
 #ifdef __cplusplus
 }
 #endif

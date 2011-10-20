@@ -44,76 +44,64 @@ extern "C" {
   Il y a donc moins de N sommets (N = nombre de pixels) et de N-1 arcs.
 
   Une composante (sommet) est representee par une structure ctreenode.
+  +
+  arbre des composantes d'un graphe d'adjacence valué
+  +
+  arbre de fusion d'un graphe d'adjacence valué 
+  +
+  un arbre de saillance
 */
 /* ============================================================================== */
 
-#define ATTRIB_AREA
-#define ATTRIB_VOL
-
-typedef struct soncell   // cell structure for the lists of sons
+typedef struct JCsoncell
 {
-  int32_t son;               // index of the son in table tabnodes [struct ctree]
-  struct soncell *next;  // points to next cell
-} soncell;
+  int32_t son;
+  struct JCsoncell *next;
+} JCsoncell;
 
-typedef struct           // structure for one node in the component tree
+typedef struct
 {
-  uint8_t data;    // node's level
-  int32_t father;            // index of the father node. value -1 indicates the root
-  int32_t nbsons;            // number or sons. value -1 indicates a deleted node
-#ifdef ATTRIB_AREA
-  int32_t area;              // number of pixels in the component
-#endif
-#ifdef ATTRIB_VOL
-  int32_t vol;               // volume of the component
-#endif
-  soncell *sonlist;      // list of sons (points to the first son cell)
-  soncell *lastson;      // direct pointer to the last son cell
-} ctreenode;
+  uint8_t data;             // node's level
+  int32_t father;            // value -1 indicates the root
+  int32_t nbsons;            // value -1 indicates a deleted node
+  int32_t max, min;
+  JCsoncell *sonlist;
+  JCsoncell *lastson;
+} JCctreenode;
 
-typedef struct           // structure for a component tree
+typedef struct
 {
-  int32_t nbnodes;           // total number of nodes
-  int32_t nbleafs;           // total number of leafs
-  int32_t nbsoncells;        // number of avaliable son cells
-  int32_t root;              // index of the root node in table tabnodes
-  ctreenode * tabnodes;  // table which contains all the nodes
-  soncell * tabsoncells; // table which contains all the son cells
-  uint8_t *flags;  // each flag is associated to the node with the same index
-} ctree;
+  int32_t nbnodes;
+  int32_t nbsoncells;
+  int32_t root;
+  JCctreenode * tabnodes; 
+  JCsoncell * tabsoncells;
+  uint8_t *flags;
+} JCctree;
+
+typedef struct
+{
+  JCctree *CT;
+  int32_t *mergeEdge;
+} mtree;
 
 /* ==================================== */
 /* PROTOTYPES */
 /* ==================================== */
-#define IMGCHAR
-//#define IMGLONG
+extern JCctree * componentTreeAlloc(int32_t N);
+extern void componentTreeFree(JCctree * CT);
+extern int32_t ComponentTreeGA( uint8_t *F, int32_t rs, int32_t N, JCctree **CompTree, int32_t **CompMap);
+extern int32_t ** jccomptree_LCApreprocess(JCctree *CT, int32_t *Euler, int32_t *Depth, int32_t *Represent, int32_t *Number, int32_t *nbR, int32_t *lognR);
+extern int32_t jccomptree_LowComAncFast(int32_t n1, int32_t n2, int32_t *Euler, int32_t *Number, int32_t *Depth, int32_t **Minim);
+extern int32_t jccomptree_LowComAncSlow(JCctree * CT, int32_t c1, int32_t c2);
+extern void mergeTreePrint(mtree * MT);
+extern mtree * mergeTreeAlloc(int32_t N);
+extern void mergeTreeFree(mtree * MT);
+extern int32_t mergeTree(RAG *rag, mtree **MergeTree);
+// Ces 3 fontions vont plutot dans la biblio hierarchie
+int32_t jcSaliencyTree_b (JCctree ** SaliencyTree, int32_t *MST, int32_t *Valeur, RAG *rag, int32_t *STaltitude);
 
-#ifdef IMGCHAR
-#define MAXGREY 256
-#else
-#define MAXGREY 65536
-#endif
 
-extern ctree * ComponentTreeAlloc(int32_t N);
-extern void ComponentTreeFree(ctree * CT);
-#ifdef IMGCHAR
-extern int32_t ComponentTree( uint8_t *F, int32_t rs, int32_t N, int32_t connex, // inputs
-#endif
-#ifdef IMGLONG
-extern int32_t ComponentTree( uint32_t *F, int32_t rs, int32_t N, int32_t connex, // inputs
-#endif
-                           ctree **CompTree, // output
-                           int32_t **CompMap     // output
-			 );
-#ifdef IMGCHAR
-extern int32_t ComponentTree3d( uint8_t *F, int32_t rs, int32_t ps, int32_t N, int32_t connex, // inputs
-#endif
-#ifdef IMGLONG
-extern int32_t ComponentTree3d( uint32_t *F, int32_t rs, int32_t ps, int32_t N, int32_t connex, // inputs
-#endif
-                           ctree **CompTree, // output
-                           int32_t **CompMap     // output
-			 );
 #ifdef __cplusplus
 }
 #endif

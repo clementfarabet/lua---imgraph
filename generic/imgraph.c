@@ -68,7 +68,7 @@ static int imgraph_(graph)(lua_State *L) {
 
     // resize output, and fill it with -1 (which means non-valid edge)
     THTensor_(resize3d)(dst, 2, height, width);
-    THTensor_(fill)(dst, -1);
+    THTensor_(fill)(dst, 0);
 
     // get raw pointers
     real *src_data = THTensor_(data)(src);
@@ -108,7 +108,7 @@ static int imgraph_(graph)(lua_State *L) {
 
     // resize output, and fill it with -1 (which means non-valid edge)
     THTensor_(resize3d)(dst, 4, height, width);
-    THTensor_(fill)(dst, -1);
+    THTensor_(fill)(dst, 0);
 
     // get raw pointers
     real *src_data = THTensor_(data)(src);
@@ -506,6 +506,53 @@ static THTensor * imgraph_(xv2tensor)(struct xvimage *src, THTensor *dst) {
   return dst;
 }
 
+static struct xvimage * imgraph_(tensor2xvg)(THTensor *src, struct xvimage *dst) {
+  // create output
+  if (dst == NULL)
+    dst = allocGAimage((char *)NULL, src->size[1], src->size[0]/2, 1, VFF_TYP_GABYTE);
+
+  // get pointer to dst
+  uint8_t *dst_data = UCHARDATA(dst);
+
+  // get pointer to src
+  THTensor *src_c = THTensor_(newContiguous)(src);
+  real *src_data = THTensor_(data)(src_c);
+
+  // copy data
+  long i;
+  for (i=0; i<(src->size[0]*src->size[1]); i++) {
+    real val = ((*src_data++) * 255);
+    val = (val < 0) ? 0 : val;
+    val = (val > 255) ? 255 : val;
+    *dst_data++ = (uint8_t)val;
+  }
+
+  // cleanup
+  THTensor_(free)(src_c);
+
+  // return copy
+  return dst;
+}
+
+static THTensor * imgraph_(xvg2tensor)(struct xvimage *src, THTensor *dst) {
+  // create/resize output
+  if (dst == NULL) dst = THTensor_(new)();
+  THTensor_(resize2d)(dst, src->col_size*2, src->row_size);
+  real *dst_data = THTensor_(data)(dst);
+
+  // get pointer
+  uint8_t *src_data = UCHARDATA(src);
+
+  // copy data
+  long i;
+  for (i=0; i<(dst->size[0]*dst->size[1]); i++) {
+    dst_data[i] = ((real)src_data[i]) / 255.0;
+  }
+
+  // return copy
+  return dst;
+}
+
 #ifndef _XV_INVERSE_
 #define _XV_INVERSE_
 static void inverse(struct xvimage * image) {
@@ -556,11 +603,49 @@ static int imgraph_(watershed)(lua_State *L) {
   imgraph_(xv2tensor)(input_xv, watershed);
 
   // cleanup
+  freeimage(input_xv);
   THTensor_(free)(inputc);
 
   // return number of components
   lua_pushnumber(L, nblabels);
   return 1;
+}
+
+static int imgraph_(saliency)(lua_State *L) {
+  // get args
+  THTensor *saliency = luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *graph = luaT_checkudata(L, 2, torch_(Tensor_id));
+  int mode = 0;
+  if (lua_isnumber(L, 3)) mode = lua_tonumber(L, 3);
+
+  // compute saliency
+  struct xvimage *graph_xv = imgraph_(tensor2xvg)(graph, NULL);
+  saliencyGa(graph_xv, mode, NULL);
+  imgraph_(xvg2tensor)(graph_xv, saliency);
+
+  // cleanup
+  freeimage(graph_xv);
+
+  // return
+  return 0;
+}
+
+static int imgraph_(render)(lua_State *L) {
+  // get args
+  THTensor *rendered = luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *graph = luaT_checkudata(L, 2, torch_(Tensor_id));
+
+  // render graph using khalimsky representation
+  struct xvimage *graph_xv = imgraph_(tensor2xvg)(graph, NULL);
+  struct xvimage *rendered_xv = allocimage(NULL, rowsize(graph_xv)*2 , colsize(graph_xv)*2, 1, VFF_TYP_1_BYTE);
+  lga2khalimsky(graph_xv, rendered_xv, 0);
+  imgraph_(xv2tensor)(rendered_xv, rendered);
+
+  // cleanup
+  freeimage(graph_xv);
+
+  // return
+  return 0;
 }
 
 int imgraph_(colorize)(lua_State *L) {
@@ -978,8 +1063,10 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"connectedcomponents", imgraph_(connectedcomponents)},
   {"segmentmst", imgraph_(segmentmst)},
   {"watershed", imgraph_(watershed)},
+  {"saliency", imgraph_(saliency)},
   {"histpooling", imgraph_(histpooling)},
   {"colorize", imgraph_(colorize)},
+  {"render", imgraph_(render)},
   {"adjacency", imgraph_(adjacency)},
   {"extractcomponents", imgraph_(extractcomponents)},
   {NULL, NULL}

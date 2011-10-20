@@ -35,10 +35,25 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern int32_t lwshedtopo_lwshedtopo(struct xvimage *image, int32_t connex);
-extern int32_t lreconsdilat(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lreconseros(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lwshedtopobin(struct xvimage *image, struct xvimage *marqueur, int32_t connex);
+int32_t lsaliency(
+        struct xvimage *image,
+        struct xvimage *masque,
+        struct xvimage *saliency,
+        int32_t connex);
+
+int32_t lsaliency6b(
+        struct xvimage *image,
+        struct xvimage *masque,
+        struct xvimage *saliency,
+        int32_t parite);
+
+/*
+typedef struct basinT {
+  TypListe *neighbor;
+  TypListe *passvalue;
+  int32_t altitude;
+} basinT;
+*/
 #ifdef __cplusplus
 }
 #endif

@@ -32,7 +32,6 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL license and that you accept its terms.
 */
-/* $Id: mccomptree.c,v 1.8 2006/02/28 07:49:16 michel Exp $ */
 /* 
   Arbre des composantes (nouvelle version)
 
@@ -44,10 +43,11 @@ knowledge of the CeCILL license and that you accept its terms.
 */
 
 #include <stdio.h>
-#include <sys/types.h>
 #include <stdint.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <mcunionfind.h>
+#include <mccodimage.h>
 #include <mccomptree.h>
 
 #define MAXTREE
@@ -57,7 +57,7 @@ knowledge of the CeCILL license and that you accept its terms.
 //#define DEBUG
 
 /* ==================================== */
-int32_t * linsortimageup(u_int8_t *F, int32_t N)
+int32_t * linsortimageup(uint8_t *F, int32_t N)
 /* ==================================== */
 /*
   Tri par denombrement - cf. Cormen & al., "Introduction a l'algorithmique"
@@ -88,7 +88,7 @@ int32_t * linsortimageup(u_int8_t *F, int32_t N)
 } /* linsortimageup() */
 
 /* ==================================== */
-int32_t * linsortimagedown(u_int8_t *F, int32_t N)
+int32_t * linsortimagedown(uint8_t *F, int32_t N)
 /* ==================================== */
 /*
   Tri par denombrement - cf. Cormen & al., "Introduction a l'algorithmique"
@@ -133,7 +133,7 @@ void addson(ctree *CT, int32_t node, int32_t nodeaux)
   if (CT->nbsoncells >= CT->nbnodes)
   {
     fprintf(stderr, "%s : fatal error : maximum nb of cells exceeded\n", F_NAME);
-    //    ComponentTreePrint(CT);
+    //    mccomptree_ComponentTreePrint(CT);
     exit(1);
   }
 #ifdef PARANO
@@ -177,7 +177,7 @@ void mergenodes(ctree *CT, int32_t node, int32_t nodeaux)
       for (nodeauxson = CT->tabnodes[nodeaux].sonlist; nodeauxson != NULL; nodeauxson = nodeauxson->next)
         if (nodeson->son == nodeauxson->son)
         {
-          fprintf(stderr, "%s : error : son already in list (%d %d)\n", F_NAME);
+          fprintf(stderr, "%s : error : son already in list (%d)\n", F_NAME, nodeson->son);
           return;
         }
 #endif
@@ -212,7 +212,7 @@ ctree * ComponentTreeAlloc(int32_t N)
   CT = (ctree *)calloc(1,sizeof(ctree));
   CT->tabnodes = (ctreenode *)calloc(1,N * sizeof(ctreenode));
   CT->tabsoncells = (soncell *)calloc(1,N * sizeof(soncell));
-  CT->flags = (u_int8_t *)calloc(N, sizeof(char));
+  CT->flags = (uint8_t *)calloc(N, sizeof(char));
   if ((CT == NULL) || (CT->tabnodes == NULL) || (CT->tabsoncells == NULL) || (CT->flags == NULL))
   { 
     fprintf(stderr, "%s : malloc failed\n", F_NAME);
@@ -235,7 +235,7 @@ void ComponentTreeFree(ctree * CT)
 } // ComponentTreeFree()
 
 /* ==================================== */
-void ComponentTreePrint(ctree * CT)
+void mccomptree_ComponentTreePrint(ctree * CT)
 /* ==================================== */
 {
   int32_t i;
@@ -258,7 +258,7 @@ void ComponentTreePrint(ctree * CT)
     }
     printf("\n");
   }
-} // ComponentTreePrint()
+} // mccomptree_ComponentTreePrint()
 
 #ifdef ATTRIB_AREA
 /* ==================================== */
@@ -332,7 +332,7 @@ int32_t ComputeVol(ctree * CT, int32_t node, int32_t *na1)
 #endif
 
 /* ==================================== */
-int32_t ComponentTree( u_int8_t *F, int32_t rs, int32_t N, int32_t connex, // inputs
+int32_t ComponentTree( uint8_t *F, int32_t rs, int32_t N, int32_t connex, // inputs
                     ctree **CompTree, // output
                     int32_t **CompMap     // output
                   )
@@ -517,7 +517,7 @@ printf("  addson: %d %d\n", currentNode, neighbNode);
 } // ComponentTree()
 
 /* ==================================== */
-int32_t ComponentTree3d( u_int8_t *F, int32_t rs, int32_t ps, int32_t N, int32_t connex, // inputs
+int32_t ComponentTree3d( uint8_t *F, int32_t rs, int32_t ps, int32_t N, int32_t connex, // inputs
                     ctree **CompTree, // output
                     int32_t **CompMap     // output
                   )
@@ -777,12 +777,12 @@ int32_t ComponentTree3d( u_int8_t *F, int32_t rs, int32_t ps, int32_t N, int32_t
 
 #ifdef TESTSORT
 int32_t main() {
-  u_int8_t F[20] = {25, 10, 1, 1, 0, 0, 1, 3, 5, 3, 2, 3, 4, 5, 7, 10, 11, 6, 3, 3};
+  uint8_t F[20] = {25, 10, 1, 1, 0, 0, 1, 3, 5, 3, 2, 3, 4, 5, 7, 10, 11, 6, 3, 3};
   int32_t i;
-  int32_t *T = linsortimagedown((u_int8_t *)F, 20);
+  int32_t *T = linsortimagedown((uint8_t *)F, 20);
   for (i = 0; i < 20; i++) printf("F[T[%d]] = %d\n", i, F[T[i]]);
   free(T);
-  T = linsortimageup((u_int8_t *)F, 20);
+  T = linsortimageup((uint8_t *)F, 20);
   for (i = 0; i < 20; i++) printf("F[T[%d]] = %d\n", i, F[T[i]]);
   free(T);
 }
@@ -791,13 +791,13 @@ int32_t main() {
 #ifdef TESTCOMPTREE
 int32_t main() {
 /*
-  u_int8_t F[15] = {
+  uint8_t F[15] = {
     110,  90, 100,  10,  40, 
      50,  50,  50,  10,  20, 
      80,  60,  70,  10,  30
   }; 
   int32_t i, rs = 5, cs = 3;
-  u_int8_t F[60] = {
+  uint8_t F[60] = {
     110, 110,  90,  90, 100, 100,  10,  10,  40,  40, 
     110, 110,  90,  90, 100, 100,  10,  10,  40,  40, 
      50,  50,  50,  50,  50,  50,  10,  10,  20,  20, 
@@ -806,7 +806,7 @@ int32_t main() {
      80,  80,  60,  60,  70,  70,  10,  10,  30,  30
   }; 
   int32_t i, rs = 10, cs = 6;
-  u_int8_t F[60] = {
+  uint8_t F[60] = {
     110, 110,  90,  90, 100, 100,  75,  75, 140, 140, 
     110, 110,  90,  90, 100, 100,  75,  75, 140, 140, 
      60,  60,  50,  50,  50,  50,  50,  50,  85,  85, 
@@ -816,7 +816,7 @@ int32_t main() {
   }; 
   int32_t i, rs = 10, cs = 6;
 */
-  u_int8_t F[15] = {
+  uint8_t F[15] = {
     110,  90, 100,
      50,  50,  50,
      40,  20,  50,
@@ -829,7 +829,7 @@ int32_t main() {
 
   ComponentTree(F, rs, rs*cs, 4, &CT, &CM);
   printf("component tree:\n");
-  ComponentTreePrint(CT);
+  mccomptree_ComponentTreePrint(CT);
   printf("component mapping:\n");
   for (i = 0; i < rs*cs; i++)
   {

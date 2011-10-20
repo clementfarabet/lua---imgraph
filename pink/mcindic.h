@@ -32,7 +32,13 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL license and that you accept its terms.
 */
-/* $Id: mcindic.h,v 1.3 2006/02/28 07:49:12 michel Exp $ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef _MCIMAGE_H
+#include <mcimage.h>
+#endif
 
 typedef uint8_t Indicstype;
 
@@ -52,10 +58,13 @@ extern Indicstype *Indics;       /* en global pour etre efficace */
 /* prototypes     */
 /* ============== */
 
-extern void IndicsInit(int32_t Size); 
+extern void IndicsInit(index_t Size); 
 
-extern void Indics1bitInit(int32_t Size); 
+extern void Indics1bitInit(index_t Size); 
 
 extern void IndicsTermine();
 
 
+#ifdef __cplusplus
+}
+#endif

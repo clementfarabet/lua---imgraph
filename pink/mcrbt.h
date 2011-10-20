@@ -35,10 +35,84 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern int32_t lwshedtopo_lwshedtopo(struct xvimage *image, int32_t connex);
-extern int32_t lreconsdilat(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lreconseros(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lwshedtopobin(struct xvimage *image, struct xvimage *marqueur, int32_t connex);
+
+#ifndef _MCIMAGE_H
+#include <mcimage.h>
+#endif
+
+#define RBT_Black 0
+#define RBT_Red   1
+
+typedef double TypRbtKey;
+typedef index_t TypRbtAuxData;
+
+typedef struct RBTELT {
+  TypRbtAuxData auxdata;
+  TypRbtKey key;
+  char color;
+  struct RBTELT * left;
+  struct RBTELT * right;
+  struct RBTELT * parent;
+} RbtElt;
+
+typedef struct {
+  index_t max;             /* taille max du rbt (en nombre de points) */
+  index_t util;            /* nombre de points courant dans le rbt */
+  index_t maxutil;         /* nombre de points utilises max (au cours du temps) */
+  RbtElt *root;        /* racine de l'arbre */
+  RbtElt *nil;         /* sentinelle et element dont l'adresse joue le role de NIL */
+  RbtElt *libre;       /* pile des cellules libres */
+  RbtElt elts[1];      /* tableau des elements physiques */
+} Rbt;
+
+/* ============== */
+/* prototypes     */
+/* ============== */
+
+extern Rbt * mcrbt_CreeRbtVide(
+  index_t taillemax);
+
+extern void RbtFlush(
+  Rbt * T);
+
+extern int32_t mcrbt_RbtVide(
+  Rbt * T);
+
+extern void mcrbt_RbtTermine(
+  Rbt * T);
+
+extern void RbtPrint(
+  Rbt * T);
+
+extern RbtElt * RbtSearch(
+  Rbt * T, TypRbtKey k);
+
+extern RbtElt * mcrbt_RbtMinimum(
+  Rbt * T, RbtElt * x);
+
+extern RbtElt * RbtMaximum(
+  Rbt * T, RbtElt * x);
+
+extern RbtElt * RbtSuccessor(
+  Rbt * T, RbtElt * x);
+
+extern RbtElt * mcrbt_RbtInsert(
+  Rbt ** T, TypRbtKey k, TypRbtAuxData d);
+
+extern void RbtDelete(
+  Rbt * T, RbtElt * z);
+
+extern TypRbtAuxData RbtPopMin(
+  Rbt * T);
+
+extern TypRbtAuxData RbtPopMax(
+  Rbt * T);
+
+extern TypRbtKey RbtMinLevel(
+  Rbt * T);
+
+extern TypRbtKey RbtMaxLevel(
+  Rbt * T);
 #ifdef __cplusplus
 }
 #endif

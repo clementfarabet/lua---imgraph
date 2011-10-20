@@ -33,159 +33,179 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL license and that you accept its terms.
 */
 /* 
-   Librairie mclifo :
+   Librairie mcfifo :
 
-   fonctions pour la gestion d'une liste lifo
+   fonctions pour la gestion d'une liste fifo
 
    Michel Couprie 1996
 */
 
-/* #define TESTLifo */
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
 #include <stdlib.h>
-#include <mclifo.h>
+#include <string.h>
+#include <mcfifo.h>
 
 /* ==================================== */
-Lifo * CreeLifoVide(index_t taillemax)
+Fifo * CreeFifoVide(
+  index_t taillemax)
 /* ==================================== */
 {
-  Lifo * L = (Lifo *)calloc(1,sizeof(Lifo) + sizeof(index_t) * (taillemax-1));
+  Fifo * L = (Fifo *)calloc(1,sizeof(Fifo) + sizeof(index_t) * taillemax); /* sic (+1) */
   if (L == NULL)
   {   
 #ifdef MC_64_BITS
-    fprintf(stderr, "CreeLifoVide() : malloc failed : %lld bytes\n",  sizeof(Lifo) + sizeof(index_t) * (taillemax-1));
+    fprintf(stderr, "CreeFifoVide() : malloc failed : %lld bytes\n", sizeof(Fifo) + sizeof(index_t) * taillemax);
 #else
-    fprintf(stderr, "CreeLifoVide() : malloc failed : %d bytes\n",  sizeof(Lifo) + sizeof(index_t) * (taillemax-1));
+    fprintf(stderr, "CreeFifoVide() : malloc failed : %d bytes\n", sizeof(Fifo) + sizeof(index_t) * taillemax);
 #endif
     return NULL;
   }
-  L->Max = taillemax;
-  L->Sp = 0;
+  L->Max = taillemax+1;
+  L->In = 0;
+  L->Out = 0;
   return L;
 }
 
 /* ==================================== */
-void LifoFlush(Lifo * L)
+void FifoFlush(
+  Fifo * L)
 /* ==================================== */
 {
-  L->Sp = 0;
+  L->In = 0;
+  L->Out = 0;
 }
 
 /* ==================================== */
-index_t LifoVide(Lifo * L)
+int32_t FifoVide(
+  Fifo * L)
 /* ==================================== */
 {
-  return (L->Sp == 0);
+  return (L->In == L->Out);
 }
 
 /* ==================================== */
-index_t LifoPop(Lifo * L)
+index_t FifoPop(
+  Fifo * L)
 /* ==================================== */
 {
-  if (L->Sp == 0)
+  index_t V;
+  if (L->In == L->Out)
   {
-    fprintf(stderr, "erreur Lifo vide\n");
+    fprintf(stderr, "erreur fifo vide\n");
     exit(1);
   }
-  L->Sp -= 1;
-  return L->Pts[L->Sp];
+  V = L->Pts[L->Out];
+  L->Out = (L->Out + 1) % L->Max;
+  return V;
 }
 
 /* ==================================== */
-index_t LifoHead(Lifo * L)
+void FifoPushFirst(
+  Fifo * L,
+  index_t V)
 /* ==================================== */
 {
-  if (L->Sp == 0)
+  L->Out = (L->Out - 1) % L->Max;
+  L->Pts[L->Out] = V;
+  if (L->In == L->Out)
   {
-    fprintf(stderr, "erreur Lifo vide\n");
+    fprintf(stderr, "erreur fifo pleine\n");
     exit(1);
   }
-  return L->Pts[L->Sp-1];
 }
   
 /* ==================================== */
-void LifoPush(Lifo * L, index_t V)
+void FifoPush(
+  Fifo * L,
+  index_t V)
 /* ==================================== */
 {
-  if (L->Sp > L->Max - 1)
+  L->Pts[L->In] = V;
+  L->In = (L->In + 1) % L->Max;
+  if (L->In == L->Out)
   {
-    fprintf(stderr, "erreur Lifo pleine\n");
+    fprintf(stderr, "erreur fifo pleine\n");
     exit(1);
   }
-  L->Pts[L->Sp] = V;
-  L->Sp += 1;
 }
 
 /* ==================================== */
-void LifoPrint(Lifo * L)
+void FifoPrint(
+  Fifo * L)
 /* ==================================== */
 {
   index_t i;
-  if (LifoVide(L)) {printf("[]"); return;}
-  printf("[ ");
-  for (i = 0; i < L->Sp; i++)
+  if (FifoVide(L)) {printf("[]\n"); return;}
 #ifdef MC_64_BITS
-    printf("%lld ", L->Pts[i]);
+  printf("Taille Fifo: %lld \n",FifoTaille(L));
 #else
-    printf("%d ", L->Pts[i]);
+  printf("Taille Fifo: %d \n",FifoTaille(L));
 #endif
-  printf("]");
-}
-
-/* ==================================== */
-void LifoPrintLine(Lifo * L)
-/* ==================================== */
-{
-  index_t i;
-  if (LifoVide(L)) {printf("[]\n"); return;}
-  printf("[ ");
-  for (i = 0; i < L->Sp; i++)
 #ifdef MC_64_BITS
-    printf("%lld ", L->Pts[i]);
+  printf("Max = %lld ; Out = %lld ; In = %lld\n", L->Max, L->Out, L->In);
 #else
-    printf("%d ", L->Pts[i]);
+  printf("Max = %d ; Out = %d ; In = %d\n", L->Max, L->Out, L->In);
+#endif
+  printf("[ ");
+  for (i = L->Out; i != L->In; i = (i+1) % L->Max)
+#ifdef MC_64_BITS
+  printf("%lld ", L->Pts[i]);
+#else
+  printf("%d ", L->Pts[i]);
 #endif
   printf("]\n");
 }
 
 /* ==================================== */
-void LifoTermine(Lifo * L)
+void FifoTermine(
+  Fifo * L)
 /* ==================================== */
 {
   free(L);
 }
 
-#ifdef TESTLifo
+/* ==================================== */
+index_t FifoTaille(
+  Fifo * L)
+/* ==================================== */
+{
+  if (L->In < L->Out)
+     return (L->Max - (L->Out-L->In));
+  else
+     return (L->In - L->Out);
+}
+
+#ifdef TESTFIFO
 void main()
 {
-  Lifo * L = CreeLifoVide(3);
-  LifoPrint(L);
-  if (LifoVide(L)) printf("LifoVide OUI\n");
-  LifoPush(L,1);
-  LifoPrint(L);
-  if (!LifoVide(L)) printf("LifoVide NON\n");
-  LifoPush(L,2);
-  LifoPrint(L);
-  LifoPush(L,3);
-  LifoPrint(L);
-  printf("LifoPop %d attendu 3\n", LifoPop(L));
-  LifoPrint(L);
-  LifoPush(L,4);
-  LifoPrint(L);
-  printf("LifoPop %d attendu 4\n", LifoPop(L));
-  LifoPrint(L);
-  printf("LifoPop %d attendu 2\n", LifoPop(L));
-  LifoPrint(L);
-  printf("LifoPop %d attendu 1\n", LifoPop(L));
-  LifoPrint(L);
-  if (LifoVide(L)) printf("LifoVide OUI\n");
-  printf("maintenant sortie attendue sur lifo pleine :\n");
-  LifoPush(L,3);
-  LifoPush(L,3);
-  LifoPush(L,3);
-  LifoPush(L,3);  
+  Fifo * L = CreeFifoVide(3);
+  FifoPrint(L);
+  if (FifoVide(L)) printf("FifoVide OUI\n");
+  FifoPush(L,1);
+  FifoPrint(L);
+  if (!FifoVide(L)) printf("FifoVide NON\n");
+  FifoPush(L,2);
+  FifoPrint(L);
+  FifoPush(L,3);
+  FifoPrint(L);
+  printf("FifoPop %d attendu 1\n", FifoPop(L));
+  FifoPrint(L);
+  FifoPushFirst(L,225);
+  FifoPrint(L);
+  printf("FifoPop %d attendu par christophe 225\n", FifoPop(L));
+  FifoPrint(L);
+  FifoPush(L,4);
+  FifoPrint(L);
+  printf("FifoPop %d attendu 2\n", FifoPop(L));
+  FifoPrint(L);
+  printf("FifoPop %d attendu 3\n", FifoPop(L));
+  FifoPrint(L);
+  printf("FifoPop %d attendu 4\n", FifoPop(L));
+  FifoPrint(L);
+  if (FifoVide(L)) printf("FifoVide OUI\n");
 }
 #endif
+
 

@@ -4,8 +4,14 @@
 #include "stdint.h"
 #include "mccodimage.h"
 #include "mcimage.h"
+#include "jcimage.h"
+#include "jccodimage.h"
 #include "llabelextrema.h"
 #include "lwshedtopo.h"
+#include "lsaliency.h"
+#include "lhierarchie.h"
+#include "lga2khalimsky.h"
+#include "lppm2GA.h"
 #include "set.h"
 
 #define torch_(NAME) TH_CONCAT_3(torch_, Real, NAME)

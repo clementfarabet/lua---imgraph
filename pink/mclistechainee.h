@@ -35,10 +35,25 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern int32_t lwshedtopo_lwshedtopo(struct xvimage *image, int32_t connex);
-extern int32_t lreconsdilat(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lreconseros(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lwshedtopobin(struct xvimage *image, struct xvimage *marqueur, int32_t connex);
+/* definitions pour le module "mclistechainee.c" */
+
+typedef int32_t TypElement;
+
+typedef struct LISTECHAINEE {         /* definition de la structure Listechainee        */
+  TypElement elt;              /* element en tete de listechainee   */
+  struct LISTECHAINEE   *suite;       /* pointe sur la suite de la listechainee         */
+} TypListechainee;
+
+extern TypListechainee * ListechaineeVide();
+extern TypElement Tete(TypListechainee * l);
+extern TypListechainee * Suite(TypListechainee * l);
+extern TypListechainee * Cons(TypElement e, TypListechainee * l);
+extern void AfficheListechainee(TypListechainee * l);
+extern void DetruitListechainee(TypListechainee * l);
+extern int32_t EstVideListechainee(TypListechainee * l);
+extern TypListechainee * InListechainee(TypElement el, TypListechainee * lis);
+extern TypListechainee * UnionListechainee (TypListechainee * lis1, TypListechainee * lis2);
+
 #ifdef __cplusplus
 }
 #endif

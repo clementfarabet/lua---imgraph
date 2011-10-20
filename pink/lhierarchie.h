@@ -35,10 +35,20 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern int32_t lwshedtopo_lwshedtopo(struct xvimage *image, int32_t connex);
-extern int32_t lreconsdilat(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lreconseros(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lwshedtopobin(struct xvimage *image, struct xvimage *marqueur, int32_t connex);
+// Bibliotheque pour la segmentation hierarchique a base de LPE sur
+// les aretes
+
+#undef SURFACE
+#undef DYNAMIC
+#undef VOLUME
+#undef OMEGA
+#define SURFACE 0
+#define DYNAMIC 1
+#define VOLUME 2
+#define OMEGA 3
+
+extern int32_t main_cascade(struct xvimage *image, struct xvimage *ga, int32_t param);
+extern int32_t saliencyGa(struct xvimage *ga, int32_t param, struct xvimage *annexe);
 #ifdef __cplusplus
 }
 #endif

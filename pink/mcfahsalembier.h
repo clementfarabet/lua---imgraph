@@ -32,67 +32,77 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL license and that you accept its terms.
 */
-/* $Id: mcfahsalembier.h,v 1.4 2006/02/28 07:49:12 michel Exp $ */
-typedef struct FAHELT {
-  int32_t Point;
-  struct FAHELT * Next;
-  struct FAHELT * Prev;
-} FahElt;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-//#define NPRIO 256
-#define NPRIO 65536
+#ifndef _MCIMAGE_H
+#include <mcimage.h>
+#endif
+
+typedef struct FAHSELT {
+  index_t Point;
+  struct FAHSELT * Next;
+  struct FAHSELT * Prev;
+} FahsElt;
+
+//#define FAHS_NPRIO 256
+#define FAHS_NPRIO 65536
 
 typedef struct {
-  int32_t Max;             /* taille max de la fah (en nombre de points) */
+  index_t Max;             /* taille max de la fah (en nombre de points) */
   int32_t Niv;             /* niveau a partir duquel des listes existent */
-  int32_t Util;            /* nombre de points courant dans la fah */
-  int32_t Maxutil;         /* nombre de points utilises max (au cours du temps) */
-  FahElt *Tete[NPRIO]; /* tableau des tetes de liste (la ou l'on insere) */
-  FahElt *Queue[NPRIO];/* tableau des queues de liste (la ou l'on preleve) */
-  FahElt *Libre;       /* pile des cellules libres */
-  FahElt Elts[1];      /* tableau des elements physiques */
-} Fah;
+  index_t Util;            /* nombre de points courant dans la fah */
+  index_t Maxutil;         /* nombre de points utilises max (au cours du temps) */
+  FahsElt *Tete[FAHS_NPRIO]; /* tableau des tetes de liste (la ou l'on insere) */
+  FahsElt *Queue[FAHS_NPRIO];/* tableau des queues de liste (la ou l'on preleve) */
+  FahsElt *Libre;       /* pile des cellules libres */
+  FahsElt Elts[1];      /* tableau des elements physiques */
+} Fahs;
 
 /* ============== */
 /* prototypes     */
 /* ============== */
 
-extern Fah * CreeFahVide(
-  int32_t taillemax
+extern Fahs * CreeFahsVide(
+  index_t taillemax
 );
 
-extern void FahFlush(
-  Fah * L
+extern void FahsFlush(
+  Fahs * L
 );
 
-extern int32_t FahVide(
-  Fah * L
+extern int32_t FahsVide(
+  Fahs * L
 );
 
-extern int32_t FahVideNiveau(
-  Fah * L,
+extern int32_t FahsVideNiveau(
+  Fahs * L,
   int32_t niv
 );
 
-extern int32_t FahPop(
-  Fah * L
+extern index_t FahsPop(
+  Fahs * L
 );
 
-extern int32_t FahPopNiveau(
-  Fah * L,
+extern index_t FahsPopNiveau(
+  Fahs * L,
   int32_t niv
 );
 
-extern void FahPush(
-  Fah * L,
-  int32_t Po,
+extern void FahsPush(
+  Fahs * L,
+  index_t Po,
   int32_t Ni
 );
 
-extern void FahTermine(
-  Fah * L
+extern void FahsTermine(
+  Fahs * L
 );
 
-extern void FahPrint(
-  Fah * L
+extern void FahsPrint(
+  Fahs * L
 );
+#ifdef __cplusplus
+}
+#endif

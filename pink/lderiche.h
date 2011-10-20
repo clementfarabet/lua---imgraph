@@ -35,10 +35,44 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern int32_t lwshedtopo_lwshedtopo(struct xvimage *image, int32_t connex);
-extern int32_t lreconsdilat(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lreconseros(struct xvimage *g, struct xvimage *f, int32_t connex);
-extern int32_t lwshedtopobin(struct xvimage *image, struct xvimage *marqueur, int32_t connex);
+/* ============== */
+/* prototype for lderiche.c */
+/* ============== */
+
+extern void derichegen(double *x,
+		       int32_t M,
+		       int32_t N,
+		       double *y1,
+		       double *y2,
+		       double *y,
+		       double a1, double a2, double a3, double a4, 
+		       double a5, double a6, double a7, double a8, 
+		       double b1, double b2, double b3, double b4);
+
+extern int32_t lderiche(
+        struct xvimage *image1,
+        double alpha,
+        int32_t function,
+        double l
+);
+
+extern int32_t lshencastan(struct xvimage *image, double beta);
+
+extern int32_t lderiche3d(
+        struct xvimage *image1,
+        double alpha,
+        int32_t function,
+        double l
+);
+
+extern int32_t llisseurrec3d(
+        struct xvimage *image1,
+        double alpha
+);
+
+extern int32_t lgradientcd(struct xvimage *image, double alpha);
+extern int32_t lgaussianfilter(struct xvimage *image, double alpha);
+
 #ifdef __cplusplus
 }
 #endif
