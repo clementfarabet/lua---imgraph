@@ -9,6 +9,7 @@ typedef struct {
   RAG *rag;
   struct xvimage *labels;
   int32_t *altitudes;
+  float *weights;
   int cs;
   int rs;
 } MergeTree;
@@ -36,6 +37,7 @@ static MergeTree *lua_pushMergeTree (lua_State *L)
   mt->labels = NULL;
   mt->rag = NULL;
   mt->altitudes = NULL;
+  mt->weights = NULL;
   mt->cs = 0;
   mt->rs = 0;
   luaL_getmetatable(L, MT);
@@ -50,6 +52,7 @@ static int MergeTree_gc (lua_State *L)
   if (t->labels) freeimage(t->labels);
   if (t->rag) termineRAG(t->rag);
   if (t->altitudes) free(t->altitudes);
+  if (t->weights) free(t->weights);
   return 0;
 }
 
@@ -74,6 +77,10 @@ static int MergeTree_tostring (lua_State *L)
       str += sprintf(str, "sons: ");
       for (s = CT->tabnodes[i].sonlist; s != NULL; s = s->next)
         str += sprintf(str, "%d  ", s->son);
+    }
+    if ((str-cstr) > 9*1024) {
+      str += sprintf(str, "\n ... ");
+      break;
     }
   }
 
