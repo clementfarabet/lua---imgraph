@@ -310,6 +310,30 @@ function imgraph.render(...)
 end
 
 ----------------------------------------------------------------------
+-- compute the merge tree of a graph
+--
+function imgraph.mergetree(...)
+   --get args
+   local args = {...}
+   local graph = args[1]
+
+   -- usage
+   if not graph or (graph:nDimension() ~= 3) then
+      print(xlua.usage('imgraph.mergetree',
+                       'mergetree a graph into a 2D image', nil,
+                       {type='torch.Tensor', help='input graph', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.mergetree')
+   end
+
+   -- compute merge tree of graph
+   local graphflat = graph:new():resize(graph:size(1)*graph:size(2),graph:size(3))
+   local mt = graph.imgraph.mergetree(graphflat)
+
+   -- return tree
+   return mt
+end
+
+----------------------------------------------------------------------
 -- segment a graph, by computing its min-spanning tree and
 -- merging vertices based on a dynamic threshold
 --
@@ -665,6 +689,9 @@ imgraph._example = [[
       local graph = imgraph.graph(lena)
       local saliency = imgraph.saliency(graph,'surface')
       local graphs = imgraph.render(saliency)
+
+      -- (6) compute the merge tree of the last graph
+      local mt = imgraph.mergetree(graph)
 
       -- (7) display results
       image.display{image=image.lena(), legend='input image'}

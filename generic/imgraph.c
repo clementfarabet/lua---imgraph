@@ -630,6 +630,42 @@ static int imgraph_(saliency)(lua_State *L) {
   return 0;
 }
 
+static int imgraph_(mergetree)(lua_State *L) {
+  // get args
+  THTensor *graph = luaT_checkudata(L, 1, torch_(Tensor_id));
+  graph = THTensor_(newContiguous)(graph);
+
+  // convert
+  struct xvimage *graph_xv = imgraph_(tensor2xvg)(graph, NULL);
+
+  // dims
+  int32_t rs = rowsize(graph_xv);
+  int32_t cs = colsize(graph_xv);
+
+  // compute labels
+  struct xvimage *labels = allocimage(NULL,rs,cs,1,VFF_TYP_4_BYTE);
+  int32_t *LABELS = SLONGDATA(labels);
+  flowMapping(graph_xv, LABELS);
+
+  // construct adjacency graph
+  RAG *rag = construitRAG(graph_xv, labels, NULL);
+
+  // compute merge tree
+  mtree *mt;
+  mergeTree(rag, &mt);
+
+  // cleanup
+  freeimage(graph_xv);
+  THTensor_(free)(graph);
+  termineRAG(rag);
+
+  // return tree
+  MergeTree *t = lua_pushMergeTree(L);
+  t->tree = mt;
+  t->labels = labels;
+  return 1;
+}
+
 static int imgraph_(render)(lua_State *L) {
   // get args
   THTensor *rendered = luaT_checkudata(L, 1, torch_(Tensor_id));
@@ -1067,6 +1103,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"histpooling", imgraph_(histpooling)},
   {"colorize", imgraph_(colorize)},
   {"render", imgraph_(render)},
+  {"mergetree", imgraph_(mergetree)},
   {"adjacency", imgraph_(adjacency)},
   {"extractcomponents", imgraph_(extractcomponents)},
   {NULL, NULL}
@@ -1077,6 +1114,8 @@ static void imgraph_(Init)(lua_State *L)
   luaT_pushmetaclass(L, torch_(Tensor_id));
   luaT_registeratname(L, imgraph_(methods__), "imgraph");
   lua_pop(L,1);
+
+  MergeTree_register(L);
 }
 
 #endif

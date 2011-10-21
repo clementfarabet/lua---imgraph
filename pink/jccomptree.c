@@ -130,7 +130,7 @@ void mergeTreePrint(mtree * MT)
   printf("root = %d ;  nbnodes: %d ; nbsoncells: %d\n", CT->root, CT->nbnodes, CT->nbsoncells);
   for (i = 0; i < CT->nbnodes; i++) 
   {
-    printf("node: %d ; level %d ; nbsons: %d ; father: %d ; mergeEdge %d", 
+    printf("node: %d ; level %d ; nbsons: %d ; father: %d ; mergeEdge %d ", 
             i, CT->tabnodes[i].data, CT->tabnodes[i].nbsons, CT->tabnodes[i].father, MT->mergeEdge[i]);
     if (CT->tabnodes[i].nbsons > 0)
     {

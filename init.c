@@ -4,15 +4,19 @@
 #include "stdint.h"
 #include "mccodimage.h"
 #include "mcimage.h"
+#include "jcgraphes.h"
 #include "jcimage.h"
 #include "jccodimage.h"
+#include "jccomptree.h"
 #include "llabelextrema.h"
 #include "lwshedtopo.h"
 #include "lsaliency.h"
 #include "lhierarchie.h"
+#include "llpeGA.h"
 #include "lga2khalimsky.h"
 #include "lppm2GA.h"
 #include "set.h"
+#include "mergetree.h"
 
 #define torch_(NAME) TH_CONCAT_3(torch_, Real, NAME)
 #define torch_string_(NAME) TH_CONCAT_STRING_3(torch., Real, NAME)

@@ -47,6 +47,7 @@ extern "C" {
 #define VOLUME 2
 #define OMEGA 3
 
+RAG *construitRAG(struct xvimage *ga, struct xvimage *label, struct xvimage *annexe);
 extern int32_t main_cascade(struct xvimage *image, struct xvimage *ga, int32_t param);
 extern int32_t saliencyGa(struct xvimage *ga, int32_t param, struct xvimage *annexe);
 #ifdef __cplusplus

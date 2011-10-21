@@ -63,7 +63,7 @@ extern int32_t flowMapping(struct  xvimage* ga, int32_t* Label);
 extern int32_t flowMappingRecursif(struct  xvimage* ga, int32_t* Label);
 extern int32_t flowMappingFloat(struct  xvimage* ga, int32_t* Label);
 extern int32_t flowMappingDouble(struct  xvimage* ga, int32_t* Label);
-extern int32_t lpeGrapheAreteValuee(GrapheValue *gv, int32_t* Label);
+  //extern int32_t lpeGrapheAreteValuee(GrapheValue *gv, int32_t* Label);
 extern int32_t altitudePoint(struct xvimage *ga, int32_t i);
 #ifdef __cplusplus
 }
