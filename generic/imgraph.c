@@ -636,6 +636,12 @@ static int imgraph_(mergetree)(lua_State *L) {
   mtree *mt;
   mergeTree(rag, &mt);
 
+  // compute altitudes
+  int32_t *altitudes = (int32_t *)malloc(sizeof(int32_t) * 2 * rag->g->nsom);
+  for (i = 0; i < mt->CT->nbnodes; i++) {
+    altitudes[i] = mt->CT->tabnodes[i].data;
+  }
+
   // cleanup
   freeimage(graph_xv);
   THTensor_(free)(graph);
@@ -647,6 +653,7 @@ static int imgraph_(mergetree)(lua_State *L) {
   t->rag = rag;
   t->cs = cs;
   t->rs = rs;
+  t->altitudes = altitudes;
   return 1;
 }
 
@@ -684,6 +691,7 @@ static int imgraph_(filtertree)(lua_State *L) {
   // store new comp tree and attributes
   componentTreeFree(t->tree->CT);
   t->tree->CT = st;
+  if (t->altitudes) free(t->altitudes);
   t->altitudes = staltitude;
 
   // cleanup
