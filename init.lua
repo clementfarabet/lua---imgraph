@@ -297,7 +297,7 @@ function imgraph.filtertree(...)
    -- usage
    if not tree then
       print(xlua.usage('imgraph.filtertree',
-                       'filter a merge tree according to a criterion', nil,
+                       'filter a merge tree according to a criterion (in place)', nil,
                        {type='imgraph.MergeTree', help='merge tree to be filtered', req=true},
                        {type='string', help='filter criterion: surface | volume | dynamic', default='surface'}))
       xlua.error('incorrect arguments', 'imgraph.filtertree')
@@ -312,9 +312,6 @@ function imgraph.filtertree(...)
 
    -- filter merge tree
    torch.Tensor().imgraph.filtertree(tree, mode)
-
-   -- return tree
-   return tree
 end
 
 ----------------------------------------------------------------------
@@ -402,8 +399,8 @@ end
 function imgraph.histpooling(...)
    --get args
    local args = {...}
-   local srcdest, segmentation, lists, histmax, minconfidence
-   srcdest = args[1]
+   local src, segmentation, lists, histmax, minconfidence
+   src = args[1]
    segmentation = args[2]
    histmax = args[3]
    minconfidence = args[4]
@@ -413,7 +410,7 @@ function imgraph.histpooling(...)
    minconfidence = minconfidence or 0
 
    -- usage
-   if not srcdest or not segmentation or not torch.typename(srcdest):find('Tensor') or not torch.typename(segmentation):find('Tensor') then
+   if not src or not segmentation or not torch.typename(src):find('Tensor') or not torch.typename(segmentation):find('Tensor') then
       print(xlua.usage('imgraph.histpooling',
                        'pool the features (or pixels) of an image into a segmentation map,\n'
                           .. 'using histogram accumulation. this is useful for colorazing a\n'
@@ -433,11 +430,12 @@ function imgraph.histpooling(...)
    end
 
    -- compute image
-   local iresults, hresults = srcdest.imgraph.histpooling(srcdest, segmentation, 
-                                                          true, histmax, minconfidence)
+   local dst = src:clone()
+   local iresults, hresults = src.imgraph.histpooling(dst, segmentation, 
+                                                      true, histmax, minconfidence)
 
    -- return image
-   return srcdest, iresults, hresults
+   return dst, iresults, hresults
 end
 
 ----------------------------------------------------------------------
@@ -674,10 +672,13 @@ end
 -- a simple test me function
 --
 imgraph._example = [[
-      -- (1) load an image & compute its graph
-      local lena = image.lena()
-      local lenag = image.convolve(lena, image.gaussian(3), 'same')
-      local graph = imgraph.graph(lenag)
+      -- (0) user image
+      local args = {...}
+      local inputimg = args[1]
+
+      -- (1) build a graph on an input image
+      local inputimgg = image.convolve(inputimg, image.gaussian(3), 'same')
+      local graph = imgraph.graph(inputimgg)
 
       -- (2) compute its connected components, and mst segmentation
       local cc = imgraph.connectcomponents(graph, 0.1, true)
@@ -685,37 +686,46 @@ imgraph._example = [[
       local mstsegmcolor = imgraph.colorize(mstsegm)
 
       -- (3) do a histogram pooling of the original image:
-      local pool = imgraph.histpooling(lena, mstsegm)
+      local pool = imgraph.histpooling(inputimg, mstsegm)
 
       -- (4) compute the watershed of the graph
-      local graph = imgraph.graph(lenag, 8)
+      local graph = imgraph.graph(inputimgg, 8)
       local gradient = imgraph.gradient(graph)
       local watershed = imgraph.watershed(gradient, 0.07, 8)
       local watershedgraph = imgraph.graph(watershed, 8)
       local watershedcc = imgraph.connectcomponents(watershedgraph, 0.5, true)
 
       -- (5) compute the saliency of a graph
-      local graph = imgraph.graph(lena)
-      local tree = imgraph.mergetree(graph)
-      local filtered = imgraph.filtertree(tree, 'surface')
-      local mapped = imgraph.graph2map(imgraph.tree2graph(filtered))
+      local graph = imgraph.graph(inputimg)
+      tree = imgraph.mergetree(graph)
+      local hierarchy = imgraph.graph2map(imgraph.tree2graph(tree))
+      imgraph.filtertree(tree, 'volume')
+      local filteredhierarchy = imgraph.graph2map(imgraph.tree2graph(tree))
 
       -- (6) compute the merge tree of the last graph
       local mt = imgraph.mergetree(graph)
 
       -- (7) display results
-      image.display{image=image.lena(), legend='input image'}
+      image.display{image=inputimg, legend='input image'}
       image.display{image=cc, legend='thresholded graph'}
       image.display{image=watershed, legend='watershed on the graph'}
       image.display{image=watershedcc, legend='components of watershed'}
       image.display{image=mstsegmcolor, legend='segmented graph, using min-spanning tree'}
       image.display{image=pool, legend='original imaged hist-pooled by segmentation'}
-      image.display{image=mapped, legend='filtered edge-weighted graph watershed'}
+      image.display{image=hierarchy, legend='raw edge-weighted graph watershed'}
+      image.display{image=filteredhierarchy, legend='filtered edge-weighted graph watershed'}
 ]]
-function imgraph.testme()
+function imgraph.testme(usrimg)
+   local inputimg
+   if usrimg then
+      inputimg = image.load(usrimg)
+   else
+      inputimg = image.lena()
+      inputimg = image.scale(inputimg, 200, 200)
+   end
    local example = loadstring(imgraph._example)
    print 'imgraph sample code {\n'
    print (imgraph._example)
    print '}'
-   example()
+   example(inputimg)
 end

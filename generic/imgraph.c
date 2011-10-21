@@ -626,8 +626,9 @@ static int imgraph_(mergetree)(lua_State *L) {
   // compute labels
   struct xvimage *labels = allocimage(NULL,rs,cs,1,VFF_TYP_4_BYTE);
   int32_t *labels_data = SLONGDATA(labels);
-  int i;
-  for (i=0; i<rs*cs; i++) labels_data[i] = i;
+  int i; 
+  //for (i=0; i<rs*cs; i++) labels_data[i] = i;
+  flowMapping(graph_xv, labels_data);
 
   // construct adjacency graph
   RAG *rag = construitRAG(graph_xv, labels, NULL);
