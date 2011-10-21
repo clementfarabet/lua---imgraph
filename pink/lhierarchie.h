@@ -48,6 +48,16 @@ extern "C" {
 #define OMEGA 3
 
 RAG *construitRAG(struct xvimage *ga, struct xvimage *label, struct xvimage *annexe);
+
+int32_t * surfaceMergeTree(JCctree *CT, RAG *rag);
+int32_t * dynaMergeTree(JCctree *CT, RAG *rag);
+int32_t * volumeMergeTree(JCctree *CT, RAG *rag);
+int32_t * omegaMergeTree(JCctree *CT, RAG *rag);
+
+void mstCompute(mtree *MT, int32_t *MST, int32_t *Valeur, int32_t *Attribut);
+
+int32_t computeSaliencyMap(JCctree *CT, struct xvimage *ga, int32_t *label, int32_t *attribut);
+
 extern int32_t main_cascade(struct xvimage *image, struct xvimage *ga, int32_t param);
 extern int32_t saliencyGa(struct xvimage *ga, int32_t param, struct xvimage *annexe);
 #ifdef __cplusplus

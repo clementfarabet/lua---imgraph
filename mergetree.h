@@ -6,7 +6,11 @@
 
 typedef struct {
   mtree *tree;
+  RAG *rag;
   struct xvimage *labels;
+  int32_t *altitudes;
+  int cs;
+  int rs;
 } MergeTree;
 
 static MergeTree *lua_toMergeTree (lua_State *L, int index)
@@ -30,6 +34,10 @@ static MergeTree *lua_pushMergeTree (lua_State *L)
   MergeTree *mt = (MergeTree *)lua_newuserdata(L, sizeof(MergeTree));
   mt->tree = NULL;
   mt->labels = NULL;
+  mt->rag = NULL;
+  mt->altitudes = NULL;
+  mt->cs = 0;
+  mt->rs = 0;
   luaL_getmetatable(L, MT);
   lua_setmetatable(L, -2);
   return mt;
@@ -40,6 +48,8 @@ static int MergeTree_gc (lua_State *L)
   MergeTree *t = lua_toMergeTree(L, 1);
   if (t->tree) mergeTreeFree(t->tree);
   if (t->labels) freeimage(t->labels);
+  if (t->rag) termineRAG(t->rag);
+  if (t->altitudes) free(t->altitudes);
   return 0;
 }
 

@@ -219,58 +219,9 @@ function imgraph.watershed(...)
 end
 
 ----------------------------------------------------------------------
--- compute the saliency (hierarchical watershed) of a graph
---
-function imgraph.saliency(...)
-   --get args
-   local args = {...}
-   local dest, graph, mode
-   local arg2 = torch.typename(args[2])
-   if arg2 and arg2:find('Tensor') then
-      dest = args[1]
-      graph = args[2]
-      mode = args[3]
-   else
-      dest = torch.Tensor()
-      graph = args[1]
-      mode = args[2]
-   end
-
-   -- defaults
-   if mode == 'saliency' then mode = 0
-   elseif mode == 'dynamic' then mode = 1
-   elseif mode == 'volume' then mode = 2
-   elseif mode == 'alphaomega' then mode = 3
-   else mode = 0 end
-
-   -- usage
-   if not graph or (graph:nDimension() ~= 3) then
-      print(xlua.usage('imgraph.saliency',
-                       'compute the saliency (hierarchical watershed) of a graph', nil,
-                       {type='torch.Tensor', help='input graph', req=true},
-                       {type='mode', help='mode: surface | dynamic | volume | alphaomega', 
-                        default='surface'},
-                       "",
-                       {type='torch.Tensor', help='destination tensor', req=true},
-                       {type='torch.Tensor', help='input graph', req=true},
-                       {type='mode', help='mode: surface | dynamic | volume | alphaomega', 
-                        default='surface'}))
-      xlua.error('incorrect arguments', 'imgraph.saliency')
-   end
-
-   -- compute saliency
-   local graphflat = graph:new():resize(graph:size(1)*graph:size(2),graph:size(3))
-   graph.imgraph.saliency(dest, graphflat, mode)
-   dest:resizeAs(graph)
-
-   -- return image
-   return dest
-end
-
-----------------------------------------------------------------------
 -- render a graph into an image
 --
-function imgraph.render(...)
+function imgraph.graph2map(...)
    --get args
    local args = {...}
    local dest, graph, method
@@ -290,20 +241,20 @@ function imgraph.render(...)
 
    -- usage
    if not graph or (graph:nDimension() ~= 3) then
-      print(xlua.usage('imgraph.render',
-                       'render a graph into a 2D image', nil,
+      print(xlua.usage('imgraph.graph2map',
+                       'graph2map a graph into a 2D image', nil,
                        {type='torch.Tensor', help='input graph', req=true},
                        {type='method', help='rendering method: khalimsky', default='khalimsky'},
                        "",
                        {type='torch.Tensor', help='destination tensor', req=true},
                        {type='torch.Tensor', help='input graph', req=true},
                        {type='method', help='rendering method: khalimsky', default='khalimsky'}))
-      xlua.error('incorrect arguments', 'imgraph.render')
+      xlua.error('incorrect arguments', 'imgraph.graph2map')
    end
 
    -- render graph
    local graphflat = graph:new():resize(graph:size(1)*graph:size(2),graph:size(3))
-   graph.imgraph.render(dest, graphflat, mode)
+   graph.imgraph.graph2map(dest, graphflat, mode)
 
    -- return image
    return dest
@@ -320,7 +271,7 @@ function imgraph.mergetree(...)
    -- usage
    if not graph or (graph:nDimension() ~= 3) then
       print(xlua.usage('imgraph.mergetree',
-                       'mergetree a graph into a 2D image', nil,
+                       'compute the merge tree of a graph (dendrogram)', nil,
                        {type='torch.Tensor', help='input graph', req=true}))
       xlua.error('incorrect arguments', 'imgraph.mergetree')
    end
@@ -331,6 +282,64 @@ function imgraph.mergetree(...)
 
    -- return tree
    return mt
+end
+
+----------------------------------------------------------------------
+-- filter a merge tree so as to equalize surface/volume or other
+-- attributes
+--
+function imgraph.filtertree(...)
+   --get args
+   local args = {...}
+   local tree = args[1]
+   local mode = args[2]
+
+   -- usage
+   if not tree then
+      print(xlua.usage('imgraph.filtertree',
+                       'filter a merge tree according to a criterion', nil,
+                       {type='imgraph.MergeTree', help='merge tree to be filtered', req=true},
+                       {type='string', help='filter criterion: surface | volume | dynamic', default='surface'}))
+      xlua.error('incorrect arguments', 'imgraph.filtertree')
+   end
+
+   -- defaults
+   if mode == 'surface' then mode = 0
+   elseif mode == 'dynamic' then mode = 1
+   elseif mode == 'volume' then mode = 2
+   elseif mode == 'alphaomega' then mode = 3
+   else mode = 0 end
+
+   -- filter merge tree
+   torch.Tensor().imgraph.filtertree(tree, mode)
+
+   -- return tree
+   return tree
+end
+
+----------------------------------------------------------------------
+-- transform a merge tree back into a graph, for visualization
+--
+function imgraph.tree2graph(...)
+   --get args
+   local args = {...}
+   local tree = args[1]
+
+   -- usage
+   if not tree then
+      print(xlua.usage('imgraph.tree2graph',
+                       'transform a merge tree into a 2D graph', nil,
+                       {type='imgraph.MergeTree', help='merge tree', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.tree2graph')
+   end
+
+   -- tree -> graph
+   local graph = torch.Tensor()
+   graph.imgraph.tree2graph(tree, graph)
+   graph:resize(2, graph:size(1)/2, graph:size(2))
+
+   -- return graph
+   return graph
 end
 
 ----------------------------------------------------------------------
@@ -687,8 +696,9 @@ imgraph._example = [[
 
       -- (5) compute the saliency of a graph
       local graph = imgraph.graph(lena)
-      local saliency = imgraph.saliency(graph,'surface')
-      local graphs = imgraph.render(saliency)
+      local tree = imgraph.mergetree(graph)
+      local filtered = imgraph.filtertree(tree, 'surface')
+      local mapped = imgraph.graph2map(imgraph.tree2graph(filtered))
 
       -- (6) compute the merge tree of the last graph
       local mt = imgraph.mergetree(graph)
@@ -700,7 +710,7 @@ imgraph._example = [[
       image.display{image=watershedcc, legend='components of watershed'}
       image.display{image=mstsegmcolor, legend='segmented graph, using min-spanning tree'}
       image.display{image=pool, legend='original imaged hist-pooled by segmentation'}
-      image.display{image=graphs, legend='graph saliency'}
+      image.display{image=mapped, legend='filtered edge-weighted graph watershed'}
 ]]
 function imgraph.testme()
    local example = loadstring(imgraph._example)

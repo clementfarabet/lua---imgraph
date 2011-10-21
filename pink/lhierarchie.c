@@ -101,7 +101,7 @@ RAG *construitRAG(struct xvimage *ga, struct xvimage *label, struct xvimage *ann
   for(i = 0; i < N; i++)
     if(LABEL[i] > nblabels) nblabels = LABEL[i];
   nblabels++;
-  rag = initRAG(nblabels, 3*N);
+  rag = initRAG(nblabels, 4*N);
   /* Parcourt de toutes les aretes du graphe d'arete F */
   for(u = 0; u < N_t; u ++){
     // si l'arete est bien ds le GA
@@ -517,7 +517,7 @@ int32_t *volumeMergeTree(JCctree *CT, RAG *rag)
 
 // extraction du MST contenu dans un merge tree, vers un tableau d'arete
 // et revaluation des arets en fonction de Attribut
-static void mstCompute(mtree *MT, int32_t *MST, int32_t *Valeur, int32_t *Attribut) 
+void mstCompute(mtree *MT, int32_t *MST, int32_t *Valeur, int32_t *Attribut) 
      /* MST et Valeur sont supposés alloués */
 {
 

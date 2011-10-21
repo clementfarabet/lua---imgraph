@@ -611,25 +611,6 @@ static int imgraph_(watershed)(lua_State *L) {
   return 1;
 }
 
-static int imgraph_(saliency)(lua_State *L) {
-  // get args
-  THTensor *saliency = luaT_checkudata(L, 1, torch_(Tensor_id));
-  THTensor *graph = luaT_checkudata(L, 2, torch_(Tensor_id));
-  int mode = 0;
-  if (lua_isnumber(L, 3)) mode = lua_tonumber(L, 3);
-
-  // compute saliency
-  struct xvimage *graph_xv = imgraph_(tensor2xvg)(graph, NULL);
-  saliencyGa(graph_xv, mode, NULL);
-  imgraph_(xvg2tensor)(graph_xv, saliency);
-
-  // cleanup
-  freeimage(graph_xv);
-
-  // return
-  return 0;
-}
-
 static int imgraph_(mergetree)(lua_State *L) {
   // get args
   THTensor *graph = luaT_checkudata(L, 1, torch_(Tensor_id));
@@ -644,8 +625,9 @@ static int imgraph_(mergetree)(lua_State *L) {
 
   // compute labels
   struct xvimage *labels = allocimage(NULL,rs,cs,1,VFF_TYP_4_BYTE);
-  int32_t *LABELS = SLONGDATA(labels);
-  flowMapping(graph_xv, LABELS);
+  int32_t *labels_data = SLONGDATA(labels);
+  int i;
+  for (i=0; i<rs*cs; i++) labels_data[i] = i;
 
   // construct adjacency graph
   RAG *rag = construitRAG(graph_xv, labels, NULL);
@@ -657,16 +639,81 @@ static int imgraph_(mergetree)(lua_State *L) {
   // cleanup
   freeimage(graph_xv);
   THTensor_(free)(graph);
-  termineRAG(rag);
 
   // return tree
   MergeTree *t = lua_pushMergeTree(L);
   t->tree = mt;
   t->labels = labels;
+  t->rag = rag;
+  t->cs = cs;
+  t->rs = rs;
   return 1;
 }
 
-static int imgraph_(render)(lua_State *L) {
+static int imgraph_(filtertree)(lua_State *L) {
+  // get args
+  MergeTree *t = lua_toMergeTree(L, 1);
+  int mode = 0;
+  if (lua_isnumber(L, 2)) mode = lua_tonumber(L, 2);
+
+  // compute merge attributes
+  int32_t *attribute;
+  switch(mode){
+  case 0:
+    attribute = surfaceMergeTree(t->tree->CT,t->rag);
+    break;
+  case 1:
+    attribute = dynaMergeTree(t->tree->CT,t->rag); 
+    break;
+  case 2:
+    attribute = volumeMergeTree(t->tree->CT,t->rag);
+    break;
+  case 3:
+    attribute = omegaMergeTree(t->tree->CT,t->rag);
+    break;
+  }
+
+  // compute spanning tree with attributes
+  int32_t *mst = (int32_t *)malloc(sizeof(int32_t) * t->rag->g->nsom - 1);
+  int32_t *value = (int32_t *)malloc(sizeof(int32_t) * t->rag->g->nsom - 1);
+  int32_t *staltitude = (int32_t *)malloc(sizeof(int32_t) * 2 * t->rag->g->nsom);
+  JCctree *st;
+  mstCompute(t->tree, mst, value, attribute);
+  jcSaliencyTree_b(&st, mst, value, t->rag, staltitude);
+
+  // store new comp tree and attributes
+  componentTreeFree(t->tree->CT);
+  t->tree->CT = st;
+  t->altitudes = staltitude;
+
+  // cleanup
+  free(mst);
+  free(value);
+  free(attribute);
+
+  // done
+  return 1;
+}
+
+static int imgraph_(tree2graph)(lua_State *L) {
+  // get args
+  MergeTree *t = lua_toMergeTree(L, 1);
+  THTensor *graph = luaT_checkudata(L, 2, torch_(Tensor_id));
+
+  // alloc graph
+  struct xvimage *graph_xv = allocGAimage((char *)NULL, t->rs, t->cs, 1, VFF_TYP_GABYTE);
+
+  // generate graph
+  computeSaliencyMap(t->tree->CT, graph_xv, SLONGDATA(t->labels), t->altitudes);
+
+  // export
+  imgraph_(xvg2tensor)(graph_xv, graph);
+
+  // done
+  return 1;
+}
+
+static int imgraph_(graph2map)(lua_State *L) {
   // get args
   THTensor *rendered = luaT_checkudata(L, 1, torch_(Tensor_id));
   THTensor *graph = luaT_checkudata(L, 2, torch_(Tensor_id));
@@ -1099,11 +1146,12 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"connectedcomponents", imgraph_(connectedcomponents)},
   {"segmentmst", imgraph_(segmentmst)},
   {"watershed", imgraph_(watershed)},
-  {"saliency", imgraph_(saliency)},
   {"histpooling", imgraph_(histpooling)},
   {"colorize", imgraph_(colorize)},
-  {"render", imgraph_(render)},
+  {"graph2map", imgraph_(graph2map)},
   {"mergetree", imgraph_(mergetree)},
+  {"filtertree", imgraph_(filtertree)},
+  {"tree2graph", imgraph_(tree2graph)},
   {"adjacency", imgraph_(adjacency)},
   {"extractcomponents", imgraph_(extractcomponents)},
   {NULL, NULL}
