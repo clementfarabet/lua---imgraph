@@ -40,6 +40,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
 #include <sys/types.h>
 #include <sys/types.h>
 #include <mccodimage.h>
@@ -546,9 +547,10 @@ int32_t computeSaliencyMap(JCctree *CT, struct xvimage *ga, int32_t *label, int3
   uint8_t *F = UCHARDATA(ga);   /* l'image de depart */
   int32_t u,x,y,i,j,c1;
   /* la valeur maximum de l'attribut est à la racine */
-  double facteur = mcmax(255/(double)attribut[CT->root], 0.05); 
-  //facteur = 1;
-  //printf("Attribut[racine] = %d et facteur %lf \n", attribut[CT->root],facteur);
+  double facteur = 1/(double)attribut[CT->root];
+  double exp = 1+log(1+attribut[CT->root]/256.0);
+  printf("%f\n", exp);
+
 #ifdef LCAFAST 
   /* Structure de donnée pour lca fast */
   int32_t logn, nbRepresent;
@@ -581,7 +583,7 @@ int32_t computeSaliencyMap(JCctree *CT, struct xvimage *ga, int32_t *label, int3
 #ifndef LCAFAST
 	c1 = jccomptree_LowComAncSlow(CT, (int32_t)label[x], (int32_t)label[y]);
 #endif
-	F[u] = (uint8_t)(mcmin((int32_t)(facteur * (double)attribut[c1]), 255));   
+	F[u] = (uint8_t)(mcmin(pow(facteur * (double)attribut[c1], 1/exp), 1) * 255);
       } 
        else F[u] =0; 
     }
@@ -605,7 +607,7 @@ int32_t computeSaliencyMap(JCctree *CT, struct xvimage *ga, int32_t *label, int3
 	  printf("Erreur de lca pour %d %d retourne %d\n", (int32_t)(label[x]),  (int32_t)(label[y]), c1);
 	  exit(0);
 	} 
-	F[u] = (uint8_t)(mcmin(255, (int32_t)(facteur * (double)attribut[c1])));  
+	F[u] = (uint8_t)(mcmin(pow(facteur * (double)attribut[c1], 1/exp), 1) * 255);
       }
       else F[u] = 0;
     }
