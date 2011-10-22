@@ -222,56 +222,82 @@ void volumeRec(JCctree *CT, int32_t *SurfaceCompo, int32_t *fuzzyAreaCompo, int3
 //que soit le critère (pas seulement pour le volume). Je prefère
 //cependant attendre l'écriture définitive du papier sur la saillence
 //avant de faire des modifications
-int32_t attributOpenningRec(JCctree *CT, int32_t *attributCompo, int32_t *attributMerge, int32_t root)
+static JCctree *attributOpenningRec_CT;
+static int32_t *attributOpenningRec_attributCompo;
+static int32_t *attributOpenningRec_attributMerge;
+int32_t attributOpenningRec_recursive(int32_t root) 
 {
+  JCctree *CT = attributOpenningRec_CT;
+  int32_t *attributCompo = attributOpenningRec_attributCompo; 
+  int32_t *attributMerge = attributOpenningRec_attributMerge;
   int32_t max,v;
   JCsoncell *s; 
   if(CT->tabnodes[root].father == -1){
     for(s = CT->tabnodes[root].sonlist; s != NULL; s = s->next) 
-      attributOpenningRec(CT, attributCompo, attributMerge, s->son);
+      attributOpenningRec_recursive(s->son);
     attributMerge[root] = attributCompo[root];
     return attributMerge[root]; 
   }  
   if(CT->tabnodes[CT->tabnodes[root].father].data != CT->tabnodes[root].data){
     for(s = CT->tabnodes[root].sonlist; s != NULL; s = s->next) 
-      attributOpenningRec(CT, attributCompo, attributMerge, s->son);
+      attributOpenningRec_recursive(s->son);
     attributMerge[root] = attributCompo[root]; 
     return attributMerge[root]; 
   }
   max = 0;
   for(s = CT->tabnodes[root].sonlist; s != NULL; s = s->next)
-    if( (v=attributOpenningRec(CT, attributCompo, attributMerge, s->son)) > max) 
+    if( (v=attributOpenningRec_recursive(s->son)) > max) 
       max = v;
   attributMerge[root] = max; 
   return attributMerge[root];
+}
+int32_t attributOpenningRec(JCctree *CT, int32_t *attributCompo, int32_t *attributMerge, int32_t root)
+{
+  attributOpenningRec_CT = CT;
+  attributOpenningRec_attributCompo = attributCompo;
+  attributOpenningRec_attributMerge = attributMerge;
+  return attributOpenningRec_recursive(root);
 }
 
 /* allows to compute the value of the criterion at which a given
    component disappears. Remark that these are not equal to the
    surface of the components*/
-int32_t surfaceOpenningRec(JCctree *CT, int32_t *SurfaceCompo, int32_t *SurfaceMerge, int32_t root)
+static JCctree *surfaceOpenningRec_CT;
+static int32_t *surfaceOpenningRec_surfaceCompo;
+static int32_t *surfaceOpenningRec_surfaceMerge;
+int32_t surfaceOpenningRec_recursive(int32_t root)
 {
+  JCctree *CT = surfaceOpenningRec_CT;
+  int32_t *SurfaceCompo = surfaceOpenningRec_surfaceCompo;
+  int32_t *SurfaceMerge = surfaceOpenningRec_surfaceMerge;
   int32_t max,v;
   JCsoncell *s; 
   if(CT->tabnodes[root].father == -1){
     for(s = CT->tabnodes[root].sonlist; s != NULL; s = s->next) 
-      surfaceOpenningRec(CT, SurfaceCompo, SurfaceMerge, s->son);
+      surfaceOpenningRec_recursive(s->son);
     SurfaceMerge[root] = SurfaceCompo[root];
     return SurfaceMerge[root]; 
   }  
   if(CT->tabnodes[CT->tabnodes[root].father].data != CT->tabnodes[root].data){
     for(s = CT->tabnodes[root].sonlist; s != NULL; s = s->next) 
-      surfaceOpenningRec(CT, SurfaceCompo, SurfaceMerge, s->son);
+      surfaceOpenningRec_recursive(s->son);
     SurfaceMerge[root] = SurfaceCompo[root]; 
     return SurfaceMerge[root]; 
   }
   max = 0;
   for(s = CT->tabnodes[root].sonlist; s != NULL; s = s->next) 
   {
-    if( (v=surfaceOpenningRec(CT, SurfaceCompo, SurfaceMerge, s->son)) > max) max = v;
+    if( (v=surfaceOpenningRec_recursive(s->son)) > max) max = v;
   }
   SurfaceMerge[root] = max; 
   return SurfaceMerge[root];
+}
+int32_t surfaceOpenningRec(JCctree *CT, int32_t *surfaceCompo, int32_t *surfaceMerge, int32_t root)
+{
+  surfaceOpenningRec_CT = CT;
+  surfaceOpenningRec_surfaceCompo = surfaceCompo;
+  surfaceOpenningRec_surfaceMerge = surfaceMerge;
+  return surfaceOpenningRec_recursive(root);
 } 
 
 // Si meme altitude, meme attribut

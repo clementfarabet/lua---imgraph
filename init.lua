@@ -721,7 +721,7 @@ function imgraph.testme(usrimg)
       inputimg = image.load(usrimg)
    else
       inputimg = image.lena()
-      inputimg = image.scale(inputimg, 200, 200)
+      inputimg = image.scale(inputimg, 256, 256)
    end
    local example = loadstring(imgraph._example)
    print 'imgraph sample code {\n'

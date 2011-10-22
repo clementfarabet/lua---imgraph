@@ -196,25 +196,32 @@ int32_t LowComAncSlow(
 // from lwshedtopo.c
 
 // Depth-first preprocessing
-int32_t jccomptree_LCApreprocessDepthFirst(JCctree *CT, int32_t node, int32_t depth, int32_t *nbr, int32_t *rep, int32_t *Euler, int32_t *Represent, int32_t *Depth, int32_t *Number)
+static JCctree *lca_CT;
+static int32_t *lca_nbr;
+static int32_t *lca_rep;
+static int32_t *lca_Euler;
+static int32_t *lca_Represent;
+static int32_t *lca_Depth;
+static int32_t *lca_Number;
+int32_t jccomptree_LCApreprocessDepthFirst(int32_t node, int32_t depth)
 {
   int32_t son;
   JCsoncell *sc;
   //  printf("jccomptree_LCApreprocessDepthFirst\n");
-  if (CT->tabnodes[node].nbsons > -1) {
-    (*nbr)++;
-    Euler[*nbr] = node;
-    Number[node] = *nbr;
-    Depth[node] = depth;
-    Represent[*nbr] = node;
-    (*rep)++;
-    for (sc = CT->tabnodes[node].sonlist; sc != NULL; sc = sc->next)    {
+  if (lca_CT->tabnodes[node].nbsons > -1) {
+    (*lca_nbr)++;
+    lca_Euler[*lca_nbr] = node;
+    lca_Number[node] = *lca_nbr;
+    lca_Depth[node] = depth;
+    lca_Represent[*lca_nbr] = node;
+    (*lca_rep)++;
+    for (sc = lca_CT->tabnodes[node].sonlist; sc != NULL; sc = sc->next)    {
       son = sc->son;
-      jccomptree_LCApreprocessDepthFirst(CT, son, depth+1, nbr, rep, Euler, Represent, Depth, Number);
-      Euler[++(*nbr)] = node;
+      jccomptree_LCApreprocessDepthFirst(son, depth+1);
+      lca_Euler[++(*lca_nbr)] = node;
     }
   }
-  return *nbr;
+  return *lca_nbr;
 }
 
 int32_t ** jccomptree_LCApreprocess(JCctree *CT, int32_t *Euler, int32_t *Depth, int32_t *Represent, int32_t *Number, int32_t *nbR, int32_t *lognR)
@@ -224,7 +231,14 @@ int32_t ** jccomptree_LCApreprocess(JCctree *CT, int32_t *Euler, int32_t *Depth,
 
   nbr = -1; // Initialization number of euler nodes
   rep = 0;
-  nbr = jccomptree_LCApreprocessDepthFirst(CT, CT->root, 0, &nbr, &rep, Euler, Represent, Depth, Number);
+  lca_CT = CT;
+  lca_nbr = &nbr;
+  lca_rep = &rep;
+  lca_Euler = Euler;
+  lca_Represent = Represent;
+  lca_Depth = Depth;
+  lca_Number = Number;
+  nbr = jccomptree_LCApreprocessDepthFirst(CT->root, 0);
   nbNodes = rep;
 
   // Check that the number of nodes in the tree was correct
