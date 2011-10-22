@@ -527,7 +527,7 @@ function imgraph.extractcomponents(...)
    end
 
    -- generate lists
-   local hcomponents = grayscale.imgraph.extractcomponents(grayscale)
+   local hcomponents = grayscale.imgraph.segm2components(grayscale)
 
    -- reorganize
    local components = {centroid_x={}, centroid_y={}, surface={}, 

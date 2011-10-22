@@ -1057,14 +1057,14 @@ int imgraph_(histpooling)(lua_State *L) {
   return 3;
 }
 
-int imgraph_(extractcomponents)(lua_State *L) {
+int imgraph_(segm2components)(lua_State *L) {
   // get args
   THTensor *segm = luaT_checkudata(L, 1, torch_(Tensor_id));
   real *segm_data = THTensor_(data)(segm);
 
   // check dims
   if ((segm->nDimension != 2))
-    THError("<imgraph.extractcomponents> segm must be HxW");
+    THError("<imgraph.segm2components> segm must be HxW");
 
   // get dims
   int height = segm->size[0];
@@ -1162,7 +1162,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"filtertree", imgraph_(filtertree)},
   {"tree2graph", imgraph_(tree2graph)},
   {"adjacency", imgraph_(adjacency)},
-  {"extractcomponents", imgraph_(extractcomponents)},
+  {"segm2components", imgraph_(segm2components)},
   {NULL, NULL}
 };
 
