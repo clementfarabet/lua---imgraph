@@ -110,7 +110,7 @@ struct xvimage *allocimage(
   g = (struct xvimage *)malloc(sizeof(struct xvimage));
   if (g == NULL)
   {   
-    fprintf(stderr,"%s: malloc failed (%d bytes)\n", F_NAME, sizeof(struct xvimage));
+    fprintf(stderr,"%s: malloc failed (%ld bytes)\n", F_NAME, sizeof(struct xvimage));
     return NULL;
   }
 
@@ -178,7 +178,7 @@ struct xvimage *allocmultimage(
   g = (struct xvimage *)malloc(sizeof(struct xvimage));
   if (g == NULL)
   {   
-    fprintf(stderr,"%s: malloc failed (%d bytes)\n", F_NAME, sizeof(struct xvimage));
+    fprintf(stderr,"%s: malloc failed (%ld bytes)\n", F_NAME, sizeof(struct xvimage));
     return NULL;
   }
 

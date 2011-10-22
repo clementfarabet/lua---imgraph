@@ -79,7 +79,7 @@ struct xvimage *allocGAimage(
 
   g = (struct xvimage *)malloc(sizeof(struct xvimage));
   if (g == NULL)
-  {   fprintf(stderr,"%s: malloc failed (%d bytes)\n", F_NAME, sizeof(struct xvimage));
+  {   fprintf(stderr,"%s: malloc failed (%ld bytes)\n", F_NAME, sizeof(struct xvimage));
       return NULL;
   }
   g->image_data = malloc((N*ts-1));
@@ -530,7 +530,7 @@ struct GA4d *allocGA4d(
   struct GA4d *g;
   g = (struct GA4d *)malloc(sizeof(struct GA4d) - 1 + (N * 4));
   if (g == NULL)
-  {   fprintf(stderr,"%s: malloc failed (%d bytes)\n", F_NAME, sizeof(struct xvimage) - 1 + (N * 4));
+  {   fprintf(stderr,"%s: malloc failed (%ld bytes)\n", F_NAME, sizeof(struct xvimage) - 1 + (N * 4));
       return NULL;
   }
   if (name != NULL)

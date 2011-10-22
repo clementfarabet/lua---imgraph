@@ -57,7 +57,7 @@ Lifo * CreeLifoVide(index_t taillemax)
 #ifdef MC_64_BITS
     fprintf(stderr, "CreeLifoVide() : malloc failed : %lld bytes\n",  sizeof(Lifo) + sizeof(index_t) * (taillemax-1));
 #else
-    fprintf(stderr, "CreeLifoVide() : malloc failed : %d bytes\n",  sizeof(Lifo) + sizeof(index_t) * (taillemax-1));
+    fprintf(stderr, "CreeLifoVide() : malloc failed : %ld bytes\n",  sizeof(Lifo) + sizeof(index_t) * (taillemax-1));
 #endif
     return NULL;
   }
