@@ -517,6 +517,7 @@ function imgraph.extractcomponents(...)
    local input = args[1]
    local img = args[2]
    local config = args[3] or 'bbox'
+   local minsize = args[4] or 1
 
    -- usage
    if not input then
@@ -538,13 +539,17 @@ function imgraph.extractcomponents(...)
              help='auxiliary image: if given, then components are cropped from it (must be KxHxW)'},
             {type='string', 
              help='configuration, one of: bbox | masked', default='bbox'},
+            {type='number', 
+             help='minimum component size to process', default=1},
             "",
             {type='imgraph.MergeTree',
              help='merge tree (dendrogram) of a graph', req=true},
             {type='torch.Tensor', 
              help='auxiliary image: if given, then components are cropped from it (must be KxHxW)'},
             {type='string', 
-             help='configuration, one of: bbox | masked', default='bbox'}
+             help='configuration, one of: bbox | masked', default='bbox'},
+            {type='number', 
+             help='minimum component size to process', default=1}
          )
       )
       xlua.error('incorrect arguments', 'imgraph.extractcomponents')
@@ -597,28 +602,31 @@ function imgraph.extractcomponents(...)
       local maskit = false
       if config == 'masked' then maskit = true end
       for k = 1,i do
-         -- get bounding box corners:
-         local top = c.bbox_top[k]
-         local height = c.bbox_height[k]
-         local left = c.bbox_left[k]
-         local width = c.bbox_width[k]
+         if c.surface[k] >= minsize then
+            print(k,i)
+            -- get bounding box corners:
+            local top = c.bbox_top[k]
+            local height = c.bbox_height[k]
+            local left = c.bbox_left[k]
+            local width = c.bbox_width[k]
 
-         -- extract patch from image:
-         c.patch[k] = img:narrow(2,top,height):narrow(3,left,width):clone()
+            -- extract patch from image:
+            c.patch[k] = img:narrow(2,top,height):narrow(3,left,width):clone()
 
-         -- generate mask, if not available
-         if torch.typename(input) and not c.mask[k] then
-            -- the input is a grayscale image, crop it to get the mask:
-            c.mask[k] = input:narrow(1,top,height):narrow(2,left,width):clone()
-            local id = components.id[k]
-            local mask = function(x) if x == id then return 1 else return 0 end end
-            c.mask[k]:apply(mask)
-         end
+            -- generate mask, if not available
+            if torch.typename(input) and not c.mask[k] then
+               -- the input is a grayscale image, crop it to get the mask:
+               c.mask[k] = input:narrow(1,top,height):narrow(2,left,width):clone()
+               local id = components.id[k]
+               local mask = function(x) if x == id then return 1 else return 0 end end
+               c.mask[k]:apply(mask)
+            end
 
-         -- mask box
-         if maskit then
-            for i = 1,c.patch[k]:size(1) do
-               c.patch[k][i]:cmul(c.mask[k])
+            -- mask box
+            if maskit then
+               for i = 1,c.patch[k]:size(1) do
+                  c.patch[k][i]:cmul(c.mask[k])
+               end
             end
          end
       end
