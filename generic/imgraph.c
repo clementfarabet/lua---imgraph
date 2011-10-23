@@ -714,6 +714,31 @@ static int imgraph_(filtertree)(lua_State *L) {
   return 1;
 }
 
+static int imgraph_(weighttree)(lua_State *L) {
+  // get args
+  MergeTree *t = lua_toMergeTree(L, 1);
+  int table_weights = 2; // arg 2
+
+  // cleanup
+  if (t->weights) free(t->weights);
+  t->weights = malloc(sizeof(double)*t->tree->CT->nbnodes);
+
+  // assign weigths to all nodes of tree
+  lua_pushnil(L);
+  long id = 0;
+  while (lua_next(L, table_weights) != 0) {
+    t->weights[id++] = lua_tonumber(L, -1);
+    lua_pop(L,1);
+  }
+  if (id < t->tree->CT->nbnodes) 
+    printf("<imgraph.weighttree> WARNING: not enough weights provided, padding with zeros\n");
+  for (; id<t->tree->CT->nbnodes; id++)
+    t->weights[id] = 0;
+
+  // done
+  return 0;
+}
+
 int imgraph_(tree2components)(lua_State *L) {
   // get args
   MergeTree *t = lua_toMergeTree(L, 1);
@@ -1346,6 +1371,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"graph2map", imgraph_(graph2map)},
   {"mergetree", imgraph_(mergetree)},
   {"filtertree", imgraph_(filtertree)},
+  {"weighttree", imgraph_(weighttree)},
   {"tree2graph", imgraph_(tree2graph)},
   {"tree2components", imgraph_(tree2components)},
   {"adjacency", imgraph_(adjacency)},

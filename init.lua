@@ -315,6 +315,28 @@ function imgraph.filtertree(...)
 end
 
 ----------------------------------------------------------------------
+-- assign weights to the nodes of a tree
+--
+function imgraph.weighttree(...)
+   --get args
+   local args = {...}
+   local tree = args[1]
+   local weights = args[2]
+
+   -- usage
+   if not tree or not weights then
+      print(xlua.usage('imgraph.weighttree',
+                       'filter a merge tree according to a criterion (in place)', nil,
+                       {type='imgraph.MergeTree', help='merge tree to be weighted', req=true},
+                       {type='table', help='a list of weights t[k] = w, with k the index of the node to be weighted', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.weighttree')
+   end
+
+   -- filter merge tree
+   torch.Tensor().imgraph.weighttree(tree, weights)
+end
+
+----------------------------------------------------------------------
 -- transform a merge tree back into a graph, for visualization
 --
 function imgraph.tree2graph(...)
