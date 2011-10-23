@@ -7,6 +7,16 @@
 #endif
 #define square(x) ((x)*(x))
 
+#ifdef min
+#undef min
+#endif
+#define min(x,y) (x)<(y) ? (x) : (y)
+
+#ifdef max
+#undef max
+#endif
+#define max(x,y) (x)>(y) ? (x) : (y)
+
 #ifdef rand0to1
 #undef rand0to1
 #endif
@@ -704,6 +714,183 @@ static int imgraph_(filtertree)(lua_State *L) {
   return 1;
 }
 
+int imgraph_(tree2components)(lua_State *L) {
+  // get args
+  MergeTree *t = lua_toMergeTree(L, 1);
+  JCctree *CT = t->tree->CT;
+  int getmasks = lua_toboolean(L, 2);
+
+  // dimensions of original image
+  long height = t->cs;
+  long width = t->rs;
+
+  // optional pixel list
+  long **pixel_list = NULL;
+  long  *pixelsize_list = NULL;
+  if (getmasks) {
+    pixel_list = malloc(sizeof(long *)*CT->nbnodes);
+    pixelsize_list = malloc(sizeof(long)*CT->nbnodes);
+  }
+
+  // (0) create a table to store all components, and
+  //     another table to store masks
+  lua_newtable(L);
+  int table_comps = lua_gettop(L);
+  lua_newtable(L);
+  int table_masks = lua_gettop(L);
+
+  // (1) get components' info
+  long i;
+  for (i=0; i<CT->nbnodes; i++) {
+    // id (1-based, for lua)
+    long id = i+1;
+
+    // create a table to store geometry of component:
+    THTensor *entry = THTensor_(newWithSize1d)(13);
+    real *data = THTensor_(data)(entry);
+
+    // if node doesn't have sons, then it's a pixel
+    long nbsons = CT->tabnodes[i].nbsons;
+    if (nbsons == 0) {
+      // this struct represents the component's geometry:
+      long y = i / width;
+      long x = i - y*width;
+      data[0] = x+1;       // x
+      data[1] = y+1;       // y
+      data[2] = 1;         // size
+      data[3] = 0;         // compat with 'histpooling' method
+      data[4] = id;        // hash (= id in that case)
+      data[5] = x+1;       // left_x
+      data[6] = x+1;       // right_x
+      data[7] = y+1;       // top_y
+      data[8] = y+1;       // bottom_y
+
+      // store entry
+      luaT_pushudata(L, entry, torch_(Tensor_id));
+      lua_rawseti(L, table_comps, id); // table_comps[id] = entry
+
+      // store pixels ?
+      if (getmasks) {
+        // in this case, only one pixel
+        pixelsize_list[i] = 1;
+        pixel_list[i] = malloc(sizeof(long) * 1);
+        pixel_list[i][0] = i;
+      }
+
+    } else {
+      // get info from each son
+      JCsoncell *son;
+      int firstson = 1;
+      for (son = CT->tabnodes[i].sonlist; son != NULL; son = son->next) {
+        // get entry for son
+        long sonid = son->son + 1;
+        lua_rawgeti(L, table_comps, sonid);
+        THTensor *sonentry = luaT_toudata(L, -1, torch_(Tensor_id)); 
+        lua_pop(L,1);
+
+        // update parent's structure
+        if (firstson) {
+          // first son: simply copy son into parent
+          THTensor_(copy)(entry, sonentry);
+          firstson = 0;
+
+          // change id
+          data[4] = id;
+
+          // and store entry
+          luaT_pushudata(L, entry, torch_(Tensor_id));
+          lua_rawseti(L, table_comps, id); // table_comps[id] = entry
+
+        } else {
+          // next sons: expand parent
+          real *sondata = THTensor_(data)(sonentry);
+          data[0] += sondata[0];               // x += sonx
+          data[1] += sondata[1];               // y += sony
+          data[2] += sondata[2];               // size += sonsize
+          data[5] = min(sondata[5],data[5]);   // left_x
+          data[6] = max(sondata[6],data[6]);   // right_x
+          data[7] = min(sondata[7],data[7]);   // top_x
+          data[8] = max(sondata[8],data[8]);   // bottom_x
+        }
+      }
+
+      // store pixels ?
+      if (getmasks) {
+        // alloc as many pixels as surface
+        pixelsize_list[i] = data[2];
+        pixel_list[i] = malloc(sizeof(long) * pixelsize_list[i]);
+
+        // append pixels from all sons
+        long o = 0;
+        for (son = CT->tabnodes[i].sonlist; son != NULL; son = son->next) {
+          long sid = son->son;
+          long k;
+          for (k=0; k<pixelsize_list[sid]; k++) pixel_list[i][o+k] = pixel_list[sid][k];
+          o += pixelsize_list[sid];
+        }
+      }
+    }
+  }
+
+  // (2) traverse component table to produce final component list
+  lua_pushnil(L);
+  long id = 0;
+  while (lua_next(L, table_comps) != 0) {
+    // retrieve entry
+    THTensor *entry = luaT_toudata(L, -1, torch_(Tensor_id)); lua_pop(L,1);
+    real *data = THTensor_(data)(entry);
+
+    // normalize cx and cy, by component's size
+    long surface = data[2];
+    data[0] /= surface;  // cx/surface
+    data[1] /= surface;  // cy/surface
+
+    // extra info
+    data[9] = data[6] - data[5] + 1;     // box width
+    data[10] = data[8] - data[7] + 1;    // box height
+    data[11] = (data[6] + data[5]) / 2;  // box center x
+    data[12] = (data[8] + data[7]) / 1;  // box center y
+
+    // (optional) generate masks
+    if (getmasks) {
+      // create a tensor to hold mask:
+      long maskw = data[9];
+      long maskh = data[10];
+      THTensor *mask = THTensor_(newWithSize2d)(maskh, maskw);
+      THTensor_(zero)(mask);
+
+      // fill mask:
+      real *maskd = THTensor_(data)(mask);
+      long k;
+      for (k=0; k<surface; k++) {
+        long idx = pixel_list[id][k];
+        int y = idx/width;       // get x
+        int x = idx - y*width;   // and y from linear index
+        x -= (data[5]-1);        // then remap x
+        y -= (data[7]-1);        // and y to mask coordinates
+        long mskidx = y*maskw+x; // then generate linear idx in mask
+        maskd[mskidx] = 1;       // and set pixel to 1
+      }
+
+      // register mask:
+      luaT_pushudata(L, mask, torch_(Tensor_id));
+      lua_rawseti(L, table_masks, id+1); // table_masks[id] = mask
+
+      // cleanup
+      free(pixel_list[id]);
+
+      id++;
+    }
+  }
+
+  // cleanup
+  if (pixel_list) free(pixel_list);
+  if (pixelsize_list) free(pixelsize_list);
+
+  // return components and masks
+  return 2;
+}
+
 static int imgraph_(tree2graph)(lua_State *L) {
   // get args
   MergeTree *t = lua_toMergeTree(L, 1);
@@ -1070,11 +1257,11 @@ int imgraph_(segm2components)(lua_State *L) {
   int height = segm->size[0];
   int width = segm->size[1];
 
-  // (0) create two tables, one indexable, the other one hash-indexable
+  // (0) create a hash table to store all components
   lua_newtable(L);
   int table_hash = lua_gettop(L);
 
-  // (1) extra components' info
+  // (1) get components' info
   long x,y;
   for (y=0; y<height; y++) {
     for (x=0; x<width; x++) {
@@ -1127,7 +1314,6 @@ int imgraph_(segm2components)(lua_State *L) {
 
   // (2) traverse geometry table to produce final component list
   lua_pushnil(L);
-  int cur = 1;
   while (lua_next(L, table_hash) != 0) {
     // retrieve entry
     THTensor *entry = luaT_toudata(L, -1, torch_(Tensor_id)); lua_pop(L,1);
@@ -1161,6 +1347,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"mergetree", imgraph_(mergetree)},
   {"filtertree", imgraph_(filtertree)},
   {"tree2graph", imgraph_(tree2graph)},
+  {"tree2components", imgraph_(tree2components)},
   {"adjacency", imgraph_(adjacency)},
   {"segm2components", imgraph_(segm2components)},
   {NULL, NULL}

@@ -492,12 +492,12 @@ end
 function imgraph.extractcomponents(...)
    -- get args
    local args = {...}
-   local grayscale = args[1]
+   local input = args[1]
    local img = args[2]
    local config = args[3] or 'bbox'
 
    -- usage
-   if not grayscale or grayscale:dim() ~= 2 then
+   if not input then
       print(
          xlua.usage(
             'imgraph.extractcomponents',
@@ -515,6 +515,13 @@ function imgraph.extractcomponents(...)
             {type='torch.Tensor', 
              help='auxiliary image: if given, then components are cropped from it (must be KxHxW)'},
             {type='string', 
+             help='configuration, one of: bbox | masked', default='bbox'},
+            "",
+            {type='imgraph.MergeTree',
+             help='merge tree (dendrogram) of a graph', req=true},
+            {type='torch.Tensor', 
+             help='auxiliary image: if given, then components are cropped from it (must be KxHxW)'},
+            {type='string', 
              help='configuration, one of: bbox | masked', default='bbox'}
          )
       )
@@ -522,12 +529,19 @@ function imgraph.extractcomponents(...)
    end
 
    -- support LongTensors
-   if torch.typename(grayscale) == 'torch.LongTensor' then
-      grayscale = torch.Tensor(grayscale:size(1), grayscale:size(2)):copy(grayscale)
+   if torch.typename(input) == 'torch.LongTensor' then
+      input = torch.Tensor(input:size(1), input:size(2)):copy(input)
    end
 
    -- generate lists
-   local hcomponents = grayscale.imgraph.segm2components(grayscale)
+   local hcomponents
+   local masks = {}
+   if torch.typename(input) then
+      hcomponents = input.imgraph.segm2components(input)
+   else
+      local getmasks = false; if img then getmasks = true end
+      hcomponents,masks = torch.Tensor().imgraph.tree2components(input, getmasks)
+   end
 
    -- reorganize
    local components = {centroid_x={}, centroid_y={}, surface={}, 
@@ -551,6 +565,7 @@ function imgraph.extractcomponents(...)
       components.bbox_height[i] = comp[11]
       components.bbox_x[i]      = comp[12]
       components.bbox_y[i]      = comp[13]
+      components.mask[i]        = masks[i]
    end
    components.size = function(self) return #self.id end
 
@@ -566,14 +581,17 @@ function imgraph.extractcomponents(...)
          local left = c.bbox_left[k]
          local width = c.bbox_width[k]
 
-         -- extract patch from image, and mask from segm map:
+         -- extract patch from image:
          c.patch[k] = img:narrow(2,top,height):narrow(3,left,width):clone()
-         c.mask[k] = grayscale:narrow(1,top,height):narrow(2,left,width):clone()
 
-         -- transform the segm component into a binary mask:
-         local id = components.id[k]
-         local mask = function(x) if x == id then return 1 else return 0 end end
-         c.mask[k]:apply(mask)
+         -- generate mask, if not available
+         if torch.typename(input) and not c.mask[k] then
+            -- the input is a grayscale image, crop it to get the mask:
+            c.mask[k] = input:narrow(1,top,height):narrow(2,left,width):clone()
+            local id = components.id[k]
+            local mask = function(x) if x == id then return 1 else return 0 end end
+            c.mask[k]:apply(mask)
+         end
 
          -- mask box
          if maskit then
