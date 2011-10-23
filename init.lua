@@ -566,8 +566,7 @@ function imgraph.extractcomponents(...)
    if torch.typename(input) then
       hcomponents = input.imgraph.segm2components(input)
    else
-      local getmasks = false; if img then getmasks = true end
-      hcomponents,masks = torch.Tensor().imgraph.tree2components(input, getmasks)
+      hcomponents,masks = torch.Tensor().imgraph.tree2components(input, true)
    end
 
    -- reorganize
