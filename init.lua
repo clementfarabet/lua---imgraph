@@ -603,7 +603,6 @@ function imgraph.extractcomponents(...)
       if config == 'masked' then maskit = true end
       for k = 1,i do
          if c.surface[k] >= minsize then
-            print(k,i)
             -- get bounding box corners:
             local top = c.bbox_top[k]
             local height = c.bbox_height[k]
