@@ -24,7 +24,7 @@
 
 #ifdef epsilon
 #undef epsilon
-#endif epsilon
+#endif
 #define epsilon 1e-8
 
 static inline real imgraph_(ndiff)(real *img,
