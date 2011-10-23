@@ -72,8 +72,10 @@ static int MergeTree_tostring (lua_State *L)
     str += sprintf(str, "\n");
     str += sprintf(str, " - node: %d ; level %d ; nbsons: %d ; father: %d ; ", 
             i, CT->tabnodes[i].data, CT->tabnodes[i].nbsons, CT->tabnodes[i].father);
-    if (CT->tabnodes[i].nbsons > 0)
-    {
+    if (t->weights) {
+      str += sprintf(str, "weight: %f ; ", t->weights[i]);
+    }
+    if (CT->tabnodes[i].nbsons > 0) {
       str += sprintf(str, "sons: ");
       for (s = CT->tabnodes[i].sonlist; s != NULL; s = s->next)
         str += sprintf(str, "%d  ", s->son);
