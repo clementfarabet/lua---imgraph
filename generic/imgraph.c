@@ -665,6 +665,9 @@ static int imgraph_(mergetree)(lua_State *L) {
   t->cs = cs;
   t->rs = rs;
   t->altitudes = altitudes;
+
+ 
+  
   return 1;
 }
 
@@ -711,6 +714,21 @@ static int imgraph_(filtertree)(lua_State *L) {
   free(attribute);
 
   // done
+  return 1;
+}
+
+
+static int imgraph_(cuttree)(lua_State *L) {
+  // get args
+  MergeTree *t = lua_toMergeTree(L, 1);
+ int table_weights = 2; // arg 2
+
+ 
+ //calling the labeling method on the merge tree
+ list * cut;
+ cut = MSF_Kruskal(t);
+
+ // done
   return 1;
 }
 
@@ -1376,6 +1394,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"tree2components", imgraph_(tree2components)},
   {"adjacency", imgraph_(adjacency)},
   {"segm2components", imgraph_(segm2components)},
+  {"cuttree", imgraph_(cuttree)},
   {NULL, NULL}
 };
 

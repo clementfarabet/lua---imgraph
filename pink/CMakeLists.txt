@@ -23,7 +23,9 @@ add_library(pink
              mcindic.c         
              mclifo.c          
              mcfifo.c
-             mcunionfind.c)
+             mcunionfind.c
+	     mtrand64.c 
+	     kruskal.c)
 
 set (CMAKE_C_FLAGS "-fpic -g -DUNIXIO")
 target_link_libraries(pink)

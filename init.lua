@@ -337,6 +337,28 @@ function imgraph.weighttree(...)
 end
 
 ----------------------------------------------------------------------
+-- computes a cut in a tree 
+--
+function imgraph.cuttree(...)
+   --get args
+   local args = {...}
+   local tree = args[1]
+   local weights = args[2]
+
+   -- usage
+   if not tree or not weights then
+      print(xlua.usage('imgraph.cuttree',
+                       'computes a cut in a tree', nil,
+                       {type='imgraph.MergeTree', help='merge tree to be weighted', req=true},
+                       {type='table', help='a list of weights t[k] = w, with k the index of the node to be weighted', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.cuttree')
+   end
+
+   -- compute cut
+   torch.Tensor().imgraph.cuttree(tree, weights)
+end
+
+----------------------------------------------------------------------
 -- transform a merge tree back into a graph, for visualization
 --
 function imgraph.tree2graph(...)
@@ -752,14 +774,14 @@ imgraph._example = [[
       local mt = imgraph.mergetree(graph)
 
       -- (7) display results
-      image.display{image=inputimg, legend='input image'}
-      image.display{image=cc, legend='thresholded graph'}
-      image.display{image=watershed, legend='watershed on the graph'}
-      image.display{image=watershedcc, legend='components of watershed'}
-      image.display{image=mstsegmcolor, legend='segmented graph, using min-spanning tree'}
-      image.display{image=pool, legend='original imaged hist-pooled by segmentation'}
-      image.display{image=hierarchy, legend='raw edge-weighted graph watershed'}
-      image.display{image=filteredhierarchy, legend='filtered edge-weighted graph watershed'}
+       image.display{image=inputimg, legend='input image'}
+       image.display{image=cc, legend='thresholded graph'}
+       image.display{image=watershed, legend='watershed on the graph'}
+       image.display{image=watershedcc, legend='components of watershed'}
+       image.display{image=mstsegmcolor, legend='segmented graph, using min-spanning tree'}
+       image.display{image=pool, legend='original imaged hist-pooled by segmentation'}
+       image.display{image=hierarchy, legend='raw edge-weighted graph watershed'}
+       image.display{image=filteredhierarchy, legend='filtered edge-weighted graph watershed'}
 ]]
 function imgraph.testme(usrimg)
    local inputimg

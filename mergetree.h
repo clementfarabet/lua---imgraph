@@ -14,6 +14,13 @@ typedef struct {
   int rs;
 } MergeTree;
 
+ typedef struct list
+        {
+                int index;
+                struct list *next;
+        } list ;
+
+
 static MergeTree *lua_toMergeTree (lua_State *L, int index)
 {
   MergeTree *mt = (MergeTree *)lua_touserdata(L, index);
