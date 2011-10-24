@@ -593,7 +593,7 @@ function imgraph.extractcomponents(...)
       components.bbox_y[i]      = comp[13]
       components.mask[i]        = masks[i]
    end
-   components.size = function(self) return #self.id end
+   components.size = function(self) return #self.surface end
 
    -- auxiliary image given ?
    if img and img:nDimension() == 3 then
