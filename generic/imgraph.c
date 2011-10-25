@@ -721,15 +721,21 @@ static int imgraph_(filtertree)(lua_State *L) {
 static int imgraph_(cuttree)(lua_State *L) {
   // get args
   MergeTree *t = lua_toMergeTree(L, 1);
- int table_weights = 2; // arg 2
-
  
  //calling the labeling method on the merge tree
- list * cut;
- cut = MSF_Kruskal(t);
+ list * cut = MSF_Kruskal(t);
+
+ // export list into lua table
+ lua_newtable(L); int tb = lua_gettop(L);
+ int id = 1;
+ while(cut) {
+   lua_pushnumber(L, cut->index);
+   lua_rawseti(L, tb, id++);
+   cut = cut->next;
+ }
 
  // done
-  return 1;
+ return 1;
 }
 
 static int imgraph_(weighttree)(lua_State *L) {

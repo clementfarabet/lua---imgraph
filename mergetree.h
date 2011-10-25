@@ -1,9 +1,5 @@
-#ifndef _MERGETREE_
-#define _MERGETREE_
-
-// create a proper Lua class to represent a merge tree
-#define MT "imgraph.MergeTree"
-
+#ifndef _MERGETREESTRUCT_
+#define _MERGETREESTRUCT_
 typedef struct {
   mtree *tree;
   RAG *rag;
@@ -13,13 +9,13 @@ typedef struct {
   int cs;
   int rs;
 } MergeTree;
+#endif
 
- typedef struct list
-        {
-                int index;
-                struct list *next;
-        } list ;
+#ifndef _MERGETREE_
+#define _MERGETREE_
 
+// create a proper Lua class to represent a merge tree
+#define MT "imgraph.MergeTree"
 
 static MergeTree *lua_toMergeTree (lua_State *L, int index)
 {
