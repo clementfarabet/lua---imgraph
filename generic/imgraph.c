@@ -729,7 +729,7 @@ static int imgraph_(cuttree)(lua_State *L) {
  lua_newtable(L); int tb = lua_gettop(L);
  int id = 1;
  while(cut) {
-   lua_pushnumber(L, cut->index);
+   lua_pushnumber(L, cut->index+1);
    lua_rawseti(L, tb, id++);
    cut = cut->next;
  }
