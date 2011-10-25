@@ -191,7 +191,7 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
   for (i = 0; i < CT->nbnodes; i++)
     {
       // nodes having a different value than their father are in the cut
-      if( Map[CT->tabnodes[i].father] != Map[i])
+      if ((CT->tabnodes[i].father != -1) && (Map[CT->tabnodes[i].father] != Map[i]))
         Insert(&cut, i);
       // leafs having the same label as the root are in the cut
       if ((CT->tabnodes[i].nbsons == 0) && (Map[i]==0))
