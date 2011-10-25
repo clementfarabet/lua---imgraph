@@ -198,7 +198,7 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
         Insert(&cut, i);
     }
 
-  PrintList(cut);
+  //PrintList(cut);
 
   LifoTermine(LIFO);
   free(Mrk);
