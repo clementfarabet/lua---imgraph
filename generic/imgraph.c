@@ -602,7 +602,7 @@ static int imgraph_(watershed)(lua_State *L) {
   int32_t *labels_data = SLONGDATA(labels_xv);
   int i;
   for (i = 0; i < (rowsize(filtered_xv)*colsize(filtered_xv)); i++)
-    if (labels_data[i]) filtered_data[i] = NDG_MAX; 
+    if (labels_data[i]) filtered_data[i] = NDG_MAX;
     else filtered_data[i] = NDG_MIN;
 
   imgraph_(xv2tensor)(filtered_xv, input);
@@ -636,7 +636,7 @@ static int imgraph_(mergetree)(lua_State *L) {
   // compute labels
   struct xvimage *labels = allocimage(NULL,rs,cs,1,VFF_TYP_4_BYTE);
   int32_t *labels_data = SLONGDATA(labels);
-  int i; 
+  int i;
   for (i=0; i<rs*cs; i++) labels_data[i] = i;
   //flowMapping(graph_xv, labels_data);
 
@@ -666,8 +666,8 @@ static int imgraph_(mergetree)(lua_State *L) {
   t->rs = rs;
   t->altitudes = altitudes;
 
- 
-  
+
+
   return 1;
 }
 
@@ -684,7 +684,7 @@ static int imgraph_(filtertree)(lua_State *L) {
     attribute = surfaceMergeTree(t->tree->CT,t->rag);
     break;
   case 1:
-    attribute = dynaMergeTree(t->tree->CT,t->rag); 
+    attribute = dynaMergeTree(t->tree->CT,t->rag);
     break;
   case 2:
     attribute = volumeMergeTree(t->tree->CT,t->rag);
@@ -717,25 +717,26 @@ static int imgraph_(filtertree)(lua_State *L) {
   return 1;
 }
 
-
 static int imgraph_(cuttree)(lua_State *L) {
   // get args
   MergeTree *t = lua_toMergeTree(L, 1);
- 
- //calling the labeling method on the merge tree
- list * cut = MSF_Kruskal(t);
 
- // export list into lua table
- lua_newtable(L); int tb = lua_gettop(L);
- int id = 1;
- while(cut) {
-   lua_pushnumber(L, cut->index+1);
-   lua_rawseti(L, tb, id++);
-   cut = cut->next;
- }
+  //calling the labeling method on the merge tree
+  list * cut = MSF_Kruskal(t);
 
- // done
- return 1;
+  // export list into lua table
+  lua_newtable(L); int tb = lua_gettop(L);
+  int id = 1;
+  while(cut) {
+    lua_pushnumber(L, cut->index+1);
+    lua_rawseti(L, tb, id++);
+    list *cur = cut;
+    cut = cut->next;
+    free(cur);
+  }
+
+  // done
+  return 1;
 }
 
 static int imgraph_(weighttree)(lua_State *L) {
@@ -754,7 +755,7 @@ static int imgraph_(weighttree)(lua_State *L) {
     t->weights[id++] = lua_tonumber(L, -1);
     lua_pop(L,1);
   }
-  if (id < t->tree->CT->nbnodes) 
+  if (id < t->tree->CT->nbnodes)
     printf("<imgraph.weighttree> WARNING: not enough weights provided, padding with zeros\n");
   for (; id<t->tree->CT->nbnodes; id++)
     t->weights[id] = 0;
@@ -834,7 +835,7 @@ int imgraph_(tree2components)(lua_State *L) {
         // get entry for son
         long sonid = son->son + 1;
         lua_rawgeti(L, table_comps, sonid);
-        THTensor *sonentry = luaT_toudata(L, -1, torch_(Tensor_id)); 
+        THTensor *sonentry = luaT_toudata(L, -1, torch_(Tensor_id));
         lua_pop(L,1);
 
         // update parent's structure
@@ -1085,7 +1086,7 @@ int imgraph_(histpooling)(lua_State *L) {
   real minConfidence = lua_tonumber(L, 5);
 
   // check dims
-  if ((vectors->nDimension != 3) || (segm->nDimension != 2) 
+  if ((vectors->nDimension != 3) || (segm->nDimension != 2)
       || (segm->size[0] != vectors->size[1]) || (segm->size[1] != vectors->size[2]))
     THError("<imgraph.histpooling> vectors must be KxHxW and segm HxW");
 
@@ -1345,7 +1346,7 @@ int imgraph_(segm2components)(lua_State *L) {
 
       } else {
         // retrieve entry
-        THTensor *entry = luaT_toudata(L, -1, torch_(Tensor_id)); 
+        THTensor *entry = luaT_toudata(L, -1, torch_(Tensor_id));
         lua_pop(L,1);
 
         // update content
