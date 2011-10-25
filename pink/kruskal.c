@@ -48,7 +48,7 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
   int i, j, k, x, y, e1, e2;
   int nb_markers; int nb_leafs;
   long N, M;
-
+  float val=1; //weight parameter for leafs.
   mtree * T= MT->tree;
   float * W = MT->weights;
   // mergeTreePrint(T);
@@ -89,11 +89,10 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
       {
         SeededNodes[j]= i+CT->nbnodes;
         Mrk[SeededNodes[j]] = 1;
-        //printf("seeded node %d \n", SeededNodes[j]);
-        j++;
+	j++;
       }
-  Mrk[M] = 0;
-
+  Mrk[M] = 1;
+ 
   uint32_t * Rnk = (uint32_t*)calloc(N, sizeof(uint32_t));
   if (Rnk == NULL) { fprintf(stderr, "kruskal : malloc failed\n"); exit(0); }
   uint32_t * Fth = (uint32_t*)malloc(N*sizeof(uint32_t));
@@ -110,10 +109,8 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
     sorted_weights[k]=W[k];
 
   for(k=0;k<nb_leafs;k++)
-    {
-      sorted_weights[CT->nbnodes+k]=0.5;
-      //fprintf(stderr,"%f\n", sorted_weights[CT->nbnodes+k]);
-    }
+    sorted_weights[CT->nbnodes+k]=val;
+    
   TriRapideStochastique_dec(sorted_weights,Es, 0, M-1);
   free(sorted_weights);
 
@@ -122,7 +119,7 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
   long cpt_aretes = 0;
 
   // beginning of main loop
-  while (nb_arete < N-nb_markers+1)
+  while (nb_arete < N-nb_markers)
     {
       e_max=Es[cpt_aretes];
       cpt_aretes=cpt_aretes+1;
@@ -130,11 +127,13 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
       if (e_max<CT->nbnodes) e2= CT->tabnodes[e_max].father;
       else e2= e_max-CT->nbnodes;
       if (e2==-1)e2=M;  //e2 = Edges[1][e_max];
+      //printf("(%d %d)\n", e1,e2);
       x = element_find(e1, Fth );
       y = element_find(e2, Fth );
       if ((x != y) && (!(Mrk[x]>=1 && Mrk[y]>=1)))
         {
           root = element_link( x,y, Rnk, Fth);
+	  //printf("link\n");
           nb_arete=nb_arete+1;
           if ( Mrk[x]>=1) Mrk[root]= Mrk[x];
           else if ( Mrk[y]>=1) Mrk[root]= Mrk[y];
@@ -145,11 +144,9 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
   // (find the root vertex of each tree)
   int * Map2 = (int *)malloc(N*sizeof(int));
   int * Map = (int *)malloc(N*sizeof(int));
-  for (i=0; i<N; i++) {
+   for (i=0; i<N; i++)
     Map2[i] = element_find(i, Fth);
-    //printf("Map2[%d]=%d \n",i,Map2[i]);
-  }
-
+    
   // Compute the binary labeling in Map
   for (i = 1; i < nb_markers; i++)
     Map[SeededNodes[i]] = 1;
@@ -164,12 +161,13 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
           x = LifoPop(LIFO);
           Mrk[x]=true;
           j= nb_neighbors(x, CT, nb_leafs);
-
-          for (k=0;k<j;k++)
+	  for (k=0;k<j;k++)
             {
+	    
               y = neighbor(x, k, CT, nb_leafs, SeededNodes);
+	   
               if (y==-1)y=M;
-              if (Map2[y]==Map2[SeededNodes[i]]  && Mrk[y]==false)
+	      if (Map2[y]==Map2[SeededNodes[i]]  && Mrk[y]==false)
                 {
                   LifoPush(LIFO, y);
                   if (i==0) Map[y]= 0;
@@ -177,16 +175,16 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
                   Mrk[y]=true;
                 }
             }
-        }
+	}
       LifoFlush(LIFO);
     }
   for (i = 1; i < nb_markers; i++)
     Map[SeededNodes[i]] = 1;
   Map[M]=0;
 
-  for (i=0; i<N; i++) {
-    //printf("Map[%d]=%d \n",i,Map[i]);
-  }
+  /*  for (i=0; i<N; i++) {
+    printf("Map[%d]=%d \n",i,Map[i]);
+    }*/
 
   // Process the tree to find the cut
   list * cut = NULL;
@@ -200,7 +198,7 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
         Insert(&cut, i);
     }
 
-  //PrintList(cut);
+  PrintList(cut);
 
   LifoTermine(LIFO);
   free(Mrk);
@@ -216,6 +214,7 @@ list * MSF_Kruskal(MergeTree * MT)  // max_weight    /* maximum weight value */ 
 void PrintList(list *sl)
 /*================================================*/
 {
+  fprintf(stderr, "Nodes of the cut:\n");
   while(sl)
     {
       printf("%d\n",sl->index);
@@ -244,6 +243,7 @@ int nb_neighbors(int x, JCctree *CT, int nb_leafs)
 int neighbor(int x, int k, JCctree *CT, int nb_leafs, int * SeededNodes)
 /*================================================*/
 {
+
   JCsoncell *s;int i, tmp;
   if (x<CT->nbnodes)
     {
@@ -257,6 +257,7 @@ int neighbor(int x, int k, JCctree *CT, int nb_leafs, int * SeededNodes)
           if (k==tmp) return CT->tabnodes[x].father;
           s = CT->tabnodes[x].sonlist;
           for (i=0;i<k;i++) s = s->next; // INEFFICACE A REFAIRE
+	  //fprintf(stderr," ici ");
           return s->son;
         }
     }
@@ -295,25 +296,6 @@ int element_find(int x, uint32_t *Fth )
     Fth[x] = element_find(Fth[x], Fth);
   return Fth[x];
 }
-
-/*  // Printing the merge tree
-    int32_t i;
-    JCsoncell *s;
-    JCctree *CT = MT->CT;
-    printf("root = %d ;  nbnodes: %d ; nbsoncells: %d\n", CT->root, CT->nbnodes, CT->nbsoncells);
-    for (i = 0; i < CT->nbnodes; i++)
-    {
-    printf("node: %d ; level %d ; nbsons: %d ; father: %d ; mergeEdge %d",
-    i, CT->tabnodes[i].data, CT->tabnodes[i].nbsons, CT->tabnodes[i].father, MT->mergeEdge[i]);
-    if (CT->tabnodes[i].nbsons > 0)
-    {
-    printf("sons: ");
-    for (s = CT->tabnodes[i].sonlist; s != NULL; s = s->next)
-    printf("%d  ", s->son);
-    }
-    printf("\n");
-    }
-*/
 
 /* =============================================================== */
 long Partitionner_dec(float *A, uint32_t * I, long p, long r)
@@ -358,7 +340,6 @@ long PartitionStochastique_dec (float *A, uint32_t * I, long p, long r)
   long q;
 
   q = p + (genrand64_int64() % (r - p + 1)); /* rand must be 64-bit safe, should be OK now */
-  //  assert((q >= p) && (q <= r)) ; /* you'd be surprised */
   t = A[p];         /* echange A[p] et A[q] */
   A[p] = A[q];
   A[q] = t;
