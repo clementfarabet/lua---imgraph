@@ -68,7 +68,7 @@ void Insert(list **sl, int index)
   nb_markers = nb_leafs+1;
   N=M+nb_markers;
   M=N-1;
-  printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
+  //printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
 
   // indexes of edges : son's nodes indexes
   //Memory allocation of temporary arrays for Krukal's algorithm 
@@ -91,7 +91,7 @@ void Insert(list **sl, int index)
       {
 	SeededNodes[j]= i+CT->nbnodes;
 	Mrk[SeededNodes[j]] = 1;      
-	printf("seeded node %d \n", SeededNodes[j]);
+	//printf("seeded node %d \n", SeededNodes[j]);
 	j++;
       }
   Mrk[M] = 0;
@@ -115,7 +115,7 @@ void Insert(list **sl, int index)
    for(k=0;k<nb_leafs;k++) 
      {
        sorted_weights[CT->nbnodes+k]=0.5;
-       fprintf(stderr,"%f\n", sorted_weights[CT->nbnodes+k]);
+       //fprintf(stderr,"%f\n", sorted_weights[CT->nbnodes+k]);
      }
    TriRapideStochastique_dec(sorted_weights,Es, 0, M-1);
    free(sorted_weights); 
@@ -150,7 +150,7 @@ void Insert(list **sl, int index)
   int * Map = (int *)malloc(N*sizeof(int));
   for (i=0; i<N; i++) {
     Map2[i] = element_find(i, Fth);
-    printf("Map2[%d]=%d \n",i,Map2[i]);
+    //printf("Map2[%d]=%d \n",i,Map2[i]);
   }
   
   // Compute the binary labeling in Map 
@@ -188,7 +188,7 @@ void Insert(list **sl, int index)
   Map[M]=0; 
 
   for (i=0; i<N; i++) {
-    printf("Map[%d]=%d \n",i,Map[i]);
+    //printf("Map[%d]=%d \n",i,Map[i]);
   }
   
   // Process the tree to find the cut
@@ -203,7 +203,7 @@ void Insert(list **sl, int index)
       Insert(&cut, i); 
     }
  
- PrintList(cut);
+ //PrintList(cut);
  
     
    LifoTermine(LIFO);
