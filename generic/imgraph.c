@@ -721,9 +721,22 @@ static int imgraph_(cuttree)(lua_State *L) {
   // get args
   MergeTree *t = lua_toMergeTree(L, 1);
 
-  //calling the labeling method on the merge tree
-  list * cut = MSF_Kruskal(t);
+  int mode = 0;
+  if (lua_isnumber(L, 2)) mode = lua_tonumber(L, 2);
 
+  //calling the labeling method on the merge tree
+  
+  list * cut;
+  switch(mode){
+  case 0:
+    cut = MSF_Kruskal(t);
+    break;
+  case 1:
+    cut = MSF_Prim(t);
+    break;
+  }
+
+  
   // export list into lua table
   lua_newtable(L); int tb = lua_gettop(L);
   int id = 1;

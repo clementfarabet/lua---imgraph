@@ -343,17 +343,24 @@ function imgraph.cuttree(...)
    --get args
    local args = {...}
    local tree = args[1]
+   local mode = args[2]
 
    -- usage
    if not tree then
       print(xlua.usage('imgraph.cuttree',
                        'computes a cut in a tree', nil,
-                       {type='imgraph.MergeTree', help='merge tree to be weighted', req=true}))
+                       	{type='imgraph.cuttree', help='computes a cut in a hierchical tree', req=true}, 
+		        {type='string', help='cutting algorithm : Kruskal | Prim | PWatershed', default='Kruskal'}))
       xlua.error('incorrect arguments', 'imgraph.cuttree')
    end
 
+   -- defaults
+   if mode == 'Kruskal' then mode = 0
+   elseif mode == 'Prim' then mode = 1
+   else mode = 0 end
+
    -- compute cut
-   return torch.Tensor().imgraph.cuttree(tree)
+   return torch.Tensor().imgraph.cuttree(tree, mode)
 end
 
 ----------------------------------------------------------------------
