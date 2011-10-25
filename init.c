@@ -12,6 +12,7 @@
 #include "lwshedtopo.h"
 #include "lsaliency.h"
 #include "lhierarchie.h"
+#include "kruskal.h"
 #include "llpeGA.h"
 #include "lga2khalimsky.h"
 #include "lppm2GA.h"
