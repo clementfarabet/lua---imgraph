@@ -54,7 +54,7 @@ list * MSF_Prim(MergeTree * MT)
   nb_markers = nb_leafs+1;
   N=M+nb_markers;
   M=N-1;
-  printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
+  // printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
 
   //init Prim
   //Creates a Red-Black tree to sort edges
@@ -90,26 +90,40 @@ list * MSF_Prim(MergeTree * MT)
        	Set(SeededNodes[j], true);
 	j++;
       }
-  G2[M]=1;    
-  mcrbt_RbtInsert(&L, (TypRbtKey)(val), M);
+  G2[root_node]=1;    
+  mcrbt_RbtInsert(&L, (TypRbtKey)(1-W[root_node]), root_node);
   sizeL++;
-  Set(M, true);
+  Set(root_node, true);
 
   // weights
   float * Weights = (float *)malloc(M*sizeof(float));
   for(j=0;j<CT->nbnodes;j++)
     Weights[j]=W[j];
   
+  /*  Weights[1]=0.1;
+  Weights[2]=0.2;
+Weights[3]=0.3;
+Weights[4]=0.4;
+Weights[5]=0.5;
+Weights[6]=0.6;
+Weights[7]=0.7;
+Weights[8]=0.8;
+Weights[9]=0.9;
+Weights[10]=1;
+Weights[0]=0;
+  */
+
+
   for(j=0;j<nb_leafs;j++)
     Weights[CT->nbnodes+j]=val;
-  for(j=0;j<M;j++)
-    fprintf(stderr,"%f \n", Weights[j]);
+  // for(j=0;j<M;j++)
+  // fprintf(stderr,"%f \n", Weights[j]);
 
   // While there exists unprocessed nodes
   while(sizeL != 0)
     {
       //Pick an edge u of min weight in the tree.
-      u = RbtPopMin(L);  fprintf(stderr, "pop %d\n", u);
+      u = RbtPopMin(L); // fprintf(stderr, "pop %d\n", u);
       sizeL--;
       // Find its extreme nodes (x,y)
       x = u; // x = G->Edges[0][u];
@@ -127,15 +141,16 @@ list * MSF_Prim(MergeTree * MT)
 	{
 	  // assign the same label to the other one
 	  G2[x] = G2[y];
-	  fprintf(stderr,"x= %d y=%d\n",x,y);
+	  //fprintf(stderr,"Map[%d]=Map[%d]\n",x,y);
 	  
 	  // select neighbors edges to place them in the tree
 	  j= nb_neighbors(u, CT, nb_leafs);
+	  //fprintf(stderr,"nb_neigbors= %d \n",j);
 	  for (i=0;i<j;i++)
             {
-	      v = neighbor(u, i, CT, nb_leafs, SeededNodes);
+	       v = neighbor(u, i, CT, nb_leafs, SeededNodes);
 	      if (v==-1)v=M;
-	       fprintf(stderr," %d ",v);
+	      // fprintf(stderr," %d ",v);
 	     
 	       // if the edge v is not processed yet
 	      if(!IsSet(v, true))
@@ -146,23 +161,23 @@ list * MSF_Prim(MergeTree * MT)
 		  else if(v!=M) y_1= v-CT->nbnodes;
 		  else y_1 = root_node;
 		  if (y_1==-1)y_1=M;    
-		  fprintf(stderr," [%d %d] ",x_1, y_1); 
+		  //fprintf(stderr," [%d %d] ",x_1, y_1); 
 		  if((minimum(G2[x_1],G2[y_1]) == 0) && (maximum(G2[x_1],G2[y_1]) > 0))
 		    {
-		      fprintf(stderr,"( insert %d) ",v);
+		      //fprintf(stderr,"( insert %d) ",v);
 		      mcrbt_RbtInsert(&L, (TypRbtKey)(1-Weights[v]), v);
 		      sizeL++;
 		      Set(v,true);
-		    }	  
+		    }
 		}
 	    }
-	  fprintf(stderr," \n");
+	  // fprintf(stderr," \n");
 	}
       UnSet(u,true);
     }
   
-  for (i=0; i<N; i++) 
-    printf("Map[%d]=%d \n",i,G2[i]-1);
+  /* for (i=0; i<N; i++) 
+     printf("Map[%d]=%d \n",i,G2[i]-1);*/
     
       // Process the tree to find the cut
       list * cut = NULL;
