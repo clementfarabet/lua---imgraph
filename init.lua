@@ -212,7 +212,7 @@ function imgraph.watershed(...)
    end
 
    -- compute image
-   local nelts = gradient.imgraph.watershed(dest, gradient, minHeight, connex)
+   local nelts = gradient.imgraph.watershed(dest, gradient:clone(), minHeight, connex)
 
    -- return image
    return dest, nelts
@@ -764,7 +764,7 @@ imgraph._example = [[
       -- (4) compute the watershed of the graph
       local graph = imgraph.graph(inputimgg, 8)
       local gradient = imgraph.gradient(graph)
-      local watershed = imgraph.watershed(gradient, 0.07, 8)
+      local watershed = imgraph.watershed(gradient, 0.08, 8)
       local watershedgraph = imgraph.graph(watershed, 8)
       local watershedcc = imgraph.connectcomponents(watershedgraph, 0.5, true)
 
