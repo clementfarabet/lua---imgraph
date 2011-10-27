@@ -21,8 +21,8 @@ typedef struct {
 } Set;
 
 Set * set_new(int nelts) {
-  Set *set = calloc(1, sizeof(Set));
-  set->elts = calloc(nelts, sizeof(Elt));
+  Set *set = (Set *)calloc(1, sizeof(Set));
+  set->elts = (Elt *)calloc(nelts, sizeof(Elt));
   set->nelts = nelts;
   int i;
   for (i = 0; i < nelts; i++) {

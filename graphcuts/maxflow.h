@@ -1,3 +1,4 @@
+
 #include <MTree_utils.h>
 
 #ifndef _MERGETREESTRUCT_
@@ -13,8 +14,6 @@ typedef struct {
 } MergeTree;
 #endif
 
-
-
 #ifndef _LISTSTRUCT_
 #define _LISTSTRUCT_
 typedef struct list
@@ -24,4 +23,4 @@ typedef struct list
 } list ;
 #endif
 
-list * Graph_Cuts(MergeTree * );
+extern list * Graph_Cuts(MergeTree * );

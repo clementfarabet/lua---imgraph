@@ -63,7 +63,7 @@ static int MergeTree_gc (lua_State *L)
 static int MergeTree_tostring (lua_State *L)
 {
   MergeTree *t = lua_toMergeTree(L, 1);
-  char *cstr = malloc(10*1024);
+  char *cstr = (char *)malloc(10*1024);
   char *str = cstr;
   str += sprintf(str, "<%s>\n", MT);
 

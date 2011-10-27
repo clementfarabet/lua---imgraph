@@ -97,10 +97,9 @@ extern int32_t jccomptree_LowComAncSlow(JCctree * CT, int32_t c1, int32_t c2);
 extern void mergeTreePrint(mtree * MT);
 extern mtree * mergeTreeAlloc(int32_t N);
 extern void mergeTreeFree(mtree * MT);
-//extern int32_t mergeTree(RAG *rag, mtree **MergeTree);
+extern int32_t mergeTree(RAG *rag, mtree **MergeTree);
 // Ces 3 fontions vont plutot dans la biblio hierarchie
-//int32_t jcSaliencyTree_b (JCctree ** SaliencyTree, int32_t *MST, int32_t *Valeur, RAG *rag, int32_t *STaltitude);
-
+int32_t jcSaliencyTree_b (JCctree ** SaliencyTree, int32_t *MST, int32_t *Valeur, RAG *rag, int32_t *STaltitude);
 
 #ifdef __cplusplus
 }
