@@ -815,6 +815,21 @@ void Insert(list **sl, int index)
   else *sl = elem;
 }
 
+
+/*================================================*/
+void PrintList(list *sl)
+/*================================================*/
+{
+  fprintf(stderr, "Nodes of the cut:\n");
+  while(sl)
+    {
+      printf("%d\n",sl->index);
+      sl = sl->next;
+    }
+}
+
+
+
 /* =============================================================== */
 list * Graph_Cuts(MergeTree *MT )
 /* =============================================================== */
@@ -824,7 +839,7 @@ list * Graph_Cuts(MergeTree *MT )
   computed using a Max Flow algorithm */
   int y, i, j, tmp;
   
-  double CTE_WEIGHTS = 500000;
+  double CTE_WEIGHTS = 100000;
   printf("CTE_WEIGHTS =  %f %d \n",CTE_WEIGHTS, INFINITE_D );
 
   int nb_markers; int nb_leafs;
@@ -868,11 +883,11 @@ list * Graph_Cuts(MergeTree *MT )
    
    // weights
    
-   float * weights = (float *)malloc(M*sizeof(float));
+   float * weights = (float *)malloc(N*sizeof(float));
    for(i=0;i<CT->nbnodes;i++)
      weights[i]=W[i];
    
-   for(i=0;i<nb_leafs;i++)
+   for(i=0;i<nb_markers;i++)
      weights[CT->nbnodes+i]=val;
    
    
@@ -884,15 +899,20 @@ list * Graph_Cuts(MergeTree *MT )
      g -> add_node(); 
    
    g -> add_tweights(SeededNodes[0], INFINITE_D, 0 );
+   //fprintf(stderr,"adding the source edge to node %d \n", SeededNodes[0] );
    for (i=1;i<nb_markers;i++)
+     {
      g -> add_tweights(SeededNodes[i], 0, INFINITE_D);
-   
+     // fprintf(stderr,"adding the sink edge to node %d \n", SeededNodes[i] );
+     }   
+
    for  (i=0;i<CT->nbnodes;i++)
      {
        tmp = CT->tabnodes[i].nbsons;
        if (tmp==0) //leaf
 	 {
-	   y= SeededNodes[i]; // edge index
+	   y= SeededNodes[i+1]; // edge index
+	   // fprintf(stderr,"edge (%d %d) %d \n", i,y,  (int)(weights[y]*CTE_WEIGHTS ));
 	   g -> add_edge( i, y, (int)(weights[y]*CTE_WEIGHTS), (int)(weights[y]*CTE_WEIGHTS) );
 	 } 
        else
@@ -900,13 +920,16 @@ list * Graph_Cuts(MergeTree *MT )
 	   for ( s = CT->tabnodes[i].sonlist;s!=NULL;s = s->next)  
 	     {
 	       y=s->son;
+	       //  fprintf(stderr,"edge (%d %d) %d \n", i,y,  (int)(weights[y]*CTE_WEIGHTS ));
 	       g -> add_edge( i, y, (int)(weights[y]*CTE_WEIGHTS), (int)(weights[y]*CTE_WEIGHTS) );
 	     }
 	 }
      }
+g -> add_edge( root_node, M, (int)(weights[root_node]*CTE_WEIGHTS), (int)(weights[y]*CTE_WEIGHTS) );
 
    free(weights);  
    
+ // ------------------ Calling the Max Flow algorithm ----------------------
    printf("Max flow walue  =  %d \n", g -> maxflow());
    
  
@@ -919,11 +942,12 @@ list * Graph_Cuts(MergeTree *MT )
       else if (g->what_segment(i) == GraphType::SINK)
 	Map[i]=1;
       else printf("Graphcut error\n");
+      //printf("Map[%d]=%d\n", i, Map[i]);
     }
   delete g;
 
  
- // Process the tree to find the cut
+ // ------------------ Process the tree to find the cut ----------------------
   list * cut = NULL;
  for (i = 0; i < CT->nbnodes; i++)
     {
@@ -935,6 +959,9 @@ list * Graph_Cuts(MergeTree *MT )
         Insert(&cut, i);
     }
 
+ 
+ if (cut == NULL)  Insert(&cut, root_node);
+ //PrintList(cut);
   free(Map);
   free(SeededNodes);
 
