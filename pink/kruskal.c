@@ -187,9 +187,10 @@ list * MSF_Kruskal(MergeTree * MT)
         Insert(&cut, i);
     }
 
-  //PrintList(cut);
+ 
   if (cut == NULL)  Insert(&cut, root_node);
-  LifoTermine(LIFO);
+ //PrintList(cut); 
+ LifoTermine(LIFO);
   free(Mrk);
   free(SeededNodes);
   free(Rnk);
