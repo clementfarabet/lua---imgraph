@@ -136,43 +136,6 @@ function imgraph.connectcomponents(...)
 end
 
 ----------------------------------------------------------------------
--- compute the gradient amplitude of a graph
---
-function imgraph.gradient(...)
-   -- get args
-   local args = {...}
-   local gradient, graph
-   local arg2 = torch.typename(args[2])
-   if arg2 and arg2:find('Tensor') then
-      gradient = args[1]
-      graph = args[2]
-   else
-      gradient = torch.Tensor()
-      graph = args[1]
-   end
-
-   -- usage
-   if not graph then
-      print(xlua.usage('imgraph.gradient',
-                       'compute an approximated gradient map of a graph\n'
-                          .. 'the map has the size of the original image on which the graph\n'
-                          .. 'was constructed',
-                       nil,
-                       {type='torch.Tensor', help='input graph', req=true},
-                       "",
-                       {type='torch.Tensor', help='destination tensor', req=true},
-                       {type='torch.Tensor', help='input graph', req=true}))
-      xlua.error('incorrect arguments', 'imgraph.gradient')
-   end
-
-   -- compute graph
-   graph.imgraph.gradient(gradient, graph)
-
-   -- return result
-   return gradient
-end
-
-----------------------------------------------------------------------
 -- compute the watershed of a graph
 --
 function imgraph.watershed(...)
@@ -237,24 +200,31 @@ function imgraph.graph2map(...)
    end
 
    -- defaults
-   method = method or 'khalimsky'
+   method = method or 'maxgrad'
 
    -- usage
    if not graph or (graph:nDimension() ~= 3) then
       print(xlua.usage('imgraph.graph2map',
-                       'graph2map a graph into a 2D image', nil,
+                       'render a graph into a 2D image:\n'
+                          .. ' + khalimsky: creates a map that is twice larger, for fine visualization\n'
+                          .. ' + maxgrad: creates a map that is the same size, by maxing the edge weights',
+                       nil,
                        {type='torch.Tensor', help='input graph', req=true},
-                       {type='method', help='rendering method: khalimsky', default='khalimsky'},
+                       {type='method', help='rendering method: maxgrad | khalimsky', default='maxgrad'},
                        "",
                        {type='torch.Tensor', help='destination tensor', req=true},
                        {type='torch.Tensor', help='input graph', req=true},
-                       {type='method', help='rendering method: khalimsky', default='khalimsky'}))
+                       {type='method', help='rendering method: maxgrad | khalimsky', default='maxgrad'}))
       xlua.error('incorrect arguments', 'imgraph.graph2map')
    end
 
    -- render graph
-   local graphflat = graph:new():resize(graph:size(1)*graph:size(2),graph:size(3))
-   graph.imgraph.graph2map(dest, graphflat, mode)
+   if method == 'khalimsky' then
+      local graphflat = graph:new():resize(graph:size(1)*graph:size(2),graph:size(3))
+      graph.imgraph.graph2map(dest, graphflat, mode)
+   else
+      graph.imgraph.gradient(dest, graph)
+   end
 
    -- return image
    return dest
@@ -765,7 +735,7 @@ imgraph._example = [[
 
       -- (4) compute the watershed of the graph
       local graph = imgraph.graph(inputimgg, 8)
-      local gradient = imgraph.gradient(graph)
+      local gradient = imgraph.graph2map(graph)
       local watershed = imgraph.watershed(gradient, 0.08, 8)
       local watershedgraph = imgraph.graph(watershed, 8)
       local watershedcc = imgraph.connectcomponents(watershedgraph, 0.5, true)
