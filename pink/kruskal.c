@@ -1,5 +1,5 @@
 /*
-  Kruskal algorithm for Maximum Spanning Forest (MSF) computation 
+  Kruskal algorithm for Maximum Spanning Forest (MSF) computation
   implemented to compute an MSF cut in a tree (hierarchy)
   author: Camille Couprie
   21 oct. 2011
@@ -23,7 +23,7 @@
 
 
 /*=====================================================================================*/
-list * MSF_Kruskal(MergeTree * MT)  
+list * MSF_Kruskal(MergeTree * MT)
 /*=====================================================================================*/
 /*Segment a tree into two components.
   Returns a list of nodes correspunding to the Max Spanning Forest cut,
@@ -54,7 +54,7 @@ list * MSF_Kruskal(MergeTree * MT)
   nb_markers = nb_leafs+1;
   N=M+nb_markers;
   M=N-1;
-  printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
+  //printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
 
   // indexes of edges : son's nodes indexes
   //Memory allocation of temporary arrays for Krukal's algorithm
@@ -76,10 +76,10 @@ list * MSF_Kruskal(MergeTree * MT)
       {
         SeededNodes[j]= i+CT->nbnodes;
         Mrk[SeededNodes[j]] = 1;
-	j++;
+        j++;
       }
   Mrk[M] = 1;
- 
+
   uint32_t * Rnk = (uint32_t*)calloc(N, sizeof(uint32_t));
   if (Rnk == NULL) { fprintf(stderr, "kruskal : malloc failed\n"); exit(0); }
   uint32_t * Fth = (uint32_t*)malloc(N*sizeof(uint32_t));
@@ -94,12 +94,12 @@ list * MSF_Kruskal(MergeTree * MT)
   float * sorted_weights = (float *)malloc(M*sizeof(float));
   for(k=0;k<CT->nbnodes;k++)
     sorted_weights[k]=W[k];
-   
+
   for(k=0;k<nb_leafs;k++)
     sorted_weights[CT->nbnodes+k]=val;
-    
+
   TriRapideStochastique_dec(sorted_weights,Es, 0, M-1);
-   free(sorted_weights);
+  free(sorted_weights);
 
 
   long nb_arete = 0;
@@ -116,13 +116,13 @@ list * MSF_Kruskal(MergeTree * MT)
       else if(e_max!=M) e2= e_max-CT->nbnodes;
       else e2=root_node;
       if (e2==-1)e2=M;  //e2 = Edges[1][e_max];
-      printf("(%d %d)\n", e1,e2);
+      //printf("(%d %d)\n", e1,e2);
       x = element_find(e1, Fth );
       y = element_find(e2, Fth );
       if ((x != y) && (!(Mrk[x]>=1 && Mrk[y]>=1)))
         {
           root = element_link( x,y, Rnk, Fth);
-	  printf("link\n");
+          //printf("link\n");
           nb_arete=nb_arete+1;
           if ( Mrk[x]>=1) Mrk[root]= Mrk[x];
           else if ( Mrk[y]>=1) Mrk[root]= Mrk[y];
@@ -133,9 +133,9 @@ list * MSF_Kruskal(MergeTree * MT)
   // (find the root vertex of each tree)
   int * Map2 = (int *)malloc(N*sizeof(int));
   int * Map = (int *)malloc(N*sizeof(int));
-   for (i=0; i<N; i++)
+  for (i=0; i<N; i++)
     Map2[i] = element_find(i, Fth);
-    
+
   // Compute the binary labeling in Map
   for (i = 1; i < nb_markers; i++)
     Map[SeededNodes[i]] = 1;
@@ -152,11 +152,11 @@ list * MSF_Kruskal(MergeTree * MT)
           x = LifoPop(LIFO);
           Mrk[x]=true;
           j= nb_neighbors(x, CT, nb_leafs);
-	  for (k=0;k<j;k++)
+          for (k=0;k<j;k++)
             {
-	      y = neighbor(x, k, CT, nb_leafs, SeededNodes);
-	      if (y==-1)y=M;
-	      if (Map2[y]==Map2[SeededNodes[i]]  && Mrk[y]==false)
+              y = neighbor(x, k, CT, nb_leafs, SeededNodes);
+              if (y==-1)y=M;
+              if (Map2[y]==Map2[SeededNodes[i]]  && Mrk[y]==false)
                 {
                   LifoPush(LIFO, y);
                   if (i==0) Map[y]= 0;
@@ -164,16 +164,16 @@ list * MSF_Kruskal(MergeTree * MT)
                   Mrk[y]=true;
                 }
             }
-	}
+        }
       LifoFlush(LIFO);
     }
   for (i = 1; i < nb_markers; i++)
     Map[SeededNodes[i]] = 1;
   Map[M]=0;
 
-   for (i=0; i<N; i++) {
-     fprintf(stderr,"Map[%d]=%d \n",i,Map[i]);
-    }
+  for (i=0; i<N; i++) {
+    //fprintf(stderr,"Map[%d]=%d \n",i,Map[i]);
+  }
 
   // Process the tree to find the cut
   list * cut = NULL;
