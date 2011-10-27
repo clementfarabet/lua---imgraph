@@ -32,6 +32,9 @@ list * MSF_Kruskal(MergeTree * MT)
   int i, j, k, x, y, e1, e2;
   int nb_markers; int nb_leafs;
   long N, M;
+
+ // -------- Gathering usefull input graph (MT) informations -----------
+
   float val=1; //weight parameter for leafs.
   mtree * T= MT->tree;
   float * W = MT->weights;
@@ -103,7 +106,7 @@ list * MSF_Kruskal(MergeTree * MT)
   int e_max, root;
   long cpt_aretes = 0;
 
-  // beginning of main loop
+  // ----------- beginning of main loop of Kruskal's algorithm ----------------
   while (nb_arete < N-nb_markers)
     {
       e_max=Es[cpt_aretes];
@@ -138,6 +141,8 @@ list * MSF_Kruskal(MergeTree * MT)
     Map[SeededNodes[i]] = 1;
   Map[M]=0;
 
+
+  // ---------Loop to assign the proper label to each tree--------
   for (i=0;i<N;i++) Mrk[i] = false;
   for (i=0;i<nb_markers; i++)
     {
@@ -183,7 +188,7 @@ list * MSF_Kruskal(MergeTree * MT)
     }
 
   //PrintList(cut);
-
+  if (cut == NULL)  Insert(&cut, root_node);
   LifoTermine(LIFO);
   free(Mrk);
   free(SeededNodes);

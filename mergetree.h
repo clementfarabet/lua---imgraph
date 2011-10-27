@@ -9,6 +9,7 @@ typedef struct {
   int cs;
   int rs;
 } MergeTree;
+
 #endif
 
 #ifndef _MERGETREE_

@@ -32,12 +32,59 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL license and that you accept its terms.
 */
-#ifdef __cplusplus
-extern "C" {
-#endif
 
+/* ============================================================================== */
+/* 
+  Structure de donnees pour la construction de l'arbre des composantes.
+
+  Les sommets de cet arbre representent les composantes des coupes de F,  
+  a l'exception de celles qui sont egales a une composante d'un niveau inferieur.
+  Il y a donc moins de N sommets (N = nombre de pixels) et de N-1 arcs.
+
+  Une composante (sommet) est representee par une structure ctreenode.
+  +
+  arbre des composantes d'un graphe d'adjacence valué
+  +
+  arbre de fusion d'un graphe d'adjacence valué 
+  +
+  un arbre de saillance
+*/
+/* ============================================================================== */
 #ifndef _JCTREESTRUCT_
 #define _JCTREESTRUCT_
+
+typedef struct JCsoncell
+{
+  int32_t son;
+  struct JCsoncell *next;
+} JCsoncell;
+
+typedef struct
+{
+  uint8_t data;             // node's level
+  int32_t father;            // value -1 indicates the root
+  int32_t nbsons;            // value -1 indicates a deleted node
+  int32_t max, min;
+  JCsoncell *sonlist;
+  JCsoncell *lastson;
+} JCctreenode;
+
+typedef struct
+{
+  int32_t nbnodes;
+  int32_t nbsoncells;
+  int32_t root;
+  JCctreenode * tabnodes; 
+  JCsoncell * tabsoncells;
+  uint8_t *flags;
+} JCctree;
+
+typedef struct
+{
+  JCctree *CT;
+  int32_t *mergeEdge;
+} mtree;
+
 // Structure de Graphe binaire
 
 typedef struct BasicCell {
@@ -68,7 +115,6 @@ typedef struct GrapheBasic {
 } GrapheBasic; 
 
 
-
 // Graphe d'adjacence (graphes values contenant de l'information sur les sommets)
 typedef struct RAG{
   GrapheBasic *g;           // la structure binaire
@@ -81,34 +127,4 @@ typedef struct RAG{
 } RAG;
 
 #endif
-// Manipulation ces graphes binaires
-GrapheBasic *initGrapheBasic(int32_t nsom, int32_t nmaxarc);
-void termineGrapheBasic(GrapheBasic *g);
-uint32_t ajouteGrapheBasicSymArc(GrapheBasic *g, int32_t i, int32_t s);
-PBasicCell alloueBasicCell(PBasicCell *plibre);
 
-// Structure pour des graphes a aretes valuees
-typedef struct GrapheValue {
-  GrapheBasic *g;
-  uint8_t *F;
-} GrapheValue;
-
-// Manipulations des graphes values
-GrapheValue *initGrapheValue(int32_t nsom, int32_t nmaxarc);
-void termineGrapheValue(GrapheValue * gv);
-// add a weighted edge if necessary, otherwise update the value of the
-// edge from i to s
-int32_t updateArcValue(GrapheValue *gv, int32_t i, int32_t s, uint8_t val);
-
-
-// Manipulation des RAGs
-extern RAG *initRAG(int32_t nsom, int32_t nmaxarc);
-extern void termineRAG(RAG * rag);
-extern int32_t updateRAGArc(RAG *rag, int32_t i, int32_t s, uint8_t val);
-
-// Les deux fonctions suivantes vont plutot dans la bibliothèque
-// hierarchie
-extern void attributNoeud(RAG *rag, struct xvimage *label, struct xvimage *ga, struct xvimage *annexe);
-#ifdef __cplusplus
-}
-#endif

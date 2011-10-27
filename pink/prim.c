@@ -36,6 +36,9 @@ list * MSF_Prim(MergeTree * MT)
   int32_t i, j,u,v, x,y,z, x_1,y_1;                        
   int nb_markers; int nb_leafs;
   long N, M;
+
+// -------- Gathering usefull input graph (MT) informations -----------
+
   float val=0; //weight parameter for leafs.
   mtree * T= MT->tree;  // mergeTreePrint(T);
   float * W = MT->weights;
@@ -54,7 +57,7 @@ list * MSF_Prim(MergeTree * MT)
   nb_markers = nb_leafs+1;
   N=M+nb_markers;
   M=N-1;
-  // printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
+  
 
   //init Prim
   //Creates a Red-Black tree to sort edges
@@ -99,26 +102,11 @@ list * MSF_Prim(MergeTree * MT)
   float * Weights = (float *)malloc(M*sizeof(float));
   for(j=0;j<CT->nbnodes;j++)
     Weights[j]=W[j];
-  
-  /*  Weights[1]=0.1;
-  Weights[2]=0.2;
-Weights[3]=0.3;
-Weights[4]=0.4;
-Weights[5]=0.5;
-Weights[6]=0.6;
-Weights[7]=0.7;
-Weights[8]=0.8;
-Weights[9]=0.9;
-Weights[10]=1;
-Weights[0]=0;
-  */
-
+ 
 
   for(j=0;j<nb_leafs;j++)
     Weights[CT->nbnodes+j]=val;
-  // for(j=0;j<M;j++)
-  // fprintf(stderr,"%f \n", Weights[j]);
-
+  
   // While there exists unprocessed nodes
   while(sizeL != 0)
     {
@@ -191,6 +179,8 @@ Weights[0]=0;
 	    Insert(&cut, i);
 	}
       
+      if (cut == NULL)  Insert(&cut, root_node);
+
       PrintList(cut);
       IndicsTermine();
       free(G2);

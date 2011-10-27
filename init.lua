@@ -350,13 +350,15 @@ function imgraph.cuttree(...)
       print(xlua.usage('imgraph.cuttree',
                        'computes a cut in a tree', nil,
                        	{type='imgraph.cuttree', help='computes a cut in a hierchical tree', req=true}, 
-		        {type='string', help='cutting algorithm : Kruskal | Prim | PWatershed', default='Kruskal'}))
+		        {type='string', help='cutting algorithm : Kruskal | Prim | PWatershed | Graphcuts', default='Kruskal'}))
       xlua.error('incorrect arguments', 'imgraph.cuttree')
    end
 
    -- defaults
    if mode == 'Kruskal' then mode = 0
    elseif mode == 'Prim' then mode = 1
+   elseif mode == 'PWatershed' then mode = 2 
+   elseif mode == 'Graphcuts' then mode = 3
    else mode = 0 end
 
    -- compute cut

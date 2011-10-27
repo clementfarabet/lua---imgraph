@@ -52,6 +52,7 @@ void PrintList(list *sl)
 /*================================================*/
 int nb_neighbors(int x, JCctree *CT, int nb_leafs)
 /*================================================*/
+// returns the nb of neighbors of a node x in a component tree CT.
 {
   int tmp;
   if (x<CT->nbnodes)
