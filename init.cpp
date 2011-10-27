@@ -2,6 +2,8 @@
 #include "luaT.h"
 
 #include "stdint.h"
+
+extern "C" {
 #include "mccodimage.h"
 #include "mcimage.h"
 #include "jcgraphes.h"
@@ -12,10 +14,13 @@
 #include "lwshedtopo.h"
 #include "lsaliency.h"
 #include "lhierarchie.h"
+#include "lattribheight.h"
 #include "MSF_utils.h"
 #include "llpeGA.h"
 #include "lga2khalimsky.h"
 #include "lppm2GA.h"
+}
+
 #include "set.h"
 #include "mergetree.h"
 #include "maxflow.h"
@@ -30,13 +35,15 @@ static const void* torch_DoubleTensor_id = NULL;
 #include "generic/imgraph.c"
 #include "THGenerateFloatTypes.h"
 
-DLL_EXPORT int luaopen_libimgraph(lua_State *L)
-{
-  torch_FloatTensor_id = luaT_checktypename2id(L, "torch.FloatTensor");
-  torch_DoubleTensor_id = luaT_checktypename2id(L, "torch.DoubleTensor");
+extern "C" {
+  DLL_EXPORT int luaopen_libimgraph(lua_State *L)
+  {
+    torch_FloatTensor_id = luaT_checktypename2id(L, "torch.FloatTensor");
+    torch_DoubleTensor_id = luaT_checktypename2id(L, "torch.DoubleTensor");
 
-  imgraph_FloatInit(L);
-  imgraph_DoubleInit(L);
+    imgraph_FloatInit(L);
+    imgraph_DoubleInit(L);
 
-  return 1;
+    return 1;
+  }
 }
