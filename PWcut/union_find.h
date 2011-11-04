@@ -1,13 +1,18 @@
-/*
-Copyright ESIEE (2009) 
+/*Copyright ESIEE (2009) 
 
-m.couprie@esiee.fr
+Author :
+Camille Couprie (c.couprie@esiee.fr)
 
-This software is an image processing library whose purpose is to be
-used primarily for research and teaching.
+Contributors : 
+Hugues Talbot (h.talbot@esiee.fr)
+Leo Grady (leo.grady@siemens.com)
+Laurent Najman (l.najman@esiee.fr)
 
-This software is governed by the CeCILL  license under French law and
-abiding by the rules of distribution of free software. You can  use, 
+This software contains some image processing algorithms whose purpose is to be
+used primarily for research.
+
+This software is governed by the CeCILL license under French law and
+abiding by the rules of distribution of free software.  You can  use, 
 modify and/ or redistribute the software under the terms of the CeCILL
 license as circulated by CEA, CNRS and INRIA at the following URL
 "http://www.cecill.info". 
@@ -32,32 +37,18 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL license and that you accept its terms.
 */
-#ifndef MC_LISTECHAINEE
-#define MC_LISTECHAINEE
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* definitions pour le module "mclistechainee.c" */
+#include<stdbool.h>
+#include<stdio.h>
+#include<stdint.h>
+int element_link( int x,int y, uint32_t *Rnk, uint32_t *Fth);
+int element_find(int x, uint32_t *Fth );
+uint32_t element_find_iteratif(uint32_t x, uint32_t *Fth );
 
-typedef int32_t TypElement;
-
-typedef struct LISTECHAINEE {         /* definition de la structure Listechainee        */
-  TypElement elt;              /* element en tete de listechainee   */
-  struct LISTECHAINEE   *suite;       /* pointe sur la suite de la listechainee         */
-} TypListechainee;
-
-extern TypListechainee * ListechaineeVide();
-extern TypElement Tete(TypListechainee * l);
-extern TypListechainee * Suite(TypListechainee * l);
-extern TypListechainee * Cons(TypElement e, TypListechainee * l);
-extern void AfficheListechainee(TypListechainee * l);
-extern void DetruitListechainee(TypListechainee * l);
-extern int32_t EstVideListechainee(TypListechainee * l);
-extern TypListechainee * InListechainee(TypElement el, TypListechainee * lis);
-extern TypListechainee * UnionListechainee (TypListechainee * lis1, TypListechainee * lis2);
-
-#ifdef __cplusplus
-}
+ #ifdef __cplusplus
+  }
 #endif
-#endif
+

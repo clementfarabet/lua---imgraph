@@ -735,7 +735,7 @@ static int imgraph_(cuttree)(lua_State *L) {
     cut = MSF_Prim(t);
     break;
   case 2:
-    cut = MSF_Prim(t);//PW when implemented
+    cut = Powerwatershed(t);//PW when implemented
     break;
   case 3:
     cut = Graph_Cuts(t);
