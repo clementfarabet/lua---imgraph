@@ -53,6 +53,7 @@ build = {
          target_link_libraries (imgraph ${TORCH_LIBRARIES} graphcuts pink PWcut )
 
          install_files(/lua/imgraph init.lua)
+         install_files(/lua/imgraph MalisCriterion.lua)
          install_targets(/lib imgraph)
    ]],
 

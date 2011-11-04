@@ -44,6 +44,9 @@ imgraph = {}
 -- c lib:
 require 'libimgraph'
 
+-- external classes:
+dofile(sys.concat(sys.fpath(), 'MalisCriterion.lua'))
+
 ----------------------------------------------------------------------
 -- computes a graph from an 2D or 3D image
 --
@@ -58,7 +61,6 @@ function imgraph.graph(...)
       connex = args[3]
       distance = args[4]
    else
-      dest = torch.Tensor()
       img = args[1]
       connex = args[2]
       distance = args[3]
@@ -83,6 +85,9 @@ function imgraph.graph(...)
       xlua.error('incorrect arguments', 'imgraph.graph')
    end
 
+   -- create dest
+   dest = dest or torch.Tensor():typeAs(img)
+
    -- compute graph
    img.imgraph.graph(dest, img, connex, distance)
 
@@ -104,7 +109,6 @@ function imgraph.connectcomponents(...)
       threshold = args[3]
       colorize = args[4]
    else
-      dest = torch.Tensor()
       graph = args[1]
       threshold = args[2]
       colorize = args[3]
@@ -128,6 +132,9 @@ function imgraph.connectcomponents(...)
       xlua.error('incorrect arguments', 'imgraph.connectcomponents')
    end
 
+   -- create dest
+   dest = dest or torch.Tensor():typeAs(graph)
+
    -- compute image
    local nelts = graph.imgraph.connectedcomponents(dest, graph, threshold, colorize)
 
@@ -149,7 +156,6 @@ function imgraph.watershed(...)
       minHeight = args[3]
       connex = args[4]
    else
-      dest = torch.Tensor()
       gradient = args[1]
       minHeight = args[2]
       connex = args[3]
@@ -174,6 +180,9 @@ function imgraph.watershed(...)
       xlua.error('incorrect arguments', 'imgraph.watershed')
    end
 
+   -- create dest
+   dest = dest or torch.Tensor():typeAs(gradient)
+
    -- compute image
    local nelts = gradient.imgraph.watershed(dest, gradient:clone(), minHeight, connex)
 
@@ -194,7 +203,6 @@ function imgraph.graph2map(...)
       graph = args[2]
       method = args[3]
    else
-      dest = torch.Tensor()
       graph = args[1]
       method = args[2]
    end
@@ -217,6 +225,9 @@ function imgraph.graph2map(...)
                        {type='method', help='rendering method: maxgrad | khalimsky', default='maxgrad'}))
       xlua.error('incorrect arguments', 'imgraph.graph2map')
    end
+
+   -- create dest
+   dest = dest or torch.Tensor():typeAs(graph)
 
    -- render graph
    if method == 'khalimsky' then
