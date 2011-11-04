@@ -61,7 +61,7 @@ function imgraph.graph(...)
       connex = args[3]
       distance = args[4]
    else
-      dest = torch.Tensor()
+      dest = torch.Tensor():typeAs(img)
       img = args[1]
       connex = args[2]
       distance = args[3]
@@ -107,7 +107,7 @@ function imgraph.connectcomponents(...)
       threshold = args[3]
       colorize = args[4]
    else
-      dest = torch.Tensor()
+      dest = torch.Tensor():typeAs(graph)
       graph = args[1]
       threshold = args[2]
       colorize = args[3]
@@ -152,7 +152,7 @@ function imgraph.watershed(...)
       minHeight = args[3]
       connex = args[4]
    else
-      dest = torch.Tensor()
+      dest = torch.Tensor():typeAs(gradient)
       gradient = args[1]
       minHeight = args[2]
       connex = args[3]
@@ -197,7 +197,7 @@ function imgraph.graph2map(...)
       graph = args[2]
       method = args[3]
    else
-      dest = torch.Tensor()
+      dest = torch.Tensor():typeAs(graph)
       graph = args[1]
       method = args[2]
    end
