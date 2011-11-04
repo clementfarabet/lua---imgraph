@@ -25,14 +25,26 @@ extern "C" {
 #include "mergetree.h"
 #include "maxflow.h"
 
+#include <iostream>
+#include <cstdlib>
+#include <cmath>
+#include <boost/pending/disjoint_sets.hpp>
+#include <vector>
+#include <queue>
+#include <map>
+
 #define torch_(NAME) TH_CONCAT_3(torch_, Real, NAME)
 #define torch_string_(NAME) TH_CONCAT_STRING_3(torch., Real, NAME)
 #define imgraph_(NAME) TH_CONCAT_3(imgraph_, Real, NAME)
+#define nn_(NAME) TH_CONCAT_3(nn_, Real, NAME)
 
 static const void* torch_FloatTensor_id = NULL;
 static const void* torch_DoubleTensor_id = NULL;
 
 #include "generic/imgraph.c"
+#include "THGenerateFloatTypes.h"
+
+#include "generic/MalisCriterion.c"
 #include "THGenerateFloatTypes.h"
 
 extern "C" {
@@ -43,6 +55,9 @@ extern "C" {
 
     imgraph_FloatInit(L);
     imgraph_DoubleInit(L);
+
+    nn_FloatMalisCriterion_init(L);
+    nn_DoubleMalisCriterion_init(L);
 
     return 1;
   }
