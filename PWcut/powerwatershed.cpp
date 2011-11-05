@@ -72,7 +72,7 @@ list * Powerwatershed(MergeTree * MT)
    nb_markers = nb_leafs+1;
    N=M+nb_markers;
    M=N-1;
-   printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
+   // printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
 
 
   struct graph <double> *G;
@@ -116,7 +116,7 @@ list * Powerwatershed(MergeTree * MT)
       if (tmp==0) //leaf
 	{
 	  y= G->SeededNodes[i+1]; // edge index
-	     fprintf(stderr,"edge (%d %d) %f \n", i,y, weights[y] );
+	  // fprintf(stderr,"%d edge (%d %d) %f \n", y, i,y, weights[y] );
 	  AddEdge<double>(G, i, y, weights[y],y/*edge index*/);
 	 
 	} 
@@ -125,12 +125,12 @@ list * Powerwatershed(MergeTree * MT)
 	  for ( s = CT->tabnodes[i].sonlist;s!=NULL;s = s->next)  
 	    {
 	      y=s->son;
-	       fprintf(stderr,"edge (%d %d) %f \n", i,y, weights[y] );
+	      //  fprintf(stderr,"%d edge (%d %d) %f \n",y, i,y, weights[y] );
 	      AddEdge<double>(G, i, y, weights[y],y/*edge index*/);
 	    }
 	}
     }
-  AddEdge<double>(G, root_node, M, weights[y],y/*edge index*/);
+  AddEdge<double>(G, root_node, M, weights[root_node],root_node/*edge index*/);
 
   G->max_weight= val; /*maximum weight value*/
 
@@ -139,10 +139,10 @@ list * Powerwatershed(MergeTree * MT)
   PowerWatershed_q2<double>(G);
   
   // Writing results 
-  printf("SOLUTION \n");
+  /*  printf("SOLUTION \n");
   for (j = 0; j < G->N; j++)
     printf("%f \n", G->Solution[0][j]);
-
+  */
  // ------------------ Process the tree to find the cut ----------------------
   list * cut = NULL;
  for (i = 0; i < CT->nbnodes; i++)

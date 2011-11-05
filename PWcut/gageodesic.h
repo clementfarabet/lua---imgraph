@@ -103,10 +103,10 @@ int t1, t2,t3;
   //  Es = linsortimageup(H, G->M, max_weight+1);
   //else  
     TriRapideStochastique_inc(H, Es, 0, G->M-1);
-    int i;for(i=0;i<G->M;i++) fprintf(stderr,"%d  %d  %f\n" , i, Es[i], H[i] );
+    //int i;for(i=0;i<G->M;i++) fprintf(stderr,"%d  %d  %f\n" , i, Es[i], H[i] );
   int r;
   t2=clock();
- fprintf(stderr, "sort : %.6lf seconds elapsed\n", ((double)t2-t1)/CLOCKS_PER_SEC);
+  // fprintf(stderr, "sort : %.6lf seconds elapsed\n", ((double)t2-t1)/CLOCKS_PER_SEC);
   /* first pass */
   for(k=G->M-1;k>=0;k--)
     {
@@ -114,12 +114,12 @@ int t1, t2,t3;
      
       // parcourt les 4 premiers voisins de p 	
       e_jp = G->Edges[0][p];
-      printf("edge %d, node %d \n neigh. edges", p, e_jp);
+      // printf("edge %d, node %d \n neigh. edges", p, e_jp);
        
 	  for (lis=G->Neighbors[e_jp]; lis != NULL; lis = lis->suite) 
 	    {
 	    n= lis->elt;
-	    printf(" %d ", n);
+	    //  printf(" %d ", n);
 	      if(Mrk[n]==true) 
 		{
 		  /* element_link_geod_dilate(n,p, Fth,H, O, max_weight); */
@@ -137,7 +137,7 @@ int t1, t2,t3;
 		}	
 	      Mrk[p]=true;
 	    }
-	  printf("\n");
+	  // printf("\n");
 	
 	
 
@@ -168,7 +168,7 @@ int t1, t2,t3;
     }
   free(Mrk);    
   t3=clock();
-  fprintf(stderr, "Premiere passe reconstruction : %.6lf seconds elapsed\n", ((double)t3-t2)/CLOCKS_PER_SEC);
+  //  fprintf(stderr, "Premiere passe reconstruction : %.6lf seconds elapsed\n", ((double)t3-t2)/CLOCKS_PER_SEC);
   /* second pass */
   
   for(k=0;k<G->M;k++)
@@ -181,7 +181,7 @@ int t1, t2,t3;
       else O[p]= O[Fth[p]];
     }
   t1=clock();
-  fprintf(stderr, "Deuxieme passe reconstruction : %.6lf seconds elapsed\n", ((double)t1-t3)/CLOCKS_PER_SEC);
+  //  fprintf(stderr, "Deuxieme passe reconstruction : %.6lf seconds elapsed\n", ((double)t1-t3)/CLOCKS_PER_SEC);
   free(Es);
   free(Fth);
  for(k=0;k<G->M;k++) 

@@ -118,10 +118,10 @@ subject to data constraints */
 	   G->RecWeights[k]= max_weight;//G->Weights[k];
 	 }
      }
-
+   //Print_Graph_Content(G);
    geodilate_union_find<wtype>( G->Weights, G->RecWeights, G, max_weight);
 
-   Print_Graph_Content(G);
+   
    // for(i=0;i<G->M;i++) fprintf(stderr,"%d  %f  %f\n" , i, G->Weights[i], G->RecWeights[i] );
 
   /* Initialisation of the solution with seeds values*/
