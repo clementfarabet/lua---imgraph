@@ -35,3 +35,4 @@ int neighbor(int x, int k, JCctree *CT, int nb_leafs, int * SeededNodes);
 
 list * MSF_Kruskal(MergeTree * MT);
 list * MSF_Prim(MergeTree * MT);
+list * powerwatershed(MergeTree * MT);

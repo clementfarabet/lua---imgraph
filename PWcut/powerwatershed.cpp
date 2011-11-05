@@ -23,6 +23,7 @@
 #include <graph_utils.h>
 #include <sys/types.h>
 #include <MSF_RW.h>
+#include <MSF_utils.h>
 
 #ifndef _MERGETREESTRUCT_
 #define _MERGETREESTRUCT_
