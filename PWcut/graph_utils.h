@@ -242,7 +242,7 @@ template<class wtype> void Print_Graph_Content( struct graph  <wtype> *G) /*Grap
       fprintf(stderr, "weight of float edge %d = %f  \n", i, G->Weights[i]);
   else
     for(i=0;i<G->M;i++)
-      fprintf(stderr, "weight of integer edge %d = %d  \n",i,  G->Weights[i]);
+      fprintf(stderr, "weight of integer edge %d = %f  \n",i,  G->Weights[i]);
   fprintf(stderr,"************************************\n");
 
  fprintf(stderr,"List of seeded nodes : \n");
