@@ -25,6 +25,7 @@
 #define minimum(X,Y) ((X)<=(Y)?(X):(Y))
 #define maximum(X,Y) ((X)>=(Y)?(X):(Y))
 
+void Insert3(list **sl, int index);
 
 /*=====================================================================================*/
 list * MSF_Prim(MergeTree * MT)
@@ -172,15 +173,15 @@ list * MSF_Prim(MergeTree * MT)
 	{
 	  // nodes having a different value than their father are in the cut
 	  if ((CT->tabnodes[i].father != -1) && (G2[CT->tabnodes[i].father] != G2[i]))
-	    Insert(&cut, i);
+	    Insert3(&cut, i);
 	  // leafs having the same label as the root are in the cut
 	  if ((CT->tabnodes[i].nbsons == 0) && (G2[i]-1==0))
-	    Insert(&cut, i);
+	    Insert3(&cut, i);
 	}
       
-      if (cut == NULL)  Insert(&cut, root_node);
+      if (cut == NULL)  Insert3(&cut, root_node);
 
-      PrintList(cut);
+      // PrintList(cut);
       IndicsTermine();
       free(G2);
       mcrbt_RbtTermine(L);
@@ -188,4 +189,25 @@ list * MSF_Prim(MergeTree * MT)
       free(Weights);
       return cut;
     
+}
+
+
+
+/*================================================*/
+void Insert3(list **sl, int index)
+/*================================================*/
+{
+  list *tmp = NULL;
+  list *csl = *sl;
+  list *elem = (list*) malloc(sizeof(list));
+  if(!elem) exit(EXIT_FAILURE);
+  elem->index = index;
+  while(csl)
+    {
+      tmp = csl;
+      csl = csl->next;
+    }
+  elem->next = csl;
+  if(tmp) tmp->next = elem;
+  else *sl = elem;
 }

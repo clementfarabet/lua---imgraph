@@ -797,7 +797,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 
 
 /*================================================*/
-void Insert(list **sl, int index)
+void Insert1(list **sl, int index)
 /*================================================*/
 {
   list *tmp = NULL;
@@ -817,7 +817,7 @@ void Insert(list **sl, int index)
 
 
 /*================================================*/
-void PrintList(list *sl)
+void PrintList1(list *sl)
 /*================================================*/
 {
   fprintf(stderr, "Nodes of the cut:\n");
@@ -925,7 +925,7 @@ list * Graph_Cuts(MergeTree *MT )
 	     }
 	 }
      }
-g -> add_edge( root_node, M, (int)(weights[root_node]*CTE_WEIGHTS), (int)(weights[y]*CTE_WEIGHTS) );
+g -> add_edge( root_node, M, (int)(weights[root_node]*CTE_WEIGHTS), (int)(weights[root_node]*CTE_WEIGHTS) );
 
    free(weights);  
    
@@ -953,15 +953,15 @@ g -> add_edge( root_node, M, (int)(weights[root_node]*CTE_WEIGHTS), (int)(weight
     {
       // nodes having a different value than their father are in the cut
       if ((CT->tabnodes[i].father != -1) && (Map[CT->tabnodes[i].father] != Map[i]))
-        Insert(&cut, i);
+        Insert1(&cut, i);
       // leafs having the same label as the root are in the cut
       if ((CT->tabnodes[i].nbsons == 0) && (Map[i]==0))
-        Insert(&cut, i);
+        Insert1(&cut, i);
     }
 
  
- if (cut == NULL)  Insert(&cut, root_node);
- //PrintList(cut);
+ if (cut == NULL)  Insert1(&cut, root_node);
+ //PrintList1(cut);
   free(Map);
   free(SeededNodes);
 

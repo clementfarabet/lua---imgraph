@@ -126,5 +126,18 @@ typedef struct RAG{
   uint32_t *queue;         // par liste d'aretes
 } RAG;
 
+
+#ifndef _LISTSTRUCT_
+#define _LISTSTRUCT_
+typedef struct list
+{
+  int index;
+  struct list *next;
+} list ;
+#endif
+
+void Insert(list **sl, int index);
+void PrintList(list *sl);
+
 #endif
 

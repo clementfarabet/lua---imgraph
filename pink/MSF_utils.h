@@ -12,6 +12,7 @@ typedef struct {
 } MergeTree;
 #endif
 
+
 #ifndef _LISTSTRUCT_
 #define _LISTSTRUCT_
 typedef struct list
@@ -21,10 +22,8 @@ typedef struct list
 } list ;
 #endif
 
-void Insert(list **sl, int index);
+//#include<MTree_utils.h>
 
-
-void PrintList(list *sl);
 int element_link( int x,int y, uint32_t *Rnk, uint32_t *Fth);
 int element_find(int x, uint32_t *Fth );
 void TriRapideStochastique_dec (float * A, uint32_t *I, long p, long r);

@@ -16,11 +16,13 @@
 #include <mcutil.h>
 #include <jcgraphes.h>
 #include <jccomptree.h>
-#include "MSF_utils.h"
+#include <MTree_utils.h>
+#include <MSF_utils.h>
+
 
 #define false 0
 #define true 1
-
+void Insert2(list **sl, int index);
 
 /*=====================================================================================*/
 list * MSF_Kruskal(MergeTree * MT)
@@ -181,14 +183,14 @@ list * MSF_Kruskal(MergeTree * MT)
     {
       // nodes having a different value than their father are in the cut
       if ((CT->tabnodes[i].father != -1) && (Map[CT->tabnodes[i].father] != Map[i]))
-        Insert(&cut, i);
+        Insert2(&cut, i);
       // leafs having the same label as the root are in the cut
       if ((CT->tabnodes[i].nbsons == 0) && (Map[i]==0))
-        Insert(&cut, i);
+        Insert2(&cut, i);
     }
 
  
-  if (cut == NULL)  Insert(&cut, root_node);
+  if (cut == NULL)  Insert2(&cut, root_node);
  //PrintList(cut); 
  LifoTermine(LIFO);
   free(Mrk);
@@ -200,3 +202,38 @@ list * MSF_Kruskal(MergeTree * MT)
   free(Map2);
   return cut;
 }
+
+
+
+/*================================================*/
+void Insert2(list **sl, int index)
+/*================================================*/
+{
+  list *tmp = NULL;
+  list *csl = *sl;
+  list *elem = (list*) malloc(sizeof(list));
+  if(!elem) exit(EXIT_FAILURE);
+  elem->index = index;
+  while(csl)
+    {
+      tmp = csl;
+      csl = csl->next;
+    }
+  elem->next = csl;
+  if(tmp) tmp->next = elem;
+  else *sl = elem;
+}
+
+
+/*================================================*/
+void PrintList2(list *sl)
+/*================================================*/
+{
+  fprintf(stderr, "Nodes of the cut:\n");
+  while(sl)
+    {
+      printf("%d\n",sl->index);
+      sl = sl->next;
+    }
+}
+

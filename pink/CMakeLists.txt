@@ -1,5 +1,5 @@
 
-include_directories (${PROJECT_SOURCE_DIR}/pink)
+include_directories (${PROJECT_SOURCE_DIR}/pink ${PROJECT_SOURCE_DIR}/graphcuts )
 
 add_library(pink
              lattribheight.c   
@@ -28,6 +28,7 @@ add_library(pink
 	     kruskal.c
 	     prim.c
 	     MSF_utils.c)
+	     
 
 set (CMAKE_C_FLAGS "-fpic -g -DUNIXIO")
 target_link_libraries(pink)

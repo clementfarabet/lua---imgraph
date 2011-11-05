@@ -8,17 +8,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
-/*#include <stdlib.h>
-
-#include <mccodimage.h>
-#include <mcimage.h>
-#include <mclifo.h>
-#include <mcindic.h>
-#include <mcutil.h>
-#include <jcgraphes.h>
-#include <jccomptree.h>*/
-
-
 #include <MTree_utils.h>
 #include <graph_utils.h>
 #include <sys/types.h>
@@ -49,28 +38,7 @@ typedef struct list
 #endif
 
 
-/*================================================*/
-void Insert(list **sl, int index)
-/*================================================*/
-{
-  list *tmp = NULL;
-  list *csl = *sl;
-  list *elem = (list*) malloc(sizeof(list));
-  if(!elem) exit(EXIT_FAILURE);
-  elem->index = index;
-  while(csl)
-    {
-      tmp = csl;
-      csl = csl->next;
-    }
-  elem->next = csl;
-  if(tmp) tmp->next = elem;
-  else *sl = elem;
-}
-
-//#define false 0
-//#define true 1
-
+void Insert4(list **sl, int index);
 
 /*=====================================================================================*/
 list * Powerwatershed(MergeTree * MT)
@@ -132,7 +100,7 @@ list * Powerwatershed(MergeTree * MT)
       }
   // weights
    
-   float * weights = (float *)malloc(N*sizeof(float));
+   double * weights = (double *)malloc(N*sizeof(double));
    for(i=0;i<CT->nbnodes;i++)
      weights[i]=W[i];
    
@@ -148,8 +116,8 @@ list * Powerwatershed(MergeTree * MT)
       if (tmp==0) //leaf
 	{
 	  y= G->SeededNodes[i+1]; // edge index
-	  // fprintf(stderr,"edge (%d %d) %d \n", i,y,  (int)(weights[y]*CTE_WEIGHTS ));
-	  AddEdge<double>(G, i, G->SeededNodes[i], weights[y],y/*edge index*/);
+	     fprintf(stderr,"edge (%d %d) %f \n", i,y, weights[y] );
+	  AddEdge<double>(G, i, y, weights[y],y/*edge index*/);
 	 
 	} 
       else
@@ -157,7 +125,7 @@ list * Powerwatershed(MergeTree * MT)
 	  for ( s = CT->tabnodes[i].sonlist;s!=NULL;s = s->next)  
 	    {
 	      y=s->son;
-	      //  fprintf(stderr,"edge (%d %d) %d \n", i,y,  (int)(weights[y]*CTE_WEIGHTS ));
+	       fprintf(stderr,"edge (%d %d) %f \n", i,y, weights[y] );
 	      AddEdge<double>(G, i, y, weights[y],y/*edge index*/);
 	    }
 	}
@@ -181,14 +149,14 @@ list * Powerwatershed(MergeTree * MT)
     {
       // nodes having a different value than their father are in the cut
       if ((CT->tabnodes[i].father != -1) && (G->Solution[0][CT->tabnodes[i].father] != G->Solution[0][i]))
-        Insert(&cut, i);
+        Insert4(&cut, i);
       // leafs having the same label as the root are in the cut
       if ((CT->tabnodes[i].nbsons == 0) && (G->Solution[0][i]==0))
-        Insert(&cut, i);
+        Insert4(&cut, i);
     }
 
  
- if (cut == NULL)  Insert(&cut, root_node);
+ if (cut == NULL)  Insert4(&cut, root_node);
  //PrintList(cut);
 
  
@@ -200,3 +168,22 @@ list * Powerwatershed(MergeTree * MT)
 
 }
 
+
+/*================================================*/
+void Insert4(list **sl, int index)
+/*================================================*/
+{
+  list *tmp = NULL;
+  list *csl = *sl;
+  list *elem = (list*) malloc(sizeof(list));
+  if(!elem) exit(EXIT_FAILURE);
+  elem->index = index;
+  while(csl)
+    {
+      tmp = csl;
+      csl = csl->next;
+    }
+  elem->next = csl;
+  if(tmp) tmp->next = elem;
+  else *sl = elem;
+}

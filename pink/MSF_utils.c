@@ -18,36 +18,6 @@
 #include <mtrand64.h>
 #include "MSF_utils.h"
 
-/*================================================*/
-void Insert(list **sl, int index)
-/*================================================*/
-{
-  list *tmp = NULL;
-  list *csl = *sl;
-  list *elem = malloc(sizeof(list));
-  if(!elem) exit(EXIT_FAILURE);
-  elem->index = index;
-  while(csl)
-    {
-      tmp = csl;
-      csl = csl->next;
-    }
-  elem->next = csl;
-  if(tmp) tmp->next = elem;
-  else *sl = elem;
-}
-
-/*================================================*/
-void PrintList(list *sl)
-/*================================================*/
-{
-  fprintf(stderr, "Nodes of the cut:\n");
-  while(sl)
-    {
-      printf("%d\n",sl->index);
-      sl = sl->next;
-    }
-}
 
 /*================================================*/
 int nb_neighbors(int x, JCctree *CT, int nb_leafs)
