@@ -25,14 +25,6 @@ extern "C" {
 #include "mergetree.h"
 #include "maxflow.h"
 
-#include <iostream>
-#include <cstdlib>
-#include <cmath>
-#include <boost/pending/disjoint_sets.hpp>
-#include <vector>
-#include <queue>
-#include <map>
-
 #define torch_(NAME) TH_CONCAT_3(torch_, Real, NAME)
 #define torch_string_(NAME) TH_CONCAT_STRING_3(torch., Real, NAME)
 #define imgraph_(NAME) TH_CONCAT_3(imgraph_, Real, NAME)
