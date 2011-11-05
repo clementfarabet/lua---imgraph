@@ -21,7 +21,7 @@ extern "C" {
 #include "lppm2GA.h"
 }
 
-#include "Powerwatershed.h"
+#include "powerwatershed.h"
 #include "set.h"
 #include "mergetree.h"
 #include "maxflow.h"
