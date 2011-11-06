@@ -10,4 +10,5 @@ add_library(PWcut
 	mclistechainee.c)
 
 set (CMAKE_CXX_FLAGS "-fpic -g -DUNIXIO")
+set (CMAKE_LINKER_FLAGS "-fpic")
 target_link_libraries(PWcut)
