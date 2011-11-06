@@ -29,6 +29,5 @@ add_library(pink
 	     prim.c
 	     MSF_utils.c)
 	     
-
 set (CMAKE_C_FLAGS "-fpic -g -DUNIXIO")
 target_link_libraries(pink)

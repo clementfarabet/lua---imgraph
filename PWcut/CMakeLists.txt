@@ -9,5 +9,6 @@ add_library(PWcut
 	powerwatershed.cpp
 	mclistechainee.c)
 
+set (CMAKE_C_FLAGS "-fpic -g -DUNIXIO")
 set (CMAKE_CXX_FLAGS "-fpic -g -DUNIXIO")
 target_link_libraries(PWcut)
