@@ -52,6 +52,7 @@ build = {
          include_directories (${TORCH_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/pink ${PROJECT_SOURCE_DIR}/graphcuts ${PROJECT_SOURCE_DIR}/PWcut)
          add_library (imgraph SHARED init.cpp)
          link_directories (${TORCH_LIBRARY_DIR})
+         set (CMAKE_CXX_FLAGS "-fpic")
          target_link_libraries (imgraph ${TORCH_LIBRARIES} graphcuts pink PWcut )
 
          install_files(/lua/imgraph init.lua)
