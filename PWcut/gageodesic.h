@@ -103,6 +103,8 @@ int t1, t2,t3;
   //  Es = linsortimageup(H, G->M, max_weight+1);
   //else  
     TriRapideStochastique_inc(H, Es, 0, G->M-1);
+    for(k=0;k<G->M;k++) 
+      G->Weights[k]=W[k];
     //int i;for(i=0;i<G->M;i++) fprintf(stderr,"%d  %d  %f\n" , i, Es[i], H[i] );
   int r;
   t2=clock();
@@ -184,8 +186,7 @@ int t1, t2,t3;
   //  fprintf(stderr, "Deuxieme passe reconstruction : %.6lf seconds elapsed\n", ((double)t1-t3)/CLOCKS_PER_SEC);
   free(Es);
   free(Fth);
- for(k=0;k<G->M;k++) 
-   G->Weights[k]=W[k];
+
  free(W);
     
 } 

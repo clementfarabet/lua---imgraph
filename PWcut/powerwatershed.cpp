@@ -38,6 +38,18 @@ typedef struct list
 #endif
 
 
+/*================================================*/
+void PrintList4(list *sl)
+/*================================================*/
+{
+  fprintf(stderr, "Nodes of the cut:\n");
+  while(sl)
+    {
+      printf("%d\n",sl->index);
+      sl = sl->next;
+    }
+}
+
 void Insert4(list **sl, int index);
 
 /*=====================================================================================*/
@@ -75,8 +87,8 @@ list * Powerwatershed(MergeTree * MT)
    // printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
 
 
-  struct graph <double> *G;
-  G = (struct graph <double>*)malloc(sizeof(struct graph<double>));
+  struct graph <float> *G;
+  G = (struct graph <float>*)malloc(sizeof(struct graph<float>));
   G->weight_type=1; // 1:double 0:uint32_t
 
   Allocate_Graph(G, 
@@ -100,14 +112,15 @@ list * Powerwatershed(MergeTree * MT)
       }
   // weights
    
-   double * weights = (double *)malloc(N*sizeof(double));
+   float * weights = (float *)malloc(N*sizeof(float));
    for(i=0;i<CT->nbnodes;i++)
-     weights[i]=W[i];
-   
+     {
+       weights[i]=W[i];
+     if (val<weights[i]) val = weights[i];
+     }
    for(i=0;i<nb_markers;i++)
      weights[CT->nbnodes+i]=val;
      
-
 
   /*Add the weighted edges*/
   for  (i=0;i<CT->nbnodes;i++)
@@ -117,7 +130,7 @@ list * Powerwatershed(MergeTree * MT)
 	{
 	  y= G->SeededNodes[i+1]; // edge index
 	  // fprintf(stderr,"%d edge (%d %d) %f \n", y, i,y, weights[y] );
-	  AddEdge<double>(G, i, y, weights[y],y/*edge index*/);
+	  AddEdge<float>(G, i, y, weights[y],y/*edge index*/);
 	 
 	} 
       else
@@ -126,38 +139,43 @@ list * Powerwatershed(MergeTree * MT)
 	    {
 	      y=s->son;
 	      //  fprintf(stderr,"%d edge (%d %d) %f \n",y, i,y, weights[y] );
-	      AddEdge<double>(G, i, y, weights[y],y/*edge index*/);
+	      AddEdge<float>(G, i, y, weights[y],y/*edge index*/);
 	    }
 	}
     }
-  AddEdge<double>(G, root_node, M, weights[root_node],root_node/*edge index*/);
+  AddEdge<float>(G, root_node, M, weights[root_node],root_node/*edge index*/);
 
   G->max_weight= val; /*maximum weight value*/
 
   /*Solving problem with Power Watersheds*/
      
-  PowerWatershed_q2<double>(G);
+  PowerWatershed_q2<float>(G);
   
   // Writing results 
-  /*  printf("SOLUTION \n");
+  //  printf("SOLUTION \n");
   for (j = 0; j < G->N; j++)
-    printf("%f \n", G->Solution[0][j]);
-  */
+    {
+      // printf("%f \n", G->Solution[0][j]);     
+      if (G->Solution[0][j]>0.5) G->Solution[0][j]=1;
+      else G->Solution[0][j]=0;
+     
+    }
+  
  // ------------------ Process the tree to find the cut ----------------------
   list * cut = NULL;
  for (i = 0; i < CT->nbnodes; i++)
     {
       // nodes having a different value than their father are in the cut
-      if ((CT->tabnodes[i].father != -1) && (G->Solution[0][CT->tabnodes[i].father] != G->Solution[0][i]))
+      if ((CT->tabnodes[i].father != -1) && (fabs(G->Solution[0][CT->tabnodes[i].father] - G->Solution[0][i]))>0.01)
         Insert4(&cut, i);
       // leafs having the same label as the root are in the cut
-      if ((CT->tabnodes[i].nbsons == 0) && (G->Solution[0][i]==0))
+      if ((CT->tabnodes[i].nbsons == 0) && (G->Solution[0][i]<0.5))
         Insert4(&cut, i);
     }
 
  
  if (cut == NULL)  Insert4(&cut, root_node);
- //PrintList(cut);
+ //PrintList4(cut);
 
  
   Free_Graph(G, G->N);
