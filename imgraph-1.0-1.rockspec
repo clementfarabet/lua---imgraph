@@ -41,6 +41,8 @@ build = {
 
          find_package (Torch REQUIRED)
 
+         find_package (Boost REQUIRED)
+
          set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
          add_subdirectory (pink)
