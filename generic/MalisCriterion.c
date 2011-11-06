@@ -112,9 +112,13 @@ static int nn_(MalisCriterion_forward)(lua_State *L)
   long j = 0;
   for (long d = 0, i = 0; d < conn->size[0]; ++d)
     for (long y = 0; y < conn->size[1]; ++y)
-      for (long x = 0; x < conn->size[2]; ++x, ++i)
-        if (x < (conn->size[2]-1) && y < (conn->size[1]-1))
+      for (long x = 0; x < conn->size[2]; ++x, ++i) {
+        bool isedge = true;
+        long ye = (y + nhood_data[d*nhood_geom+0]);
+        long xe = (x + nhood_data[d*nhood_geom+1]);
+        if ((xe >= 0) && (xe < conn->size[2]) && (ye >= 0) && (ye < conn->size[1]))
           pqueue[ j++ ] = i;
+      }
   sort(pqueue.begin(), pqueue.end(), nn_(AffinityGraphCompare)(conn_data));
 
   // start MST (Kruskal)
