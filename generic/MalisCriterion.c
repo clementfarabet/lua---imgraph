@@ -32,6 +32,7 @@ static int nn_(MalisCriterion_forward)(lua_State *L)
 {
   // 3d connectivity graph [#edges * height * width]
   THTensor *conn = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));  
+  conn = THTensor_(newContiguous)(conn);
   long conn_ndims = THTensor_(nDimension)(conn);
   long conn_nelts = THTensor_(nElement)(conn);
   long conn_nedges = conn->size[0];
@@ -41,6 +42,7 @@ static int nn_(MalisCriterion_forward)(lua_State *L)
 
   // target segmentation [height * width]
   THTensor *target = (THTensor *)luaT_checkudata(L, 3, torch_(Tensor_id));  
+  target = THTensor_(newContiguous)(target);
   long target_ndims = THTensor_(nDimension)(target);
   long target_nelts = THTensor_(nElement)(target);
   long target_height = target->size[0];
@@ -189,6 +191,10 @@ static int nn_(MalisCriterion_forward)(lua_State *L)
     } // end link
 
   } // end while
+
+  // cleanup
+  THTensor_(free)(conn);
+  THTensor_(free)(target);
 
   // return loss + class error + rand index
   loss /= nPairNorm;
