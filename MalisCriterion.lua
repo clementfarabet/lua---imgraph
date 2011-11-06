@@ -26,14 +26,17 @@ function MalisCriterion:__init(tree, connex, margin)
    self.margin = margin or 0.3
    self.posexample = false
    self.tree = tree or 'max'
+   self.inputtemp = torch.Tensor()
 end
 
 function MalisCriterion:forward(input, target)
-   local inputt = input
+   local loss,classerr,rand
    if self.tree == 'min' then
-      inputt = -input+1
+      self.inputtemp:resizeAs(input):copy(input):mul(-1):add(1)
+      loss,classerr,rand = input.nn.MalisCriterion_forward(self, self.inputtemp, target)
+   else
+      loss,classerr,rand = input.nn.MalisCriterion_forward(self, input, target)
    end
-   local loss,classerr,rand = input.nn.MalisCriterion_forward(self, inputt, target)
    self.posexample = not self.posexample
    self.output = loss
    self._i = input
@@ -43,9 +46,7 @@ end
 
 function MalisCriterion:backward(input, target)
    if self._i ~= input or self._t ~= target then
-      input.nn.MalisCriterion_forward(self, input, target)
-      self._i = input
-      self._t = target
+      error('forward must be called once before backward()')
    end
    return self.gradInput
 end
