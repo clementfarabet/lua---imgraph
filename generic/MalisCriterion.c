@@ -61,7 +61,7 @@ static int nn_(MalisCriterion_forward)(lua_State *L)
   const real margin = luaT_getfieldchecknumber(L, 1, "margin");
 
   // is this a positive example (true) or negative (false)
-  const int pos = luaT_getfieldcheckboolean(L, 1, "posexample");
+  int pos = luaT_getfieldcheckboolean(L, 1, "posexample");
 
   // output: gradient wrt connectivity graph
   THTensor *dloss = (THTensor *)luaT_getfieldcheckudata(L, 1, "gradInput", torch_(Tensor_id));
@@ -107,7 +107,24 @@ static int nn_(MalisCriterion_forward)(lua_State *L)
   long nPairTot = (nLabeledVert*(nLabeledVert-1))/2;
   long nPairNeg = nPairTot - nPairPos;
   long nPairNorm;
-  if (pos) {nPairNorm = nPairPos;} else {nPairNorm = nPairNeg;}
+  if (pos) {
+    if (nPairPos == 0) {
+      pos = 0;
+      nPairNorm = nPairNeg;
+    } else {
+      nPairNorm = nPairPos;
+    }
+  } else {
+    if (nPairNeg == 0) {
+      pos = 1;
+      nPairNorm = nPairPos;
+    } else {
+      nPairNorm = nPairNeg;
+    }
+  }
+  if (nPairNorm == 0) {
+    THError("found 0 pairs, aborting... (this is a bug, please fix me)");
+  }
 
   // Sort all the edges in increasing order of weight
   vector<long> pqueue( conn->size[0] * (conn->size[1]-1) * (conn->size[2]-1) );
