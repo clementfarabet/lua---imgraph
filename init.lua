@@ -651,8 +651,7 @@ function imgraph.colorize(...)
    -- get args
    local args = {...}
    local grayscale = args[1]
-   local colormap = args[2] or torch.Tensor()
-   local colorized = torch.Tensor()
+   local colormap = args[2]
 
    -- usage
    if not grayscale or not (grayscale:dim() == 2 or (grayscale:dim() == 3 and grayscale:size(1) == 1)) then
@@ -665,6 +664,10 @@ function imgraph.colorize(...)
                        {type='torch.Tensor', help='color map (must be Nx3), if not provided, auto generated'}))
       xlua.error('incorrect arguments', 'imgraph.colorize')
    end
+
+   -- auto type
+   colormap = colormap or torch.Tensor():typeAs(grayscale)
+   local colorized = torch.Tensor():typeAs(grayscale)
 
    -- accept 3D grayscale
    if grayscale:dim() == 3 and grayscale:size(1) == 1 then
