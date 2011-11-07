@@ -1,7 +1,7 @@
 require 'nn'
 local MalisCriterion, parent = torch.class('nn.MalisCriterion', 'nn.Criterion')
 
-function MalisCriterion:__init(tree, connex, margin)
+function MalisCriterion:__init(tree, metric, connex, margin)
    parent.__init(self)
    connex = connex or 4
    if connex == 4 then
@@ -27,21 +27,22 @@ function MalisCriterion:__init(tree, connex, margin)
    self.posexample = false
    self.tree = tree or 'max'
    self.inputtemp = torch.Tensor()
+   self.metric = metric or 'loss' -- loss | classified | rand
 end
 
 function MalisCriterion:forward(input, target)
-   local loss,classerr,rand
+   local e = {}
    if self.tree == 'min' then
       self.inputtemp:resizeAs(input):copy(input):mul(-1):add(1)
-      loss,classerr,rand = input.nn.MalisCriterion_forward(self, self.inputtemp, target)
+      e.loss,e.classified,e.rand = input.nn.MalisCriterion_forward(self, self.inputtemp, target)
    else
-      loss,classerr,rand = input.nn.MalisCriterion_forward(self, input, target)
+      e.loss,e.classified,e.rand = input.nn.MalisCriterion_forward(self, input, target)
    end
    self.posexample = not self.posexample
-   self.output = loss
    self._i = input
    self._t = target
-   return loss,classerr,rand
+   self.output = e[self.metric]
+   return self.output
 end
 
 function MalisCriterion:backward(input, target)
