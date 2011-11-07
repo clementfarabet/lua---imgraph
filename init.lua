@@ -387,7 +387,6 @@ function imgraph.segmentmst(...)
       minsize = args[4]
       colorize = args[5]
    else
-      dest = torch.Tensor()
       graph = args[1]
       thres = args[2]
       minsize = args[3]
@@ -419,6 +418,7 @@ function imgraph.segmentmst(...)
    end
 
    -- compute image
+   dest = dest or torch.Tensor():typeAs(graph)
    local nelts = graph.imgraph.segmentmst(dest, graph, thres, minsize, colorize)
 
    -- return image
