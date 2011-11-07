@@ -176,7 +176,8 @@ static int nn_(MalisCriterion_forward)(lua_State *L)
           } else if ((!pos) && (it1->first != it2->first)) {
             // -ve example pairs
             // Sq-Sq loss is used here
-            dl = -max(0.0,conn_data[minEdge]-0.5+margin);
+            dl = max(0.0,conn_data[minEdge]-0.5+margin);
+            dl *= -1;
             loss += 0.5*dl*dl*nPair;
             dloss_data[minEdge] += dl*nPair;
             if (conn_data[minEdge] > 0.5) { // an error
