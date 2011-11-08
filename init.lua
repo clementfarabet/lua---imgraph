@@ -665,10 +665,6 @@ function imgraph.colorize(...)
       xlua.error('incorrect arguments', 'imgraph.colorize')
    end
 
-   -- auto type
-   colormap = colormap or torch.Tensor():typeAs(grayscale)
-   local colorized = torch.Tensor():typeAs(grayscale)
-
    -- accept 3D grayscale
    if grayscale:dim() == 3 and grayscale:size(1) == 1 then
       grayscale = torch.Tensor(grayscale):resize(grayscale:size(2), grayscale:size(3))
@@ -678,6 +674,10 @@ function imgraph.colorize(...)
    if torch.typename(grayscale) == 'torch.LongTensor' then
       grayscale = torch.Tensor(grayscale:size(1), grayscale:size(2)):copy(grayscale)
    end
+
+   -- auto type
+   colormap = colormap or torch.Tensor():typeAs(grayscale)
+   local colorized = torch.Tensor():typeAs(grayscale)
 
    -- colorize !
    grayscale.imgraph.colorize(colorized, grayscale, colormap)
