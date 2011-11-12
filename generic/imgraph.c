@@ -666,9 +666,41 @@ static int imgraph_(mergetree)(lua_State *L) {
   t->rs = rs;
   t->altitudes = altitudes;
 
-
-
+  // done
   return 1;
+}
+
+static int imgraph_(dumptree) (lua_State *L)
+{
+  MergeTree *t = lua_toMergeTree(L, 1);
+  const char *filename = lua_tostring(L, 2);
+
+  FILE *fp = fopen(filename, "w");
+
+  int32_t i;
+  JCsoncell *s;
+  JCctree *CT = t->tree->CT;
+  fprintf(fp, "root %d nbnodes %d nbsoncells %d", CT->root, CT->nbnodes, CT->nbsoncells);
+  for (i = 0; i < CT->nbnodes; i++) 
+  {
+    fprintf(fp, "\n");
+    fprintf(fp, "node %d father %d ", 
+            i, CT->tabnodes[i].data, CT->tabnodes[i].father);
+    if (CT->tabnodes[i].nbsons > 0) {
+      fprintf(fp, "sons ");
+      for (s = CT->tabnodes[i].sonlist; s != NULL; s = s->next)
+        fprintf(fp, "%d ", s->son);
+    }
+    if (t->weights) {
+      fprintf(fp, "weight %f ", t->weights[i]);
+    }
+    fflush(fp);
+  }
+
+  fprintf(fp, "\n");
+  fclose(fp);
+
+  return 0;
 }
 
 static int imgraph_(filtertree)(lua_State *L) {
@@ -1416,6 +1448,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"mergetree", imgraph_(mergetree)},
   {"filtertree", imgraph_(filtertree)},
   {"weighttree", imgraph_(weighttree)},
+  {"dumptree", imgraph_(dumptree)},
   {"tree2graph", imgraph_(tree2graph)},
   {"tree2components", imgraph_(tree2components)},
   {"adjacency", imgraph_(adjacency)},

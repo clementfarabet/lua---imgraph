@@ -296,6 +296,28 @@ function imgraph.filtertree(...)
 end
 
 ----------------------------------------------------------------------
+-- dump a tree to disk
+--
+function imgraph.dumptree(...)
+   --get args
+   local args = {...}
+   local tree = args[1]
+   local filename = args[2]
+
+   -- usage
+   if not tree or not filename then
+      print(xlua.usage('imgraph.dumptree',
+                       'dump a tree to disk', nil,
+                       {type='imgraph.dumptree', help='merge tree to be filtered', req=true},
+                       {type='string', help='filename', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.dumptree')
+   end
+
+   -- filter merge tree
+   torch.Tensor().imgraph.dumptree(tree, filename)
+end
+
+----------------------------------------------------------------------
 -- assign weights to the nodes of a tree
 --
 function imgraph.weighttree(...)
