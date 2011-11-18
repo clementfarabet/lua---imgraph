@@ -681,21 +681,21 @@ static int imgraph_(dumptree) (lua_State *L)
   JCsoncell *s;
   JCctree *CT = t->tree->CT;
   fprintf(fp, "root %d nbnodes %d nbsoncells %d", CT->root, CT->nbnodes, CT->nbsoncells);
-  for (i = 0; i < CT->nbnodes; i++) 
-  {
-    fprintf(fp, "\n");
-    fprintf(fp, "node %d father %d ", 
-            i, CT->tabnodes[i].data, CT->tabnodes[i].father);
-    if (CT->tabnodes[i].nbsons > 0) {
-      fprintf(fp, "sons ");
-      for (s = CT->tabnodes[i].sonlist; s != NULL; s = s->next)
-        fprintf(fp, "%d ", s->son);
+  for (i = 0; i < CT->nbnodes; i++)
+    {
+      fprintf(fp, "\n");
+      fprintf(fp, "node %d father %d ",
+              i, CT->tabnodes[i].data, CT->tabnodes[i].father);
+      if (CT->tabnodes[i].nbsons > 0) {
+        fprintf(fp, "sons ");
+        for (s = CT->tabnodes[i].sonlist; s != NULL; s = s->next)
+          fprintf(fp, "%d ", s->son);
+      }
+      if (t->weights) {
+        fprintf(fp, "weight %f ", t->weights[i]);
+      }
+      fflush(fp);
     }
-    if (t->weights) {
-      fprintf(fp, "weight %f ", t->weights[i]);
-    }
-    fflush(fp);
-  }
 
   fprintf(fp, "\n");
   fclose(fp);
@@ -757,7 +757,7 @@ static int imgraph_(cuttree)(lua_State *L) {
   if (lua_isnumber(L, 2)) mode = lua_tonumber(L, 2);
 
   //calling the labeling method on the merge tree
-  
+
   list * cut;
   switch(mode){
   case 0:
@@ -767,14 +767,16 @@ static int imgraph_(cuttree)(lua_State *L) {
     cut = MSF_Prim(t);
     break;
   case 2:
-    cut = Powerwatershed(t);//PW when implemented
+    cut = Powerwatershed(t);
     break;
   case 3:
     cut = Graph_Cuts(t);
     break;
+  case 4:
+    cut = Min_Cover(t);
+    break;
   }
 
-  
   // export list into lua table
   lua_newtable(L); int tb = lua_gettop(L);
   int id = 1;

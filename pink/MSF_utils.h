@@ -31,6 +31,7 @@ long PartitionStochastique_dec (float *A, uint32_t * I, long p, long r);
 int nb_neighbors(int x, JCctree *CT, int nb_leafs);
 int neighbor(int x, int k, JCctree *CT, int nb_leafs, int * SeededNodes);
 
-
 list * MSF_Kruskal(MergeTree * MT);
 list * MSF_Prim(MergeTree * MT);
+
+list * Min_Cover(MergeTree * MT);

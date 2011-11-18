@@ -27,6 +27,7 @@ add_library(pink
 	     mtrand64.c 
 	     kruskal.c
 	     prim.c
+	     mincover.c
 	     MSF_utils.c)
 	     
 set (CMAKE_C_FLAGS "-fpic -g -DUNIXIO")
