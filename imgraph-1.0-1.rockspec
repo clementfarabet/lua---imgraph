@@ -46,8 +46,8 @@ build = {
          set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
          add_subdirectory (pink)
- 	 add_subdirectory (graphcuts)  
- 	 add_subdirectory (PWcut)  
+         add_subdirectory (graphcuts)  
+         add_subdirectory (PWcut)  
 
          include_directories (${TORCH_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/pink ${PROJECT_SOURCE_DIR}/graphcuts ${PROJECT_SOURCE_DIR}/PWcut)
          add_library (imgraph SHARED init.cpp)
