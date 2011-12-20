@@ -231,7 +231,11 @@ function imgraph.graph2map(...)
 
    -- render graph
    if method == 'khalimsky' then
-      local graphflat = graph:new():resize(graph:size(1)*graph:size(2),graph:size(3))
+      -- warning
+      if graph:size(1) ~= 2 then
+         print('<imgraph.mergetree> warning: only supporting 4-connexity (discarding other edges)')
+      end
+      local graphflat = graph:new():resize(2*graph:size(2),graph:size(3))
       graph.imgraph.graph2map(dest, graphflat, mode)
    else
       graph.imgraph.gradient(dest, graph)
@@ -257,8 +261,13 @@ function imgraph.mergetree(...)
       xlua.error('incorrect arguments', 'imgraph.mergetree')
    end
 
+   -- warning
+   if graph:size(1) ~= 2 then
+      print('<imgraph.mergetree> warning: only supporting 4-connexity (discarding other edges)')
+   end
+
    -- compute merge tree of graph
-   local graphflat = graph:new():resize(graph:size(1)*graph:size(2),graph:size(3))
+   local graphflat = graph:new():resize(2*graph:size(2),graph:size(3))
    local mt = graph.imgraph.mergetree(graphflat)
 
    -- return tree
