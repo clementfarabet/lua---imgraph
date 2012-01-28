@@ -735,6 +735,13 @@ function imgraph.colormap(colors, default, verbose)
       xlua.error('incorrect arguments', 'imgraph.colormap')
    end
 
+   -- tensor?
+   for k,entry in pairs(colors) do
+      if torch.typename(entry) and torch.typename(entry):find('Tensor') then
+         colors[k] = colors[k]:clone():storage():totable()
+      end
+   end
+
    -- found max in table
    local max = -math.huge
    for k,entry in pairs(colors) do
