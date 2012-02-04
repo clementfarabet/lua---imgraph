@@ -1239,7 +1239,7 @@ int imgraph_(histpooling)(lua_State *L) {
 
       // accumulate current vector into histo
       if (local_conf >= minConfidence) {
-        THTensor_(cadd)(histo, 1, select2);
+        THTensor_(cadd)(histo, histo, 1, select2);
         lua_pushnumber(L, ++size);
         lua_rawseti(L,table_sizes,segm_id); // s[segm_id] = ++size
       }
