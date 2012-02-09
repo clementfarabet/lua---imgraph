@@ -517,8 +517,8 @@ function imgraph.adjacency(...)
    -- usage
    if not grayscale or grayscale:dim() ~= 2 then
       print(xlua.usage('imgraph.adjacency',
-                       'return the adjacency matrix of a segmentation map.'
-                          .. 'a component list can be given, in which case the list'
+                       'return the adjacency matrix of a segmentation map.\n'
+                          .. 'a component list can be given, in which case the list\n'
                           .. 'is updated to directly embed the neighboring relationships',
                        'graph = imgraph.graph(image.lena())\n'
                           .. 'segm = imgraph.segmentmst(graph)\n'
