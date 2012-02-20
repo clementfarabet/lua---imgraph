@@ -55,6 +55,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <jcgraphes.h>
 #include <jccomptree.h>
 #include <assert.h>
+#include <mtrand64.h>
 
 #define LCA1         0x08
 #define MAXTREE
@@ -341,7 +342,7 @@ int32_t i_PartitionStochastique(int32_t *A, int32_t *T, int32_t p, int32_t r)
 {
   int32_t t, q;
 
-  q = p + (rand() % (r - p + 1));
+  q = p + (genrand64_int64() % (r - p + 1));
   t = A[p];         /* echange A[p] et A[q] */
   A[p] = A[q]; 
   A[q] = t;
