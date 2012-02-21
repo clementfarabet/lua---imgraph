@@ -278,8 +278,6 @@ end
 -- compute the hierarchy of [guimaraes et al. ICIP2012] of a graph
 --
 function imgraph.hierarchyGuimaraes(...)
-
-
    --get args
    local args = {...}
    local graph = args[1]
