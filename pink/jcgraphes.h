@@ -80,7 +80,7 @@ typedef struct RAG{
   uint32_t *queue;         // par liste d'aretes
 } RAG;
 
-#endif
+
 // Manipulation ces graphes binaires
 GrapheBasic *initGrapheBasic(int32_t nsom, int32_t nmaxarc);
 void termineGrapheBasic(GrapheBasic *g);
@@ -109,6 +109,8 @@ extern int32_t updateRAGArc(RAG *rag, int32_t i, int32_t s, uint8_t val);
 // Les deux fonctions suivantes vont plutot dans la bibliothèque
 // hierarchie
 extern void attributNoeud(RAG *rag, struct xvimage *label, struct xvimage *ga, struct xvimage *annexe);
+
+#endif
 #ifdef __cplusplus
 }
 #endif

@@ -28,7 +28,11 @@ add_library(pink
             kruskal.c
             prim.c
             mincover.c
-            MSF_utils.c)
+            MSF_utils.c
+	    mcweightgraph.c
+	    sjcomptree.c
+	    mcsort.c
+)
 	     
 set (CMAKE_C_FLAGS "-fpic -g -DUNIXIO")
 target_link_libraries(pink)

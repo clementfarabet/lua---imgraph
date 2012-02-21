@@ -55,7 +55,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <jcgraphes.h>
 #include <jccomptree.h>
 #include <assert.h>
-#include <mtrand64.h>
+#include <mtrand64.h> // 64-bit random number generator
 
 #define LCA1         0x08
 #define MAXTREE
@@ -342,7 +342,7 @@ int32_t i_PartitionStochastique(int32_t *A, int32_t *T, int32_t p, int32_t r)
 {
   int32_t t, q;
 
-  q = p + (genrand64_int64() % (r - p + 1));
+  q = p + (genrand64_int64() % (r - p + 1)); /* rand must be 64-bit safe, should be OK now */
   t = A[p];         /* echange A[p] et A[q] */
   A[p] = A[q]; 
   A[q] = t;
@@ -475,6 +475,7 @@ int32_t jcSaliencyTree_b (JCctree ** SaliencyTree, int32_t *MST, int32_t *Valeur
   Tarjan *T;
   int32_t taille = rag->g->nsom;
 
+
   if((STmap = (int32_t *)malloc(sizeof(int32_t) *taille)) == NULL){
     fprintf(stderr, "jcSalliancyTree: erreur de malloc\n"); 
   }
@@ -484,7 +485,9 @@ int32_t jcSaliencyTree_b (JCctree ** SaliencyTree, int32_t *MST, int32_t *Valeur
   }
   for(i = 0; i < taille-1; i++)
     clefs[i] = i; 
+
   i_TriRapideStochastique(clefs, Valeur, 0, taille-2);
+
   if( (ST = componentTreeAlloc((2*taille))) == NULL){
     fprintf(stderr, "jcSalliancyTree: erreur de ComponentTreeAlloc\n");
     exit(0);
@@ -500,6 +503,13 @@ int32_t jcSaliencyTree_b (JCctree ** SaliencyTree, int32_t *MST, int32_t *Valeur
     ST->tabnodes[i].sonlist = NULL;
     TarjanMakeSet(T,i);
   }  
+
+  /*for(i = 0; i < taille-1; i++){ 
+  printf("\n MST %d \n",MST[clefs[i]]);
+  
+  }*/
+  //printf("Nb of nodes %d \n",ST->nbnodes);
+
   for(i = 0; i < taille-1; i++){ 
     // for each edge of the MST taken in increasing order of altitude
     n1 = TarjanFind(T, rag->tete[MST[clefs[i]]]);  n2 = TarjanFind(T,rag->queue[MST[clefs[i]]]);

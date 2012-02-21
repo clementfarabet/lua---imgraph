@@ -12,8 +12,12 @@ typedef struct {
 
 #endif
 
+
 #ifndef _MERGETREE_
 #define _MERGETREE_
+
+
+
 
 // create a proper Lua class to represent a merge tree
 #define MT "imgraph.MergeTree"
@@ -75,15 +79,15 @@ static int MergeTree_tostring (lua_State *L)
   {
     str += sprintf(str, "\n");
     str += sprintf(str, " - node: %d ; level %d ; nbsons: %d ; father: %d ; ", 
-            i, CT->tabnodes[i].data, CT->tabnodes[i].nbsons, CT->tabnodes[i].father);
-    if (t->weights) {
+        i, CT->tabnodes[i].data, CT->tabnodes[i].nbsons, CT->tabnodes[i].father);
+     if (t->weights) {
       str += sprintf(str, "weight: %f ; ", t->weights[i]);
     }
-    if (CT->tabnodes[i].nbsons > 0) {
+     if (CT->tabnodes[i].nbsons > 0) {
       str += sprintf(str, "sons: ");
       for (s = CT->tabnodes[i].sonlist; s != NULL; s = s->next)
         str += sprintf(str, "%d  ", s->son);
-    }
+	}
     if ((str-cstr) > 9*1024) {
       str += sprintf(str, "\n ... ");
       break;
