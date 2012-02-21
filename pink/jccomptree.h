@@ -35,6 +35,10 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifndef JCCOMPTREE_H
+#define JCCOMPTREE_H
+
 /* ============================================================================== */
 /* 
   Structure de donnees pour la construction de l'arbre des composantes.
@@ -61,6 +65,10 @@ typedef struct JCsoncell
 
 typedef struct
 {
+  uint8_t k;    // node's k
+  uint8_t area;    // node's area
+  float data_f;    // node's level
+  int32_t edge;    // related edge
   uint8_t data;             // node's level
   int32_t father;            // value -1 indicates the root
   int32_t nbsons;            // value -1 indicates a deleted node
@@ -85,6 +93,7 @@ typedef struct
   int32_t *mergeEdge;
 } mtree;
 
+#include<jcgraphes.h>
 /* ==================================== */
 /* PROTOTYPES */
 /* ==================================== */
@@ -101,6 +110,7 @@ extern int32_t mergeTree(RAG *rag, mtree **MergeTree);
 // Ces 3 fontions vont plutot dans la biblio hierarchie
 int32_t jcSaliencyTree_b (JCctree ** SaliencyTree, int32_t *MST, int32_t *Valeur, RAG *rag, int32_t *STaltitude);
 
+#endif
 #ifdef __cplusplus
 }
 #endif

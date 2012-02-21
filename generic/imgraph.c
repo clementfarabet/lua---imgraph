@@ -622,8 +622,10 @@ static int imgraph_(watershed)(lua_State *L) {
 }
 
 static int imgraph_(mergetree)(lua_State *L) {
+
   // get args
   THTensor *graph = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+
   graph = THTensor_(newContiguous)(graph);
 
   // convert
@@ -646,13 +648,14 @@ static int imgraph_(mergetree)(lua_State *L) {
   // compute merge tree
   mtree *mt;
   mergeTree(rag, &mt);
-
+  
+  //fprintf(stderr,"nb nodes %d %d \n", 2 * rag->g->nsom,mt->CT->nbnodes );
   // compute altitudes
-  int32_t *altitudes = (int32_t *)malloc(sizeof(int32_t) * 2 * rag->g->nsom);
+  int32_t *altitudes = (int32_t *)malloc(sizeof(int32_t) * mt->CT->nbnodes);
   for (i = 0; i < mt->CT->nbnodes; i++) {
     altitudes[i] = mt->CT->tabnodes[i].data;
   }
-
+ 
   // cleanup
   freeimage(graph_xv);
   THTensor_(free)(graph);
@@ -669,6 +672,96 @@ static int imgraph_(mergetree)(lua_State *L) {
   // done
   return 1;
 }
+
+
+static int imgraph_(hierarchyGuimaraes)(lua_State *L) {
+
+  // get args
+  THTensor *graph = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+  graph = THTensor_(newContiguous)(graph);
+
+  // convert
+  struct xvimage *graph_xv = imgraph_(tensor2xvg)(graph, NULL);
+
+  // dims
+  int32_t rs = rowsize(graph_xv);
+  int32_t cs = colsize(graph_xv);
+
+  //stores the graphe in the structure graphe
+   /* Case of a 4-connected graph where each edge is weighted by the
+       absolute difference of intensity between its extremity
+       pixels */
+  graphe *g;
+  int32_t x,y,u;
+  int32_t N = rs * cs;   /* taille image */
+  int32_t N_t = 2*N;
+  g = initgraphe(N, 2*(2*N-rs-cs));
+  setSize(g,rs,cs);
+
+ // compute labels
+  struct xvimage *labels = allocimage(NULL,rs,cs,1,VFF_TYP_4_BYTE);
+  int32_t *labels_data = SLONGDATA(labels);
+  int i;
+  for (i=0; i<rs*cs; i++) labels_data[i] = i;
+
+    // construct adjacency graph
+
+    /* Parcourt de toutes les aretes du graphe d'arete F */
+    for(u = 0; u < N_t; u ++){
+      // si l'arete est bien ds le GA
+      if( ( (u < N) && (u%rs < rs-1)) || ((u >= N) && (u < N_t - rs))){
+	x = Sommetx(u, N, rs);
+	y = Sommety(u, N, rs);
+	if(x != y) 
+	  addarete(g, x, y, UCHARDATA(graph_xv)[u]);
+      }
+    }
+
+  RAG *rag = construitRAG(graph_xv, labels, NULL);
+
+        // compute merge tree
+  mtree *mt;
+  if( (mt = mergeTreeAlloc((N_t))) == NULL){
+    fprintf(stderr, "erreur de ComponentTreeAlloc\n");
+    exit(0);
+  }
+
+  // mergeTree(rag, &mt);
+  //call HierarchicalSegmentation(graphe *g, JCctree *CT);
+  int32_t * Alt;
+  Alt = ( int32_t * )calloc(2*N, sizeof(int32_t));
+  HierarchicalSegmentation(g, mt->CT, Alt, mt->mergeEdge);
+
+ for(u = 0; u < 2*N; u ++)
+   {
+     //fprintf(stderr, "%d %d\n ",  Alt[u],mt->CT->tabnodes[u].nbsons);
+   mt->CT->tabnodes[u].data = Alt[u];
+   }
+  // compute altitudes
+   int32_t *altitudes = (int32_t *)malloc(sizeof(int32_t) * 2 * N);
+   for (u = 0; u < mt->CT->nbnodes; u++) 
+     altitudes[u] = mt->CT->tabnodes[u].data;
+    
+
+  // cleanup
+  freeimage(graph_xv);
+  THTensor_(free)(graph);
+
+  // return tree
+  MergeTree *t = lua_pushMergeTree(L);
+  t->tree = mt;
+  t->labels = labels ;
+  t->rag = rag;
+  t->cs = cs;
+  t->rs = rs;
+  t->altitudes = altitudes;
+
+  terminegraphe(g);
+  free(Alt);
+  // done
+  return 1;
+}
+
 
 static int imgraph_(dumptree) (lua_State *L)
 {
@@ -705,10 +798,11 @@ static int imgraph_(dumptree) (lua_State *L)
 
 static int imgraph_(filtertree)(lua_State *L) {
   // get args
+
   MergeTree *t = lua_toMergeTree(L, 1);
   int mode = 0;
   if (lua_isnumber(L, 2)) mode = lua_tonumber(L, 2);
-
+ 
   // compute merge attributes
   int32_t *attribute;
   switch(mode){
@@ -727,13 +821,20 @@ static int imgraph_(filtertree)(lua_State *L) {
   }
 
   // compute spanning tree with attributes
-  int32_t *mst = (int32_t *)malloc(sizeof(int32_t) * t->rag->g->nsom - 1);
-  int32_t *value = (int32_t *)malloc(sizeof(int32_t) * t->rag->g->nsom - 1);
-  int32_t *staltitude = (int32_t *)malloc(sizeof(int32_t) * 2 * t->rag->g->nsom);
+  int32_t *mst = (int32_t *)malloc(sizeof(int32_t) * (t->rag->g->nsom-1 ));
+  int32_t *value = (int32_t *)malloc(sizeof(int32_t)* (t->rag->g->nsom-1 ));
+  int32_t *staltitude = (int32_t *)malloc(sizeof(int32_t) * (2 * t->rag->g->nsom));
   JCctree *st;
   mstCompute(t->tree, mst, value, attribute);
+  int i;
+  /* for (i=t->rag->g->nsom-10;i<t->rag->g->nsom ;i++)
+     fprintf(stderr, "%d ", value[i]);*/
+
+
   jcSaliencyTree_b(&st, mst, value, t->rag, staltitude);
 
+
+  
   // store new comp tree and attributes
   componentTreeFree(t->tree->CT);
   t->tree->CT = st;
@@ -843,81 +944,95 @@ int imgraph_(tree2components)(lua_State *L) {
   int table_masks = lua_gettop(L);
 
   // (1) get components' info
-  long i;
-  for (i=0; i<CT->nbnodes; i++) {
-    // id (1-based, for lua)
-    long id = i+1;
-
-    // create a table to store geometry of component:
-    THTensor *entry = THTensor_(newWithSize1d)(13);
-    real *data = THTensor_(data)(entry);
-
-    // if node doesn't have sons, then it's a pixel
-    long nbsons = CT->tabnodes[i].nbsons;
-    if (nbsons == 0) {
-      // this struct represents the component's geometry:
-      long y = i / width;
-      long x = i - y*width;
-      data[0] = x+1;       // x
-      data[1] = y+1;       // y
-      data[2] = 1;         // size
-      data[3] = 0;         // compat with 'histpooling' method
-      data[4] = id;        // hash (= id in that case)
-      data[5] = x+1;       // left_x
-      data[6] = x+1;       // right_x
-      data[7] = y+1;       // top_y
-      data[8] = y+1;       // bottom_y
-
-      // store entry
-      luaT_pushudata(L, entry, torch_(Tensor_id));
-      lua_rawseti(L, table_comps, id); // table_comps[id] = entry
-
-      // store pixels ?
-      if (getmasks) {
-        // in this case, only one pixel
-        pixelsize_list[i] = 1;
-        pixel_list[i] = (long *)malloc(sizeof(long) * 1);
-        pixel_list[i][0] = i;
-      }
-
-    } else {
-      // get info from each son
-      JCsoncell *son;
-      int firstson = 1;
-      for (son = CT->tabnodes[i].sonlist; son != NULL; son = son->next) {
-        // get entry for son
-        long sonid = son->son + 1;
-        lua_rawgeti(L, table_comps, sonid);
-        THTensor *sonentry = (THTensor *)luaT_toudata(L, -1, torch_(Tensor_id));
-        lua_pop(L,1);
-
-        // update parent's structure
-        if (firstson) {
-          // first son: simply copy son into parent
-          THTensor_(copy)(entry, sonentry);
-          firstson = 0;
-
-          // change id
-          data[4] = id;
-
-          // and store entry
-          luaT_pushudata(L, entry, torch_(Tensor_id));
-          lua_rawseti(L, table_comps, id); // table_comps[id] = entry
-
-        } else {
-          // next sons: expand parent
-          real *sondata = THTensor_(data)(sonentry);
-          data[0] += sondata[0];               // x += sonx
-          data[1] += sondata[1];               // y += sony
-          data[2] += sondata[2];               // size += sonsize
-          data[5] = min(sondata[5],data[5]);   // left_x
-          data[6] = max(sondata[6],data[6]);   // right_x
-          data[7] = min(sondata[7],data[7]);   // top_x
-          data[8] = max(sondata[8],data[8]);   // bottom_x
-        }
-      }
-
-      // store pixels ?
+  // long *index_nodes = (long *)malloc(sizeof(long)*CT->nbnodes);
+  long i;//,j=0;
+  for (i=0; i<CT->nbnodes; i++) 
+    {
+      //if (CT->tabnodes[i].nbsons !=-1){ // the node exists
+	
+	//index_nodes[i]=j;
+	//	fprintf(stderr,"index[%d]=%d \n",i,j);
+	//	j++;
+	
+	// id (1-based, for lua)
+	long id = i+1;
+	
+	// create a table to store geometry of component:
+	THTensor *entry = THTensor_(newWithSize1d)(13);
+	real *data = THTensor_(data)(entry);
+	
+	// if node doesn't have sons, then it's a pixel
+	long nbsons = CT->tabnodes[i].nbsons;
+	if (nbsons == 0)
+	  {
+	    // this struct represents the component's geometry:
+	    long y = i / width;
+	    long x = i - y*width;
+	    data[0] = x+1;       // x
+	    data[1] = y+1;       // y
+	    data[2] = 1;         // size
+	    data[3] = 0;         // compat with 'histpooling' method
+	    data[4] = id;        // hash (= id in that case)
+	    data[5] = x+1;       // left_x
+	    data[6] = x+1;       // right_x
+	    data[7] = y+1;       // top_y
+	    data[8] = y+1;       // bottom_y
+	    
+	    // store entry
+	    luaT_pushudata(L, entry, torch_(Tensor_id));
+	    lua_rawseti(L, table_comps, id); // table_comps[id] = entry
+	    
+	    // store pixels ?
+	    if (getmasks) {
+	      // in this case, only one pixel
+	      pixelsize_list[i] = 1;
+	      pixel_list[i] = (long *)malloc(sizeof(long) * 1);
+	      pixel_list[i][0] = i;
+	    }
+	    
+	  } 
+	else 
+	  {
+	    // get info from each son
+	    JCsoncell *son;
+	    int firstson = 1;
+	    for (son = CT->tabnodes[i].sonlist; son != NULL; son = son->next) 
+	      {
+		// get entry for son
+		long sonid = son->son + 1;
+		lua_rawgeti(L, table_comps, sonid);
+		THTensor *sonentry = (THTensor *)luaT_toudata(L, -1, torch_(Tensor_id));
+		lua_pop(L,1);
+		
+		// update parent's structure
+		if (firstson) 
+		  {
+		    // first son: simply copy son into parent
+		    THTensor_(copy)(entry, sonentry);
+		    firstson = 0;
+		    
+		    // change id
+		    data[4] = id;
+		    
+		    // and store entry
+		    luaT_pushudata(L, entry, torch_(Tensor_id));
+		    lua_rawseti(L, table_comps, id); // table_comps[id] = entry
+		  } 
+		else
+		  {
+		    // next sons: expand parent
+		    real *sondata = THTensor_(data)(sonentry);
+		    data[0] += sondata[0];               // x += sonx
+		    data[1] += sondata[1];               // y += sony
+		    data[2] += sondata[2];               // size += sonsize
+		    data[5] = min(sondata[5],data[5]);   // left_x
+		    data[6] = max(sondata[6],data[6]);   // right_x
+		    data[7] = min(sondata[7],data[7]);   // top_x
+		    data[8] = max(sondata[8],data[8]);   // bottom_x
+		  }
+	      }//end for
+	    
+	    // store pixels ?
       if (getmasks) {
         // alloc as many pixels as surface
         pixelsize_list[i] = data[2];
@@ -933,8 +1048,9 @@ int imgraph_(tree2components)(lua_State *L) {
         }
       }
     }
+	// }
   }
-
+  //fprintf(stderr,"la \n");
   // (2) traverse component table to produce final component list
   lua_pushnil(L);
   long id = 0;
@@ -953,7 +1069,7 @@ int imgraph_(tree2components)(lua_State *L) {
     data[10] = data[8] - data[7] + 1;    // box height
     data[11] = (data[6] + data[5]) / 2;  // box center x
     data[12] = (data[8] + data[7]) / 1;  // box center y
-
+    // fprintf(stderr,"la 2\n");
     // (optional) generate masks
     if (getmasks) {
       // create a tensor to hold mask:
@@ -974,7 +1090,7 @@ int imgraph_(tree2components)(lua_State *L) {
         long mskidx = y*maskw+x; // then generate linear idx in mask
         maskd[mskidx] = 1;       // and set pixel to 1
       }
-
+      // fprintf(stderr,"la 3 %d\n", id);
       // register mask:
       luaT_pushudata(L, mask, torch_(Tensor_id));
       lua_rawseti(L, table_masks, id+1); // table_masks[id] = mask
@@ -985,7 +1101,7 @@ int imgraph_(tree2components)(lua_State *L) {
       id++;
     }
   }
-
+ 
   // cleanup
   if (pixel_list) free(pixel_list);
   if (pixelsize_list) free(pixelsize_list);
@@ -1448,6 +1564,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"colorize", imgraph_(colorize)},
   {"graph2map", imgraph_(graph2map)},
   {"mergetree", imgraph_(mergetree)},
+  {"hierarchyGuimaraes", imgraph_(hierarchyGuimaraes)},
   {"filtertree", imgraph_(filtertree)},
   {"weighttree", imgraph_(weighttree)},
   {"dumptree", imgraph_(dumptree)},

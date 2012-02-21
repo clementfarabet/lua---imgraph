@@ -275,6 +275,38 @@ function imgraph.mergetree(...)
 end
 
 ----------------------------------------------------------------------
+-- compute the hierarchy of [guimaraes et al. ICIP2012] of a graph
+--
+function imgraph.hierarchyGuimaraes(...)
+
+
+   --get args
+   local args = {...}
+   local graph = args[1]
+
+   -- usage
+   if not graph or (graph:nDimension() ~= 3) then
+      print(xlua.usage('imgraph.hierarchyGuimaraes',
+                       'compute the hierarchyGuimaraes of a graph (dendrogram)', nil,
+                       {type='torch.Tensor', help='input graph', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.hierarchyGuimaraes')
+   end
+
+   -- warning
+   if graph:size(1) ~= 2 then
+      print('<imgraph.hierarchyGuimaraes> warning: only supporting 4-connexity (discarding other edges)')
+   end
+
+   -- compute the hierarchy from the graph
+   local graphflat = graph:new():resize(2*graph:size(2),graph:size(3))
+   local mt = graph.imgraph.hierarchyGuimaraes(graphflat)
+   
+   -- return tree
+   return mt
+end
+
+
+----------------------------------------------------------------------
 -- filter a merge tree so as to equalize surface/volume or other
 -- attributes
 --

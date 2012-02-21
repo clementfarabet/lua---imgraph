@@ -445,7 +445,7 @@ int32_t * surfaceMergeTree(JCctree *CT, RAG *rag)
   int32_t *SurfaceCompo;
   int32_t *SurfaceMerge;
   int32_t i;
-
+ 
   if( (SurfaceCompo = (int32_t*)malloc(sizeof(int32_t) * CT->nbnodes)) == NULL){
     fprintf(stderr,"%s: erreur de malloc\n", F_NAME);
     exit(0);
@@ -460,6 +460,7 @@ int32_t * surfaceMergeTree(JCctree *CT, RAG *rag)
   surfaceRec(CT, SurfaceCompo, CT->root); 
   surfaceOpenningRec(CT, SurfaceCompo, SurfaceMerge, CT->root); 
   free(SurfaceCompo);
+ 
   return SurfaceMerge;
 }
 

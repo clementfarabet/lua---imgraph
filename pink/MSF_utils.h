@@ -35,3 +35,4 @@ list * MSF_Kruskal(MergeTree * MT);
 list * MSF_Prim(MergeTree * MT);
 
 list * Min_Cover(MergeTree * MT);
+

@@ -19,6 +19,8 @@ extern "C" {
 #include "llpeGA.h"
 #include "lga2khalimsky.h"
 #include "lppm2GA.h"
+#include "mcweightgraph.h"
+#include "sjcomptree.h"
 }
 
 #include "powerwatershed.h"
