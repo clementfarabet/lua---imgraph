@@ -96,6 +96,40 @@ function imgraph.graph(...)
 end
 
 ----------------------------------------------------------------------
+-- computes a graph from a .mat hierarchy image
+--
+function imgraph.mat2graph(...)
+   -- get args
+   local args = {...}
+   local dest, img
+   local arg = torch.typename(args[1])
+   if arg and arg:find('Tensor') then
+      img = args[1]
+   end
+   uheight = args[2]
+   uwidth = args[3]
+   -- usage
+   if not img  then
+      print(xlua.usage('imgraph.mat2graph',
+                       'compute an edge-weighted graph from a .mat hierarchy image', nil,
+                       {type='torch.Tensor', help='input tensor (for now KxHxW or HxW)', req=true},
+                       "",
+                      {type='torch.Tensor', help='destination: existing graph', req=true},
+                       {type='torch.Tensor', help='input tensor (for now KxHxW or HxW)', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.mat2graph')
+   end
+
+   dest = torch.Tensor( ( (img:size(1)-1)/2 * (img:size(2)-1)/2 ),2 )
+  
+   -- compute graph
+   img.imgraph.mat2graph(img, dest, uheight, uwidth)
+
+   -- return result
+   return dest
+end
+
+
+----------------------------------------------------------------------
 -- compute the connected components of a graph
 --
 function imgraph.connectcomponents(...)
@@ -442,6 +476,8 @@ end
 --
 function imgraph.segmentmst(...)
    --get args
+
+ 
    local args = {...}
    local dest, graph, thres, minsize, colorize
    local arg2 = torch.typename(args[2])
@@ -484,11 +520,70 @@ function imgraph.segmentmst(...)
 
    -- compute image
    dest = dest or torch.Tensor():typeAs(graph)
+
+ 
    local nelts = graph.imgraph.segmentmst(dest, graph, thres, minsize, colorize)
 
    -- return image
    return dest, nelts
 end
+
+
+----------------------------------------------------------------------
+-- segment a graph, by computing its min-spanning tree and
+-- merging vertices based on a dynamic threshold 
+--
+function imgraph.segmentmstGuimaraes(...)
+   --get args
+   local args = {...}
+   local dest, graph, thres, minsize, colorize
+   local arg2 = torch.typename(args[2])
+   if arg2 and arg2:find('Tensor') then
+      dest = args[1]
+      graph = args[2]
+      thres = args[3]
+      minsize = args[4]
+      colorize = args[5]
+   else
+      graph = args[1]
+      thres = args[2]
+      minsize = args[3]
+      colorize = args[4]
+   end
+
+   -- defaults
+   thres = thres or 3
+   minsize = minsize or 20
+   colorize = colorize or false
+
+   -- usage
+   if not graph then
+      print(xlua.usage('imgraph.segmentmstGuimaraes',
+                       'segment an edge-weighted graph, using a surface adaptive criterion\n'
+                          .. 'on the min-spanning tree of the graph (see Guimaraes et al. 2012)',
+                       nil,
+                       {type='torch.Tensor', help='input graph', req=true},
+                       {type='number', help='base threshold for merging', default=3},
+                       {type='number', help='min size: merge components of smaller size', default=20},
+                       {type='boolean', help='replace components id by random colors', default=false},
+                       "",
+                       {type='torch.Tensor', help='destination tensor', req=true},
+                       {type='torch.Tensor', help='input graph', req=true},
+                       {type='number', help='base threshold for merging', default=3},
+                       {type='number', help='min size: merge components of smaller size', default=20},
+                       {type='boolean', help='replace components id by random colors', default=false}))
+      xlua.error('incorrect arguments', 'imgraph.segmentmstGuimaraes')
+   end
+
+   -- compute image
+   dest = dest or torch.Tensor():typeAs(graph)
+   local nelts = graph.imgraph.segmentmstGuimaraes(dest, graph, thres, minsize, colorize)
+
+   -- return image
+   return dest, nelts
+end
+
+
 
 ----------------------------------------------------------------------
 -- pool the features (or pixels) of an image into a segmentation map
