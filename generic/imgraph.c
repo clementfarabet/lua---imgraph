@@ -160,6 +160,48 @@ static int imgraph_(graph)(lua_State *L) {
   return 0;
 }
 
+
+static int imgraph_(mat2graph)(lua_State *L) {
+  // get args
+  THTensor *dst = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  THTensor *src = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+int unified_height = lua_tonumber(L, 3);
+int unified_width = lua_tonumber(L, 4);
+  // make sure input is contiguous
+  src = THTensor_(newContiguous)(src);
+
+    // get input dims
+  long channels, height, width;
+  
+  height = src->size[0];
+  width = src->size[1];
+  
+  THTensor_(resize3d)(dst, 2, unified_height, unified_width);
+  THTensor_(fill)(dst, 0);
+  
+  // get raw pointers
+  real *src_data = THTensor_(data)(src);
+  real *dst_data = THTensor_(data)(dst);
+
+  long x,y;
+ for (y = 0; y < (height-1)/2; y++)
+   {
+     for (x = 0; x < (width-1)/2; x++) 
+       {
+	 // fill the first dimension
+	 dst_data[y*unified_width+x] = src_data[width*2*y+2*x];
+	 
+	// fill the second dimension
+	  dst_data[unified_height*unified_width+ y*(unified_width)+x] = src_data[width*2*y+2*x];		
+       }
+   }
+
+  // cleanup
+  THTensor_(free)(src);
+  
+  return 0;
+}
+
 static int imgraph_(connectedcomponents)(lua_State *L) {
   // get args
   THTensor *dst = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
@@ -407,6 +449,146 @@ static int imgraph_(segmentmst)(lua_State *L) {
   // return
   return 1;
 }
+
+
+
+static int imgraph_(segmentmstGuimaraes)(lua_State *L) {
+  // get args
+  THTensor *dst = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  real thres = lua_tonumber(L, 3);
+  int minsize = lua_tonumber(L, 4);
+  int color = lua_toboolean(L, 5);
+
+  // dims
+  long nmaps = src->size[0];
+  long height = src->size[1];
+  long width = src->size[2];
+
+  // make sure input is contiguous
+  src = THTensor_(newContiguous)(src);
+  real *src_data = THTensor_(data)(src);
+
+  printf("toto");
+
+  // create edge list from graph (src)
+  Edge *edges = NULL; int nedges = 0;
+  edges = (Edge *)calloc(width*height*nmaps, sizeof(Edge));
+  int x,y;
+  for (y = 0; y < height; y++) {
+    for (x = 0; x < width; x++) {
+      if (x < width-1) {
+        edges[nedges].a = y*width+x;
+        edges[nedges].b = y*width+(x+1);
+        edges[nedges].w = src_data[(0*height+y)*width+x];
+        nedges++;
+      }
+      if (y < height-1) {
+        edges[nedges].a = y*width+x;
+        edges[nedges].b = (y+1)*width+x;
+        edges[nedges].w = src_data[(1*height+y)*width+x];
+        nedges++;
+      }
+      if (nmaps >= 4) {
+        if ((x < width-1) && (y < height-1)) {
+          edges[nedges].a = y * width + x;
+          edges[nedges].b = (y+1) * width + (x+1);
+          edges[nedges].w = src_data[(2*height+y)*width+x];
+          nedges++;
+        }
+        if ((x < width-1) && (y > 0)) {
+          edges[nedges].a = y * width + x;
+          edges[nedges].b = (y-1) * width + (x+1);
+          edges[nedges].w = src_data[(3*height+y)*width+x];
+          nedges++;
+        }
+      }
+    }
+  }
+
+  // sort edges by weight
+  sort_edges(edges, nedges);
+
+  // make a disjoint-set forest
+  Set *set = set_new(width*height);
+
+  // init thresholds
+  real *threshold = (real *)calloc(width*height, sizeof(real));
+  int i;
+  for (i = 0; i < width*height; i++) threshold[i] = thres;
+
+  // for each edge, in non-decreasing weight order,
+  // decide to merge or not, depending on current threshold
+  for (i = 0; i < nedges; i++) {
+    // components conected by this edge
+    int a = set_find(set, edges[i].a);
+    int b = set_find(set, edges[i].b);
+    if (a != b) {
+      if ((edges[i].w <= threshold[a]) && (edges[i].w <= threshold[b])) {
+        set_join(set, a, b);
+        a = set_find(set, a);
+        threshold[a] = edges[i].w + thres/set->elts[a].surface;
+      }
+    }
+  }
+
+  // post process small components
+  for (i = 0; i < nedges; i++) {
+    int a = set_find(set, edges[i].a);
+    int b = set_find(set, edges[i].b);
+    if ((a != b) && ((set->elts[a].surface < minsize) || (set->elts[b].surface < minsize)))
+      set_join(set, a, b);
+  }
+
+  // generate output
+  if (color) {
+    THTensor *colormap = THTensor_(newWithSize2d)(width*height, 3);
+    THTensor_(fill)(colormap, -1);
+    THTensor_(resize3d)(dst, 3, height, width);
+    for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+        int comp = set_find(set, y * width + x);
+        real check = THTensor_(get2d)(colormap, comp, 0);
+        if (check == -1) {
+          THTensor_(set2d)(colormap, comp, 0, rand0to1());
+          THTensor_(set2d)(colormap, comp, 1, rand0to1());
+          THTensor_(set2d)(colormap, comp, 2, rand0to1());
+        }
+        real r = THTensor_(get2d)(colormap, comp, 0);
+        real g = THTensor_(get2d)(colormap, comp, 1);
+        real b = THTensor_(get2d)(colormap, comp, 2);
+        THTensor_(set3d)(dst, 0, y, x, r);
+        THTensor_(set3d)(dst, 1, y, x, g);
+        THTensor_(set3d)(dst, 2, y, x, b);
+      }
+    }
+  } else {
+    THTensor_(resize2d)(dst, height, width);
+    real *dst_data = THTensor_(data)(dst);
+    for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+        dst_data[y*width+x] = set_find(set, y * width + x);
+      }
+    }
+  }
+
+  // push number of components
+  lua_pushnumber(L, set->nelts);
+
+  // cleanup
+  set_free(set);
+  free(edges);
+  free(threshold);
+  THTensor_(free)(src);
+
+  // return
+  return 1;
+}
+
+
+
+
+
 
 real imgraph_(max)(real *a, int n) {
   int i;
@@ -1355,7 +1537,7 @@ int imgraph_(histpooling)(lua_State *L) {
 
       // accumulate current vector into histo
       if (local_conf >= minConfidence) {
-        THTensor_(cadd)(histo, 1, select2);
+        THTensor_(cadd)(histo, histo, 1, select2);
         lua_pushnumber(L, ++size);
         lua_rawseti(L,table_sizes,segm_id); // s[segm_id] = ++size
       }
@@ -1556,9 +1738,11 @@ int imgraph_(segm2components)(lua_State *L) {
 
 static const struct luaL_Reg imgraph_(methods__) [] = {
   {"graph", imgraph_(graph)},
+  {"mat2graph", imgraph_(mat2graph)},
   {"gradient", imgraph_(gradient)},
   {"connectedcomponents", imgraph_(connectedcomponents)},
   {"segmentmst", imgraph_(segmentmst)},
+  {"segmentmstGuimaraes", imgraph_(segmentmstGuimaraes)},
   {"watershed", imgraph_(watershed)},
   {"histpooling", imgraph_(histpooling)},
   {"colorize", imgraph_(colorize)},

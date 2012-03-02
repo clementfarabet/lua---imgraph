@@ -69,7 +69,7 @@ typedef struct
   uint8_t area;    // node's area
   float data_f;    // node's level
   int32_t edge;    // related edge
-  uint8_t data;             // node's level
+  uint32_t data;             // node's level
   int32_t father;            // value -1 indicates the root
   int32_t nbsons;            // value -1 indicates a deleted node
   int32_t max, min;
