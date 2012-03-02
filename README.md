@@ -6,42 +6,45 @@ of images: create a graph, segment it,
 compute its watershed, or its connected
 components...
 
-## Install dependencies 
+## Install 
 
-1/ third-party libraries:
+1/ Torch7 is required:
 
-On Linux (Ubuntu > 9.04):
+Dependencies, on Linux (Ubuntu > 9.04):
 
 ``` sh
 $ apt-get install gcc g++ git libreadline5-dev cmake wget libqt4-core libqt4-gui libqt4-dev
 ```
 
-On Mac OS (Leopard, or more), using [Homebrew](http://mxcl.github.com/homebrew/):
+Dependencies, on Mac OS (Leopard, or more), using [Homebrew](http://mxcl.github.com/homebrew/):
 
 ``` sh
 $ brew install git readline cmake wget qt
 ```
 
-2/ Lua 5.1 + Luarocks + xLua:
+Then on both platforms:
 
 ``` sh
-$ git clone https://github.com/clementfarabet/lua4torch
-$ cd lua4torch
-$ make install PREFIX=/usr/local
+$ git clone https://github.com/andresy/torch
+$ cd torch
+$ mkdir build; cd build
+$ cmake ..
+$ make
+$ [sudo] make install
 ```
 
-3/ imgraph:
+2/ Once Torch7 is available, install this package:
 
 ``` sh
-$ luarocks install imgraph
+$ [sudo] torch-pkg install imgraph
 ```
 
 ## Use the library
 
-First run xlua, and load imgraph:
+First run torch, and load imgraph:
 
 ``` sh
-$ xlua
+$ torch
 ``` 
 
 ``` lua
