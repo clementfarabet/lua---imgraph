@@ -8,7 +8,8 @@ add_subdirectory (pink)
 add_subdirectory (graphcuts)
 add_subdirectory (PWcut)
 
-include_directories (${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/pink ${PROJECT_SOURCE_DIR}/graphcuts ${PROJECT_SOURCE_DIR}/PWcut)
+include_directories (${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/pink
+${PROJECT_SOURCE_DIR}/graphcuts ${PROJECT_SOURCE_DIR}/PWcut ${Boost_INCLUDE_DIR})
 
 SET(src init.cpp)
 SET(luasrc init.lua MalisCriterion.lua)
