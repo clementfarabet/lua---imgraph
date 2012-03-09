@@ -642,12 +642,18 @@ function imgraph.adjacency(...)
    -- usage
    if not grayscale or grayscale:dim() ~= 2 then
       print(xlua.usage('imgraph.adjacency',
-                       'return the adjacency matrix of a segmentation map.\n'
+                       'return the adjacency matrix of a segmentation map.\n\n'
                           .. 'a component list can be given, in which case the list\n'
-                          .. 'is updated to directly embed the neighboring relationships',
+                          .. 'is updated to directly embed the neighboring relationships\n'
+                          .. 'and a second adjacency matrix is returned, using the revids\n'
+                          .. 'available in the component list',
                        'graph = imgraph.graph(image.lena())\n'
                           .. 'segm = imgraph.segmentmst(graph)\n'
-                          .. 'matrix = imgraph.adjacency(segm)',
+                          .. 'matrix = imgraph.adjacency(segm)\n\n'
+                          .. 'components = imgraph.extractcomponents(segm)\n'
+                          .. 'segm = imgraph.adjacency(segm, components)\n'
+                          .. 'print(components.neighbors) -- list of neighbor IDs\n'
+                          .. 'print(components.adjacency) -- adjacency matrix of IDs',
                        {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be in [1,NCLASSES]', req=true},
                        {type='table', help='component list, as returned by imgraph.extractcomponents()'}))
       xlua.error('incorrect arguments', 'imgraph.adjacency')
@@ -664,17 +670,21 @@ function imgraph.adjacency(...)
    -- update component list, if given
    if components then
       components.neighbors = {}
+      components.adjacency = {}
       for i = 1,components:size() do
          local neighbors = adjacency[components.id[i]]
          local ntable = {}
+         local ktable = {}
          for id in pairs(neighbors) do
             table.insert(ntable, components.revid[id])
+            ktable[components.revid[id]] = true
          end
          components.neighbors[i] = ntable
+         components.adjacency[i] = ktable
       end
    end
 
-   -- return matrix
+   -- return adjacency matrix
    return adjacency
 end
 
