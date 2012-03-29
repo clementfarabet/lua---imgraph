@@ -838,49 +838,54 @@ list * Graph_Cuts(MergeTree *MT )
   Returns a list of nodes correspunding to the Min cut,
   computed using a Max Flow algorithm */
   int y, i, j, tmp;
-  
-  double CTE_WEIGHTS = 100000;
-  printf("CTE_WEIGHTS =  %f %d \n",CTE_WEIGHTS, INFINITE_D );
-
   int nb_markers; int nb_leafs;
-  int N, M; 
+  long N, M; 
+ // -------- Gathering usefull input graph (MT) informations ----------- 
   float val=1; //weight parameter for leafs.
-
-  // -------- Gathering usefull input graph (MT) informations -----------
-
   mtree * T= MT->tree;
   float * W = MT->weights;
+  // mergeTreePrint(T);
   JCctree *CT = T->CT;
   int root_node = CT->root;
-  JCsoncell *s;
 
   //nb nodes
-   M = CT->nbnodes;
-  
-   // nb_edges
-   nb_leafs = 0;
-   for (i = 0; i < M; i++)
-     if (CT->tabnodes[i].nbsons == 0)
-       nb_leafs++;
+  M = CT->nbnodes;
+
+  // nb_edges
+  nb_leafs = 0;
+  for (i = 0; i < M; i++)
+    if (CT->tabnodes[i].nbsons == 0)
+      nb_leafs++;
+
+  nb_markers = nb_leafs+1;
+  N=M+nb_markers;
+  M=N-1;
+  // printf("Nb nodes CT = %d  Nb nodes:%d Nb edges: %d Nb leafs :%d \n",CT->nbnodes, N, M, nb_leafs);
+
+
+
+  // printf("index root = %d   \n",CT->root);
    
-   nb_markers = nb_leafs+1;
-   N=M+nb_markers;
-   M=N-1;
-   printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
-   
-   uint32_t * SeededNodes = (uint32_t*)malloc(nb_markers*sizeof(uint32_t));
+   double CTE_WEIGHTS = 100000;
+   // printf("CTE_WEIGHTS =  %f %d \n",CTE_WEIGHTS, INFINITE_D );
+   JCsoncell *s;
+
+   int * SeededNodes = (int*)malloc((CT->nbnodes+1)*sizeof(int));
    if (SeededNodes == NULL) { fprintf(stderr, "kruskal : malloc failed\n"); exit(0); }
    
+
    // markers
-   SeededNodes[0]= M;
-   j=1;
+   
+   j=0;
    for (i = 0; i < CT->nbnodes; i++)
-     if (CT->tabnodes[i].nbsons == 0)
-       {
-	 SeededNodes[j]= i+CT->nbnodes;
+      if (CT->tabnodes[i].nbsons == 0)
+     {
+	 SeededNodes[i]= j+CT->nbnodes;
 	 j++;
       }
-   
+   SeededNodes[CT->root]= M;   
+
+
    // weights
    
    float * weights = (float *)malloc(N*sizeof(float));
@@ -898,39 +903,50 @@ list * Graph_Cuts(MergeTree *MT )
    for (i=0;i<N;i++)
      g -> add_node(); 
    
-   g -> add_tweights(SeededNodes[0], INFINITE_D, 0 );
-   //fprintf(stderr,"adding the source edge to node %d \n", SeededNodes[0] );
-   for (i=1;i<nb_markers;i++)
-     {
-     g -> add_tweights(SeededNodes[i], 0, INFINITE_D);
-     // fprintf(stderr,"adding the sink edge to node %d \n", SeededNodes[i] );
-     }   
-
+   g -> add_tweights(SeededNodes[CT->root], INFINITE_D, 0 );
+ 
+   for (i = 0; i < CT->nbnodes; i++)
+      if (CT->tabnodes[i].nbsons == 0)
+	{
+	  g -> add_tweights(SeededNodes[i], 0, INFINITE_D);
+	  // fprintf(stderr,"adding the sink edge to node %d \n", SeededNodes[i] );
+	}   
+   // fprintf(stderr,"adding the source edge to node %d \n", SeededNodes[CT->root] );
    for  (i=0;i<CT->nbnodes;i++)
      {
        tmp = CT->tabnodes[i].nbsons;
-       if (tmp==0) //leaf
+       if ((tmp==0)) //leaf
 	 {
-	   y= SeededNodes[i+1]; // edge index
-	   // fprintf(stderr,"edge (%d %d) %d \n", i,y,  (int)(weights[y]*CTE_WEIGHTS ));
+	  
+	   // fprintf(stderr,"node %d is a leaf \n", i);
+	   y= SeededNodes[i]; // edge index
+	   //fprintf(stderr,"edge (%d %d) \n", i,y);
 	   g -> add_edge( i, y, (int)(weights[y]*CTE_WEIGHTS), (int)(weights[y]*CTE_WEIGHTS) );
+	   // fprintf(stderr,"coucou5\n");
+	   // fprintf(stderr,"Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
+	   
+ 
 	 } 
        else
 	 {
 	   for ( s = CT->tabnodes[i].sonlist;s!=NULL;s = s->next)  
 	     {
+	       // fprintf(stderr,"coucou2 \n");
 	       y=s->son;
-	       //  fprintf(stderr,"edge (%d %d) %d \n", i,y,  (int)(weights[y]*CTE_WEIGHTS ));
+	       //fprintf(stderr,"edge (%d %d) %d \n", i,y,  (int)(weights[y]*CTE_WEIGHTS ));
 	       g -> add_edge( i, y, (int)(weights[y]*CTE_WEIGHTS), (int)(weights[y]*CTE_WEIGHTS) );
+	       // fprintf(stderr,"coucou4 %d\n", i);
+	       //printf("Nb nodes:%d Nb edges: %d Nb leafs :%d \n", N, M, nb_leafs);
 	     }
 	 }
      }
+
 g -> add_edge( root_node, M, (int)(weights[root_node]*CTE_WEIGHTS), (int)(weights[root_node]*CTE_WEIGHTS) );
 
-   free(weights);  
+//fprintf(stderr,"coucou\n");
    
  // ------------------ Calling the Max Flow algorithm ----------------------
-   printf("Max flow walue  =  %d \n", g -> maxflow());
+ fprintf(stderr,"Max flow walue  =  %d \n", g -> maxflow());
    
  
   int * Map = (int *)malloc(N*sizeof(int));
@@ -944,8 +960,8 @@ g -> add_edge( root_node, M, (int)(weights[root_node]*CTE_WEIGHTS), (int)(weight
       else printf("Graphcut error\n");
       //printf("Map[%d]=%d\n", i, Map[i]);
     }
-  delete g;
-
+   delete g;
+  free(weights);  
  
  // ------------------ Process the tree to find the cut ----------------------
   list * cut = NULL;

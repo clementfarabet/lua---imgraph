@@ -59,9 +59,15 @@ typedef struct JCsoncell
   struct JCsoncell *next;
 } JCsoncell;
 
+
+
 typedef struct
 {
-  uint8_t data;             // node's level
+  uint8_t k;    // node's k
+  uint8_t area;    // node's area
+  float data_f;    // node's level
+  int32_t edge;    // related edge
+  uint32_t data;             // node's level
   int32_t father;            // value -1 indicates the root
   int32_t nbsons;            // value -1 indicates a deleted node
   int32_t max, min;
@@ -84,6 +90,33 @@ typedef struct
   JCctree *CT;
   int32_t *mergeEdge;
 } mtree;
+/*
+
+typedef struct
+{
+  uint8_t data;             // node's level
+  int32_t father;            // value -1 indicates the root
+  int32_t nbsons;            // value -1 indicates a deleted node
+  int32_t max, min;
+  JCsoncell *sonlist;
+  JCsoncell *lastson;
+  } JCctreenode;
+
+typedef struct
+{
+  int32_t nbnodes;
+  int32_t nbsoncells;
+  int32_t root;
+  JCctreenode * tabnodes; 
+  JCsoncell * tabsoncells;
+  uint8_t *flags;
+  } JCctree;
+
+typedef struct
+{
+  JCctree *CT;
+  int32_t *mergeEdge;
+  } mtree;*/
 
 // Structure de Graphe binaire
 
