@@ -1005,7 +1005,6 @@ static int imgraph_(levelsOfTree) (lua_State *L)
 
 static int imgraph_(filtertree)(lua_State *L) {
   // get args
-
   MergeTree *t = lua_toMergeTree(L, 1);
   int mode = 0;
   if (lua_isnumber(L, 2)) mode = lua_tonumber(L, 2);
@@ -1041,15 +1040,8 @@ static int imgraph_(filtertree)(lua_State *L) {
   int32_t *staltitude = (int32_t *)malloc(sizeof(int32_t) * (2 * t->rag->g->nsom));
   JCctree *st;
   mstCompute(t->tree, mst, value, attribute);
- 
-  /* for (i=t->rag->g->nsom-10;i<t->rag->g->nsom ;i++)
-     fprintf(stderr, "%d ", value[i]);*/
-
-
   jcSaliencyTree_b(&st, mst, value, t->rag, staltitude);
 
-
-  
   // store new comp tree and attributes
   componentTreeFree(t->tree->CT);
   t->tree->CT = st;
@@ -1079,8 +1071,7 @@ static int imgraph_(cuttree)(lua_State *L) {
   int mode = 0;
   if (lua_isnumber(L, 2)) mode = lua_tonumber(L, 2);
 
-  //calling the labeling method on the merge tree
-
+  // calling the labeling method on the merge tree
   list * cut;
   switch(mode){
   case 0:
@@ -1468,6 +1459,33 @@ int imgraph_(adjacency)(lua_State *L) {
   return 1;
 }
 
+int imgraph_(adjacencyoftree)(lua_State *L) {
+  // get args
+  MergeTree *t = lua_toMergeTree(L, 1);
+  long matrix = 2;
+  int directed = lua_toboolean(L, 3);
+
+  // walk through tree
+  JCctree *CT = t->tree->CT;
+  for (long i = 0; i < CT->nbnodes; i++) {
+    // id, father id, sons ids
+    long id = i+1; // 1-based for Lua
+    long pid = CT->tabnodes[i].father + 1; // 1-based
+
+    // if not root, then node has a father
+    if (pid != 0) {
+      setneighbor(L, matrix, id, pid);
+      if (directed != 1) {
+        setneighbor(L, matrix, pid, id);
+      }
+    }
+  }
+
+  // return matrix
+  lua_pop(L,1);
+  return 1;
+}
+
 int imgraph_(histpooling)(lua_State *L) {
   // get args
   THTensor *vectors = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
@@ -1796,6 +1814,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"tree2graph", imgraph_(tree2graph)},
   {"tree2components", imgraph_(tree2components)},
   {"adjacency", imgraph_(adjacency)},
+  {"adjacencyoftree", imgraph_(adjacencyoftree)},
   {"segm2components", imgraph_(segm2components)},
   {"cuttree", imgraph_(cuttree)},
   {NULL, NULL}
