@@ -321,6 +321,7 @@ int32_t saliencyTree(/* INPUTS */
     ST->tabnodes[i].nbsons = 0;
     ST->tabnodes[i].sonlist = NULL;
     ST->tabnodes[i].data_f = 0;
+    ST->tabnodes[i].data = 0;
     ST->tabnodes[i].area = 1;
     ST->tabnodes[i].edge = -1;
     ST->tabnodes[i].k = 0;
@@ -762,8 +763,10 @@ int min_area_size=50;
   //  sjcomponentTreePrint(CT,results, CT->root, NULL); 
   //FilterHierarchy(g, CT, results, min_area_size);
 
+
+//temporary removed for building simple merge trees
 for (i=0; i<CT->nbnodes; i++) 
-    CT->tabnodes[i].data= results[i];
+  CT->tabnodes[i].data= results[i];
 
 
   int32_t *labels= ( int32_t * )malloc(g->nbsom* sizeof(int32_t));
@@ -776,4 +779,18 @@ for (i=0; i<CT->nbnodes; i++)
   // sjcomponentTreeFree(CT);
   
   return nbmin;
+}
+
+
+/***************************************************************************************************/
+int32_t MergeTree_compatibleArbelaez(graphe *g, JCctree *CT, int32_t * results,int32_t * MergeEdges ){
+/************************************************************************************************/
+  int32_t i;
+ 
+  // Compute the component tree and returns the levels in results
+  saliencyTree(g,CT,MergeEdges);
+  for (i=0; i<CT->nbnodes; i++) 
+    results[i]= CT->tabnodes[i].data_f;
+
+  return 0;
 }

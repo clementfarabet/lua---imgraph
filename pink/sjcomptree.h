@@ -45,6 +45,8 @@ knowledge of the CeCILL license and that you accept its terms.
 
       extern  int32_t HierarchicalSegmentation(graphe *g, JCctree *CT, int32_t *Alt, int32_t * mergeEdge);
 extern int32_t sjcomponentTree(graphe *g, JCctree ** CompTree, double *CTaltitude);
+      extern int32_t MergeTree_compatibleArbelaez(graphe *g, JCctree *CT, int32_t * results,int32_t * MergeEdges );
+
 
 #endif
 #ifdef __cplusplus

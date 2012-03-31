@@ -912,7 +912,8 @@ static int imgraph_(hierarchyGuimaraes)(lua_State *L) {
   //call HierarchicalSegmentation(graphe *g, JCctree *CT);
   int32_t * Alt;
   Alt = ( int32_t * )calloc(2*N, sizeof(int32_t));
-  HierarchicalSegmentation(g, mt->CT, Alt, mt->mergeEdge);
+  //HierarchicalSegmentation(g, mt->CT, Alt, mt->mergeEdge);
+  MergeTree_compatibleArbelaez(g, mt->CT, Alt, mt->mergeEdge);
 
  for(u = 0; u < 2*N; u ++)
    {
