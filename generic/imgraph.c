@@ -978,6 +978,30 @@ static int imgraph_(dumptree) (lua_State *L)
   return 0;
 }
 
+static int imgraph_(levelsOfTree) (lua_State *L)
+{
+  MergeTree *t = lua_toMergeTree(L, 1);
+  int i;
+
+  lua_newtable(L);
+  int table_comps = lua_gettop(L);
+
+  for (i = 0; i < t->tree->CT->nbnodes; i++) 
+    { 
+      THTensor *levels = THTensor_(newWithSize1d)(1);//13
+	real *altitudes = THTensor_(data)(levels);
+      
+	altitudes[0] = t->tree->CT->tabnodes[i].data;
+	//printf("%d\n",altitudes[0]);
+	// store levels
+	luaT_pushudata(L, levels, torch_(Tensor_id));
+	lua_rawseti(L, table_comps, i+1); // table_comps[i+1] = entry
+    }
+  return 1;
+}
+
+
+
 static int imgraph_(filtertree)(lua_State *L) {
   // get args
   MergeTree *t = lua_toMergeTree(L, 1);
@@ -986,6 +1010,14 @@ static int imgraph_(filtertree)(lua_State *L) {
  
   // compute merge attributes
   int32_t *attribute;
+  int i;
+
+ int32_t *altitudes_svg = (int32_t *)malloc(sizeof(int32_t) * t->tree->CT->nbnodes);
+  for (i = 0; i < t->tree->CT->nbnodes; i++) {
+    altitudes_svg[i] = t->tree->CT->tabnodes[i].data;
+  }
+
+
   switch(mode){
   case 0:
     attribute = surfaceMergeTree(t->tree->CT,t->rag);
@@ -1007,15 +1039,20 @@ static int imgraph_(filtertree)(lua_State *L) {
   int32_t *staltitude = (int32_t *)malloc(sizeof(int32_t) * (2 * t->rag->g->nsom));
   JCctree *st;
   mstCompute(t->tree, mst, value, attribute);
-  int i;
-
   jcSaliencyTree_b(&st, mst, value, t->rag, staltitude);
 
   // store new comp tree and attributes
   componentTreeFree(t->tree->CT);
   t->tree->CT = st;
+  //for (i = 0; i < st->nbnodes; i++)
+  //printf("%d \n ", st->tabnodes[i].data);
+
   if (t->altitudes) free(t->altitudes);
   t->altitudes = staltitude;
+
+  for (i = 0; i < t->tree->CT->nbnodes; i++) {
+    t->altitudes[i] = altitudes_svg[i];
+  }
 
   // cleanup
   free(mst);
@@ -1778,6 +1815,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"mergetree", imgraph_(mergetree)},
   {"hierarchyGuimaraes", imgraph_(hierarchyGuimaraes)},
   {"filtertree", imgraph_(filtertree)},
+  {"levelsOfTree", imgraph_(levelsOfTree)},
   {"weighttree", imgraph_(weighttree)},
   {"dumptree", imgraph_(dumptree)},
   {"tree2graph", imgraph_(tree2graph)},

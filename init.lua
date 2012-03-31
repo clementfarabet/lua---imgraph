@@ -304,6 +304,7 @@ function imgraph.mergetree(...)
    local graphflat = graph:new():resize(2*graph:size(2),graph:size(3))
    local mt = graph.imgraph.mergetree(graphflat)
 
+--print(mt)
    -- return tree
    return mt
 end
@@ -470,6 +471,31 @@ function imgraph.tree2graph(...)
    return graph
 end
 
+
+----------------------------------------------------------------------
+-- returns the levels (altitude) of a merge tree 
+--
+function imgraph.levelsOfTree(...)
+   --get args
+   local args = {...}
+   local tree = args[1]
+
+   -- usage
+   if not tree then
+      print(xlua.usage('imgraph.levelsOfTree',
+                       '', nil,
+                       {type='imgraph.MergeTree', help='merge tree', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.levelsOfTree')
+   end
+
+   -- 
+   local altitudes = torch.Tensor()
+   altitudes= graph.imgraph.levelsOfTree(tree)
+  
+
+   -- return levels
+   return altitudes
+end
 ----------------------------------------------------------------------
 -- segment a graph, by computing its min-spanning tree and
 -- merging vertices based on a dynamic threshold
