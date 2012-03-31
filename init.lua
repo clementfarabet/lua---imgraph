@@ -664,6 +664,7 @@ function imgraph.adjacency(...)
    local args = {...}
    local input = args[1]
    local components = args[2]
+   local directed = args[3] or false
 
    -- usage
    if not input then
@@ -684,7 +685,8 @@ function imgraph.adjacency(...)
                        {type='table', help='component list, as returned by imgraph.extractcomponents()'},
                        '',
                        {type='imgraph.MergeTree', help='merge tree (dendrogram) of a graph', req=true},
-                       {type='table', help='component list, as returned by imgraph.extractcomponents()'}))
+                       {type='table', help='component list, as returned by imgraph.extractcomponents()'},
+                       {type='boolean', help='if true, returns a directed adjancy matrix, in which only son->parent edges are considered', default=false}))
       xlua.error('incorrect arguments', 'imgraph.adjacency')
    end
 
@@ -698,7 +700,7 @@ function imgraph.adjacency(...)
    if torch.typename(input) then
       adjacency = grayscale.imgraph.adjacency(grayscale, {})
    else
-      adjacency = torch.Tensor().imgraph.adjacencyoftree(input, {})
+      adjacency = torch.Tensor().imgraph.adjacencyoftree(input, {}, directed)
    end
 
    -- update component list, if given
@@ -709,9 +711,11 @@ function imgraph.adjacency(...)
          local neighbors = adjacency[components.id[i]]
          local ntable = {}
          local ktable = {}
-         for id in pairs(neighbors) do
-            table.insert(ntable, components.revid[id])
-            ktable[components.revid[id]] = true
+         if neighbors then
+            for id in pairs(neighbors) do
+               table.insert(ntable, components.revid[id])
+               ktable[components.revid[id]] = true
+            end
          end
          components.neighbors[i] = ntable
          components.adjacency[i] = ktable

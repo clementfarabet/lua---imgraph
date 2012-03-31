@@ -1462,6 +1462,7 @@ int imgraph_(adjacencyoftree)(lua_State *L) {
   // get args
   MergeTree *t = lua_toMergeTree(L, 1);
   long matrix = 2;
+  int directed = lua_toboolean(L, 3);
 
   // walk through tree
   JCctree *CT = t->tree->CT;
@@ -1469,27 +1470,18 @@ int imgraph_(adjacencyoftree)(lua_State *L) {
     // id, father id, sons ids
     long id = i+1; // 1-based for Lua
     long pid = CT->tabnodes[i].father + 1; // 1-based
-    JCsoncell *sids = CT->tabnodes[i].sonlist;
-    long nbsons = CT->tabnodes[i].nbsons;
 
     // if not root, then node has a father
     if (pid != 0) {
       setneighbor(L, matrix, id, pid);
-      setneighbor(L, matrix, pid, id);
-    }
-
-    // has sons?
-    if (nbsons > 0) {
-      JCsoncell *s;
-      for (s = sids; s != NULL; s = s->next) {
-        long sid = s->son + 1; // 1-based
-        setneighbor(L, matrix, id, sid);
-        setneighbor(L, matrix, sid, id);
+      if (directed != 1) {
+        setneighbor(L, matrix, pid, id);
       }
     }
   }
 
   // return matrix
+  lua_pop(L,1);
   return 1;
 }
 
