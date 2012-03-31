@@ -636,11 +636,11 @@ end
 function imgraph.adjacency(...)
    -- get args
    local args = {...}
-   local grayscale = args[1]
+   local input = args[1]
    local components = args[2]
 
    -- usage
-   if not grayscale or grayscale:dim() ~= 2 then
+   if not input then
       print(xlua.usage('imgraph.adjacency',
                        'return the adjacency matrix of a segmentation map.\n\n'
                           .. 'a component list can be given, in which case the list\n'
@@ -655,17 +655,25 @@ function imgraph.adjacency(...)
                           .. 'print(components.neighbors) -- list of neighbor IDs\n'
                           .. 'print(components.adjacency) -- adjacency matrix of IDs',
                        {type='torch.Tensor', help='input segmentation map (must be HxW), and each element must be in [1,NCLASSES]', req=true},
+                       {type='table', help='component list, as returned by imgraph.extractcomponents()'},
+                       '',
+                       {type='imgraph.MergeTree', help='merge tree (dendrogram) of a graph', req=true},
                        {type='table', help='component list, as returned by imgraph.extractcomponents()'}))
       xlua.error('incorrect arguments', 'imgraph.adjacency')
    end
 
    -- support LongTensors
-   if torch.typename(grayscale) == 'torch.LongTensor' then
-      grayscale = torch.Tensor(grayscale:size(1), grayscale:size(2)):copy(grayscale)
+   if torch.typename(input) and torch.typename(input) == 'torch.LongTensor' then
+      input = torch.Tensor(input:size(1), input:size(2)):copy(input)
    end
 
    -- fill matrix
-   local adjacency = grayscale.imgraph.adjacency(grayscale, {})
+   local adjacency
+   if torch.typename(input) then
+      adjacency = grayscale.imgraph.adjacency(grayscale, {})
+   else
+      adjacency = torch.Tensor().imgraph.adjacencyoftree(input, {})
+   end
 
    -- update component list, if given
    if components then
