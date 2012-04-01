@@ -698,7 +698,7 @@ function imgraph.adjacency(...)
    -- fill matrix
    local adjacency
    if torch.typename(input) then
-      adjacency = grayscale.imgraph.adjacency(grayscale, {})
+      adjacency = input.imgraph.adjacency(input, {})
    else
       adjacency = torch.Tensor().imgraph.adjacencyoftree(input, {}, directed)
    end
