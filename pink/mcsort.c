@@ -50,7 +50,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <string.h>
 #include <stdlib.h>
 #include <mcsort.h>
-
+#include <mtrand64.h>
 
 /* =============================================================== */
  int32_t d_Partitionner(int32_t *A, double *T, int32_t p, int32_t r)
@@ -83,8 +83,8 @@ knowledge of the CeCILL license and that you accept its terms.
 */
 {
   int32_t t, q;
-
-  q = p + (rand() % (r - p + 1));
+  q = p + (genrand64_int64() % (r - p + 1));
+  //q = p + (rand() % (r - p + 1));
   t = A[p];         /* echange A[p] et A[q] */
   A[p] = A[q]; 
   A[q] = t;
@@ -139,8 +139,8 @@ int32_t PartitionStochastique(int32_t *A, int32_t p, int32_t r)
 */
 {
   int32_t t, q;
-
-  q = p + (rand() % (r - p + 1));
+q = p + (genrand64_int64() % (r - p + 1));
+//q = p + (rand() % (r - p + 1));
   t = A[p];         /* echange A[p] et A[q] */
   A[p] = A[q]; 
   A[q] = t;
