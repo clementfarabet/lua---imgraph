@@ -184,6 +184,9 @@ int unified_width = lua_tonumber(L, 4);
   real *dst_data = THTensor_(data)(dst);
 
   long x,y;
+
+  fprintf(stderr, "%d %d %d %d", unified_height,unified_width ,height,width   );
+
  for (y = 0; y < (height-1)/2; y++)
    {
      for (x = 0; x < (width-1)/2; x++) 
@@ -912,6 +915,95 @@ static int imgraph_(hierarchyGuimaraes)(lua_State *L) {
   //call HierarchicalSegmentation(graphe *g, JCctree *CT);
   int32_t * Alt;
   Alt = ( int32_t * )calloc(2*N, sizeof(int32_t));
+  HierarchicalSegmentation(g, mt->CT, Alt, mt->mergeEdge);
+  //MergeTree_compatibleArbelaez(g, mt->CT, Alt, mt->mergeEdge);
+
+ for(u = 0; u < 2*N; u ++)
+   {
+     //fprintf(stderr, "%d %d\n ",  Alt[u],mt->CT->tabnodes[u].nbsons);
+   mt->CT->tabnodes[u].data = Alt[u];
+   }
+  // compute altitudes
+   int32_t *altitudes = (int32_t *)malloc(sizeof(int32_t) * 2 * N);
+   for (u = 0; u < mt->CT->nbnodes; u++) 
+     altitudes[u] = mt->CT->tabnodes[u].data;
+    
+
+  // cleanup
+  freeimage(graph_xv);
+  THTensor_(free)(graph);
+
+  // return tree
+  MergeTree *t = lua_pushMergeTree(L);
+  t->tree = mt;
+  t->labels = labels ;
+  t->rag = rag;
+  t->cs = cs;
+  t->rs = rs;
+  t->altitudes = altitudes;
+
+  terminegraphe(g);
+  free(Alt);
+  // done
+  return 1;
+}
+
+static int imgraph_(hierarchyArb)(lua_State *L) {
+
+  // get args
+  THTensor *graph = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+  graph = THTensor_(newContiguous)(graph);
+
+  // convert
+  struct xvimage *graph_xv = imgraph_(tensor2xvg)(graph, NULL);
+
+  // dims
+  int32_t rs = rowsize(graph_xv);
+  int32_t cs = colsize(graph_xv);
+
+  //stores the graphe in the structure graphe
+   /* Case of a 4-connected graph where each edge is weighted by the
+       absolute difference of intensity between its extremity
+       pixels */
+  graphe *g;
+  int32_t x,y,u;
+  int32_t N = rs * cs;   /* taille image */
+  int32_t N_t = 2*N;
+  g = initgraphe(N, 2*(2*N-rs-cs));
+  setSize(g,rs,cs);
+
+ // compute labels
+  struct xvimage *labels = allocimage(NULL,rs,cs,1,VFF_TYP_4_BYTE);
+  int32_t *labels_data = SLONGDATA(labels);
+  int i;
+  for (i=0; i<rs*cs; i++) labels_data[i] = i;
+
+    // construct adjacency graph
+
+    /* Parcourt de toutes les aretes du graphe d'arete F */
+    for(u = 0; u < N_t; u ++){
+      // si l'arete est bien ds le GA
+      if( ( (u < N) && (u%rs < rs-1)) || ((u >= N) && (u < N_t - rs))){
+	x = Sommetx(u, N, rs);
+	y = Sommety(u, N, rs);
+	if(x != y) 
+	  addarete(g, x, y, UCHARDATA(graph_xv)[u]);
+      }
+    }
+
+  RAG *rag = construitRAG(graph_xv, labels, NULL);
+
+        // compute merge tree
+  mtree *mt;
+  if( (mt = mergeTreeAlloc((N_t))) == NULL){
+    fprintf(stderr, "erreur de ComponentTreeAlloc\n");
+    exit(0);
+  }
+
+  // mergeTree(rag, &mt);
+  //call HierarchicalSegmentation(graphe *g, JCctree *CT);
+  int32_t * Alt;
+  Alt = ( int32_t * )calloc(2*N, sizeof(int32_t));
   //HierarchicalSegmentation(g, mt->CT, Alt, mt->mergeEdge);
   MergeTree_compatibleArbelaez(g, mt->CT, Alt, mt->mergeEdge);
 
@@ -944,6 +1036,9 @@ static int imgraph_(hierarchyGuimaraes)(lua_State *L) {
   // done
   return 1;
 }
+
+
+
 
 
 static int imgraph_(dumptree) (lua_State *L)
@@ -1807,6 +1902,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"graph2map", imgraph_(graph2map)},
   {"mergetree", imgraph_(mergetree)},
   {"hierarchyGuimaraes", imgraph_(hierarchyGuimaraes)},
+  {"hierarchyArb", imgraph_(hierarchyArb)},
   {"filtertree", imgraph_(filtertree)},
   {"levelsOfTree", imgraph_(levelsOfTree)},
   {"weighttree", imgraph_(weighttree)},

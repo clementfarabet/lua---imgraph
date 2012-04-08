@@ -340,6 +340,36 @@ end
 
 
 ----------------------------------------------------------------------
+-- compute a hierarchy from a flat graph representing hierarchy of Arbelatez et at PAMI 2011 
+--
+function imgraph.hierarchyArb(...)
+   --get args
+   local args = {...}
+   local graph = args[1]
+
+   -- usage
+   if not graph or (graph:nDimension() ~= 3) then
+      print(xlua.usage('imgraph.hierarchyArb',
+                       'compute the hierarchyArb of a graph (dendrogram)', nil,
+                       {type='torch.Tensor', help='input graph', req=true}))
+      xlua.error('incorrect arguments', 'imgraph.hierarchyArb')
+   end
+
+   -- warning
+   if graph:size(1) ~= 2 then
+      print('<imgraph.hierarchyArb> warning: only supporting 4-connexity (discarding other edges)')
+   end
+
+   -- compute the hierarchy from the graph
+   local graphflat = graph:new():resize(2*graph:size(2),graph:size(3))
+   local mt = graph.imgraph.hierarchyArb(graphflat)
+   
+   -- return tree
+   return mt
+end
+
+
+----------------------------------------------------------------------
 -- filter a merge tree so as to equalize surface/volume or other
 -- attributes
 --
