@@ -39,6 +39,11 @@ static inline real imgraph_(ndiff)(real *img,
   for (i=0; i<nfeats; i++) {
     if (dt == 'e') {
       dist  += square( img[(i*height+y1)*width+x1] - img[(i*height+y2)*width+x2] );
+    } else if (dt == 'm') {
+      real tmp = fabs( img[(i*height+y1)*width+x1] - img[(i*height+y2)*width+x2] );
+      if (tmp > dist) {
+        dist = tmp;
+      }
     } else if (dt == 'a') {
       dot   += img[(i*height+y1)*width+x1] * img[(i*height+y2)*width+x2];
       normx += square(img[(i*height+y1)*width+x1]);
@@ -47,6 +52,7 @@ static inline real imgraph_(ndiff)(real *img,
   }
   if (dt == 'e') res = sqrt(dist);
   else if (dt == 'a') res = acos(dot/(sqrt(normx)*sqrt(normy) + epsilon));
+  else if (dt == 'm') res = dist;
   return res;
 }
 
@@ -165,8 +171,9 @@ static int imgraph_(mat2graph)(lua_State *L) {
   // get args
   THTensor *dst = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
   THTensor *src = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
-int unified_height = lua_tonumber(L, 3);
-int unified_width = lua_tonumber(L, 4);
+  int unified_height = lua_tonumber(L, 3);
+  int unified_width = lua_tonumber(L, 4);
+
   // make sure input is contiguous
   src = THTensor_(newContiguous)(src);
 
@@ -185,19 +192,15 @@ int unified_width = lua_tonumber(L, 4);
 
   long x,y;
 
-  fprintf(stderr, "%d %d %d %d", unified_height,unified_width ,height,width   );
-
- for (y = 0; y < (height-1)/2; y++)
-   {
-     for (x = 0; x < (width-1)/2; x++) 
-       {
-	 // fill the first dimension
-	 dst_data[y*unified_width+x] = src_data[width*2*y+2*x];
+  for (y = 0; y < (height-1)/2; y++) {
+    for (x = 0; x < (width-1)/2; x++) {
+      // fill the first dimension
+      dst_data[y*unified_width+x] = src_data[width*2*y+2*x];
 	 
-	// fill the second dimension
-	  dst_data[unified_height*unified_width+ y*(unified_width)+x] = src_data[width*2*y+2*x];		
-       }
-   }
+	    // fill the second dimension
+	    dst_data[unified_height*unified_width+ y*(unified_width)+x] = src_data[width*2*y+2*x];		
+    }
+  }
 
   // cleanup
   THTensor_(free)(src);

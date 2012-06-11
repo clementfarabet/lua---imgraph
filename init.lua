@@ -68,20 +68,21 @@ function imgraph.graph(...)
 
    -- defaults
    connex = connex or 4
-   distance = ((not distance) and 'e') or ((distance == 'euclid') and 'e') or ((distance == 'angle') and 'a')
+   distance = ((not distance) and 'e') or ((distance == 'euclid') and 'e') 
+              or ((distance == 'angle') and 'a') or ((distance == 'max') and 'm') 
 
    -- usage
-   if not img or (connex ~= 4 and connex ~= 8) or (distance ~= 'e' and distance ~= 'a') then
+   if not img or (connex ~= 4 and connex ~= 8) or (distance ~= 'e' and distance ~= 'a' and distance ~= 'm') then
       print(xlua.usage('imgraph.graph',
                        'compute an edge-weighted graph on an image', nil,
                        {type='torch.Tensor', help='input tensor (for now KxHxW or HxW)', req=true},
                        {type='number', help='connexity (edges per vertex): 4 | 8', default=4},
-                       {type='string', help='distance metric: euclid | angle', req='euclid'},
+                       {type='string', help='distance metric: euclid | angle | max', req='euclid'},
                        "",
                        {type='torch.Tensor', help='destination: existing graph', req=true},
                        {type='torch.Tensor', help='input tensor (for now KxHxW or HxW)', req=true},
                        {type='number', help='connexity (edges per vertex): 4 | 8', default=4},
-                       {type='string', help='distance metric: euclid | angle', req='euclid'}))
+                       {type='string', help='distance metric: euclid | angle | max', req='euclid'}))
       xlua.error('incorrect arguments', 'imgraph.graph')
    end
 
