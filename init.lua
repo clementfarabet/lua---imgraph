@@ -129,7 +129,6 @@ function imgraph.mat2graph(...)
    return dest
 end
 
-
 ----------------------------------------------------------------------
 -- compute the connected components of a graph
 --
@@ -305,7 +304,6 @@ function imgraph.mergetree(...)
    local graphflat = graph:new():resize(2*graph:size(2),graph:size(3))
    local mt = graph.imgraph.mergetree(graphflat)
 
---print(mt)
    -- return tree
    return mt
 end
@@ -339,7 +337,6 @@ function imgraph.hierarchyGuimaraes(...)
    return mt
 end
 
-
 ----------------------------------------------------------------------
 -- compute a hierarchy from a flat graph representing hierarchy of Arbelatez et at PAMI 2011 
 --
@@ -368,7 +365,6 @@ function imgraph.hierarchyArb(...)
    -- return tree
    return mt
 end
-
 
 ----------------------------------------------------------------------
 -- filter a merge tree so as to equalize surface/volume or other
@@ -457,8 +453,8 @@ function imgraph.cuttree(...)
    if not tree then
       print(xlua.usage('imgraph.cuttree',
                        'computes a cut in a tree', nil,
-                       	{type='imgraph.cuttree', help='computes a cut in a hierchical tree', req=true}, 
-		        {type='string', help='cutting algorithm : Kruskal | Prim | PWatershed | Graphcuts | MinCover', default='Kruskal'}))
+                        {type='imgraph.cuttree', help='computes a cut in a hierchical tree', req=true}, 
+              {type='string', help='cutting algorithm : Kruskal | Prim | PWatershed | Graphcuts | MinCover', default='Kruskal'}))
       xlua.error('incorrect arguments', 'imgraph.cuttree')
    end
 
@@ -502,7 +498,6 @@ function imgraph.tree2graph(...)
    return graph
 end
 
-
 ----------------------------------------------------------------------
 -- returns the levels (altitude) of a merge tree 
 --
@@ -527,14 +522,13 @@ function imgraph.levelsOfTree(...)
    -- return levels
    return altitudes
 end
+
 ----------------------------------------------------------------------
 -- segment a graph, by computing its min-spanning tree and
 -- merging vertices based on a dynamic threshold
 --
 function imgraph.segmentmst(...)
    --get args
-
- 
    local args = {...}
    local dest, graph, thres, minsize, colorize
    local arg2 = torch.typename(args[2])
@@ -576,15 +570,12 @@ function imgraph.segmentmst(...)
    end
 
    -- compute image
-   dest = dest or torch.Tensor():typeAs(graph)
-
- 
+   dest = dest or torch.Tensor():typeAs(graph) 
    local nelts = graph.imgraph.segmentmst(dest, graph, thres, minsize, colorize)
 
    -- return image
    return dest, nelts
 end
-
 
 ----------------------------------------------------------------------
 -- segment a graph, by computing its min-spanning tree and
@@ -639,8 +630,6 @@ function imgraph.segmentmstGuimaraes(...)
    -- return image
    return dest, nelts
 end
-
-
 
 ----------------------------------------------------------------------
 -- pool the features (or pixels) of an image into a segmentation map
