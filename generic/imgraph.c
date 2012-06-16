@@ -166,7 +166,6 @@ static int imgraph_(graph)(lua_State *L) {
   return 0;
 }
 
-
 static int imgraph_(mat2graph)(lua_State *L) {
   // get args
   THTensor *dst = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
@@ -456,9 +455,7 @@ static int imgraph_(segmentmst)(lua_State *L) {
   return 1;
 }
 
-
-
-static int imgraph_(segmentmstGuimaraes)(lua_State *L) {
+static int imgraph_(segmentmstsparse)(lua_State *L) {
   // get args
   THTensor *dst = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
   THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
@@ -467,61 +464,34 @@ static int imgraph_(segmentmstGuimaraes)(lua_State *L) {
   int color = lua_toboolean(L, 5);
 
   // dims
-  long nmaps = src->size[0];
-  long height = src->size[1];
-  long width = src->size[2];
+  long nedges = src->size[0];
+  long nnodes = 0;
 
   // make sure input is contiguous
   src = THTensor_(newContiguous)(src);
   real *src_data = THTensor_(data)(src);
 
-  printf("toto");
-
-  // create edge list from graph (src)
-  Edge *edges = NULL; int nedges = 0;
-  edges = (Edge *)calloc(width*height*nmaps, sizeof(Edge));
-  int x,y;
-  for (y = 0; y < height; y++) {
-    for (x = 0; x < width; x++) {
-      if (x < width-1) {
-        edges[nedges].a = y*width+x;
-        edges[nedges].b = y*width+(x+1);
-        edges[nedges].w = src_data[(0*height+y)*width+x];
-        nedges++;
-      }
-      if (y < height-1) {
-        edges[nedges].a = y*width+x;
-        edges[nedges].b = (y+1)*width+x;
-        edges[nedges].w = src_data[(1*height+y)*width+x];
-        nedges++;
-      }
-      if (nmaps >= 4) {
-        if ((x < width-1) && (y < height-1)) {
-          edges[nedges].a = y * width + x;
-          edges[nedges].b = (y+1) * width + (x+1);
-          edges[nedges].w = src_data[(2*height+y)*width+x];
-          nedges++;
-        }
-        if ((x < width-1) && (y > 0)) {
-          edges[nedges].a = y * width + x;
-          edges[nedges].b = (y-1) * width + (x+1);
-          edges[nedges].w = src_data[(3*height+y)*width+x];
-          nedges++;
-        }
-      }
-    }
+  // create edge list from sparse graph (src)
+  Edge *edges = NULL;
+  edges = (Edge *)calloc(nedges, sizeof(Edge));
+  int i;
+  for (i = 0; i < nedges; i++) {
+    edges[nedges].a = src_data[3*i + 0];
+    edges[nedges].b = src_data[3*i + 1];
+    edges[nedges].w = src_data[3*i + 2];
+    if (src_data[3*i + 0] > nnodes) nnodes = src_data[3*i + 0];
+    if (src_data[3*i + 1] > nnodes) nnodes = src_data[3*i + 1];
   }
 
   // sort edges by weight
   sort_edges(edges, nedges);
 
   // make a disjoint-set forest
-  Set *set = set_new(width*height);
+  Set *set = set_new(nnodes);
 
   // init thresholds
-  real *threshold = (real *)calloc(width*height, sizeof(real));
-  int i;
-  for (i = 0; i < width*height; i++) threshold[i] = thres;
+  real *threshold = (real *)calloc(nnodes, sizeof(real));
+  for (i = 0; i < nnodes; i++) threshold[i] = thres;
 
   // for each edge, in non-decreasing weight order,
   // decide to merge or not, depending on current threshold
@@ -546,35 +516,24 @@ static int imgraph_(segmentmstGuimaraes)(lua_State *L) {
       set_join(set, a, b);
   }
 
-  // generate output
+  // generate labeling
   if (color) {
-    THTensor *colormap = THTensor_(newWithSize2d)(width*height, 3);
-    THTensor_(fill)(colormap, -1);
-    THTensor_(resize3d)(dst, 3, height, width);
-    for (y = 0; y < height; y++) {
-      for (x = 0; x < width; x++) {
-        int comp = set_find(set, y * width + x);
-        real check = THTensor_(get2d)(colormap, comp, 0);
-        if (check == -1) {
-          THTensor_(set2d)(colormap, comp, 0, rand0to1());
-          THTensor_(set2d)(colormap, comp, 1, rand0to1());
-          THTensor_(set2d)(colormap, comp, 2, rand0to1());
-        }
-        real r = THTensor_(get2d)(colormap, comp, 0);
-        real g = THTensor_(get2d)(colormap, comp, 1);
-        real b = THTensor_(get2d)(colormap, comp, 2);
-        THTensor_(set3d)(dst, 0, y, x, r);
-        THTensor_(set3d)(dst, 1, y, x, g);
-        THTensor_(set3d)(dst, 2, y, x, b);
+    THTensor_(resize2d)(dst, nnodes, 3);
+    THTensor_(fill)(dst, -1);
+    for (i = 0; i < nnodes; i++) {
+      int comp = set_find(set, (i+1));
+      real check = THTensor_(get2d)(dst, comp, 0);
+      if (check == -1) {
+        THTensor_(set2d)(dst, comp, 0, rand0to1());
+        THTensor_(set2d)(dst, comp, 1, rand0to1());
+        THTensor_(set2d)(dst, comp, 2, rand0to1());
       }
     }
   } else {
-    THTensor_(resize2d)(dst, height, width);
+    THTensor_(resize1d)(dst, nnodes);
     real *dst_data = THTensor_(data)(dst);
-    for (y = 0; y < height; y++) {
-      for (x = 0; x < width; x++) {
-        dst_data[y*width+x] = set_find(set, y * width + x);
-      }
+    for (i = 0; i < nnodes; i++) {
+      dst_data[i] = set_find(set, (i+1));
     }
   }
 
@@ -590,11 +549,6 @@ static int imgraph_(segmentmstGuimaraes)(lua_State *L) {
   // return
   return 1;
 }
-
-
-
-
-
 
 real imgraph_(max)(real *a, int n) {
   int i;
@@ -861,7 +815,6 @@ static int imgraph_(mergetree)(lua_State *L) {
   return 1;
 }
 
-
 static int imgraph_(hierarchyGuimaraes)(lua_State *L) {
 
   // get args
@@ -1040,10 +993,6 @@ static int imgraph_(hierarchyArb)(lua_State *L) {
   return 1;
 }
 
-
-
-
-
 static int imgraph_(dumptree) (lua_State *L)
 {
   MergeTree *t = lua_toMergeTree(L, 1);
@@ -1098,8 +1047,6 @@ static int imgraph_(levelsOfTree) (lua_State *L)
     }
   return 1;
 }
-
-
 
 static int imgraph_(filtertree)(lua_State *L) {
   // get args
@@ -1898,7 +1845,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"gradient", imgraph_(gradient)},
   {"connectedcomponents", imgraph_(connectedcomponents)},
   {"segmentmst", imgraph_(segmentmst)},
-  {"segmentmstGuimaraes", imgraph_(segmentmstGuimaraes)},
+  {"segmentmstsparse", imgraph_(segmentmstsparse)},
   {"watershed", imgraph_(watershed)},
   {"histpooling", imgraph_(histpooling)},
   {"colorize", imgraph_(colorize)},
