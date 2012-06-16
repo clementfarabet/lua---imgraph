@@ -1326,7 +1326,7 @@ int imgraph_(tree2components)(lua_State *L) {
     data[9] = data[6] - data[5] + 1;     // box width
     data[10] = data[8] - data[7] + 1;    // box height
     data[11] = (data[6] + data[5]) / 2;  // box center x
-    data[12] = (data[8] + data[7]) / 1;  // box center y
+    data[12] = (data[8] + data[7]) / 2;  // box center y
     // fprintf(stderr,"la 2\n");
     // (optional) generate masks
     if (getmasks) {
@@ -1832,7 +1832,7 @@ int imgraph_(segm2components)(lua_State *L) {
     data[9] = data[6] - data[5] + 1;     // box width
     data[10] = data[8] - data[7] + 1;    // box height
     data[11] = (data[6] + data[5]) / 2;  // box center x
-    data[12] = (data[8] + data[7]) / 1;  // box center y
+    data[12] = (data[8] + data[7]) / 2;  // box center y
   }
 
   // return component table
