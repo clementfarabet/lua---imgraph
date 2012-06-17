@@ -476,9 +476,9 @@ static int imgraph_(segmentmstsparse)(lua_State *L) {
   edges = (Edge *)calloc(nedges, sizeof(Edge));
   int i;
   for (i = 0; i < nedges; i++) {
-    edges[nedges].a = src_data[3*i + 0];
-    edges[nedges].b = src_data[3*i + 1];
-    edges[nedges].w = src_data[3*i + 2];
+    edges[i].a = src_data[3*i + 0];
+    edges[i].b = src_data[3*i + 1];
+    edges[i].w = src_data[3*i + 2];
     if (src_data[3*i + 0] > nnodes) nnodes = src_data[3*i + 0];
     if (src_data[3*i + 1] > nnodes) nnodes = src_data[3*i + 1];
   }
@@ -518,16 +518,23 @@ static int imgraph_(segmentmstsparse)(lua_State *L) {
 
   // generate labeling
   if (color) {
+    THTensor *colormap = THTensor_(newWithSize2d)(nnodes, 3);
+    THTensor_(fill)(colormap, -1);
     THTensor_(resize2d)(dst, nnodes, 3);
-    THTensor_(fill)(dst, -1);
     for (i = 0; i < nnodes; i++) {
       int comp = set_find(set, (i+1));
-      real check = THTensor_(get2d)(dst, comp, 0);
+      real check = THTensor_(get2d)(colormap, comp, 0);
       if (check == -1) {
-        THTensor_(set2d)(dst, comp, 0, rand0to1());
-        THTensor_(set2d)(dst, comp, 1, rand0to1());
-        THTensor_(set2d)(dst, comp, 2, rand0to1());
+        THTensor_(set2d)(colormap, comp, 0, rand0to1());
+        THTensor_(set2d)(colormap, comp, 1, rand0to1());
+        THTensor_(set2d)(colormap, comp, 2, rand0to1());
       }
+      real r = THTensor_(get2d)(colormap, comp, 0);
+      real g = THTensor_(get2d)(colormap, comp, 1);
+      real b = THTensor_(get2d)(colormap, comp, 2);
+      THTensor_(set2d)(dst, i, 0, r);
+      THTensor_(set2d)(dst, i, 1, g);
+      THTensor_(set2d)(dst, i, 2, b);
     }
   } else {
     THTensor_(resize1d)(dst, nnodes);
