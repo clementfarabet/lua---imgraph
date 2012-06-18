@@ -330,7 +330,8 @@ static int imgraph_(segmentmst)(lua_State *L) {
   THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
   real thres = lua_tonumber(L, 3);
   int minsize = lua_tonumber(L, 4);
-  int color = lua_toboolean(L, 5);
+  int adaptivethres = lua_toboolean(L, 5);
+  int color = lua_toboolean(L, 6);
 
   // dims
   long nmaps = src->size[0];
@@ -397,7 +398,11 @@ static int imgraph_(segmentmst)(lua_State *L) {
       if ((edges[i].w <= threshold[a]) && (edges[i].w <= threshold[b])) {
         set_join(set, a, b);
         a = set_find(set, a);
-        threshold[a] = edges[i].w + thres/set->elts[a].surface;
+        if (adaptivethres) {
+          threshold[a] = edges[i].w + thres/set->elts[a].surface;
+        } else {
+          threshold[a] = edges[i].w;
+        }
       }
     }
   }
@@ -461,7 +466,8 @@ static int imgraph_(segmentmstsparse)(lua_State *L) {
   THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
   real thres = lua_tonumber(L, 3);
   int minsize = lua_tonumber(L, 4);
-  int color = lua_toboolean(L, 5);
+  int adaptivethres = lua_toboolean(L, 5);
+  int color = lua_toboolean(L, 6);
 
   // dims
   long nedges = src->size[0];
@@ -476,8 +482,8 @@ static int imgraph_(segmentmstsparse)(lua_State *L) {
   edges = (Edge *)calloc(nedges, sizeof(Edge));
   int i;
   for (i = 0; i < nedges; i++) {
-    edges[i].a = src_data[3*i + 0];
-    edges[i].b = src_data[3*i + 1];
+    edges[i].a = src_data[3*i + 0] - 1;
+    edges[i].b = src_data[3*i + 1] - 1;
     edges[i].w = src_data[3*i + 2];
     if (src_data[3*i + 0] > nnodes) nnodes = src_data[3*i + 0];
     if (src_data[3*i + 1] > nnodes) nnodes = src_data[3*i + 1];
@@ -503,7 +509,11 @@ static int imgraph_(segmentmstsparse)(lua_State *L) {
       if ((edges[i].w <= threshold[a]) && (edges[i].w <= threshold[b])) {
         set_join(set, a, b);
         a = set_find(set, a);
-        threshold[a] = edges[i].w + thres/set->elts[a].surface;
+        if (adaptivethres) {
+          threshold[a] = edges[i].w + thres/set->elts[a].surface;
+        } else {
+          threshold[a] = edges[i].w;
+        }
       }
     }
   }
@@ -522,7 +532,7 @@ static int imgraph_(segmentmstsparse)(lua_State *L) {
     THTensor_(fill)(colormap, -1);
     THTensor_(resize2d)(dst, nnodes, 3);
     for (i = 0; i < nnodes; i++) {
-      int comp = set_find(set, (i+1));
+      int comp = set_find(set, i);
       real check = THTensor_(get2d)(colormap, comp, 0);
       if (check == -1) {
         THTensor_(set2d)(colormap, comp, 0, rand0to1());
@@ -540,7 +550,7 @@ static int imgraph_(segmentmstsparse)(lua_State *L) {
     THTensor_(resize1d)(dst, nnodes);
     real *dst_data = THTensor_(data)(dst);
     for (i = 0; i < nnodes; i++) {
-      dst_data[i] = set_find(set, (i+1));
+      dst_data[i] = set_find(set, i) + 1;
     }
   }
 

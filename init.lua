@@ -530,7 +530,7 @@ end
 function imgraph.segmentmst(...)
    --get args
    local args = {...}
-   local dest, graph, thres, minsize, colorize
+   local dest, graph, thres, minsize, colorize, adaptive
    local arg2 = torch.typename(args[2])
    if arg2 and arg2:find('Tensor') then
       dest = args[1]
@@ -538,34 +538,39 @@ function imgraph.segmentmst(...)
       thres = args[3]
       minsize = args[4]
       colorize = args[5]
+      adaptive = args[6]
    else
       graph = args[1]
       thres = args[2]
       minsize = args[3]
       colorize = args[4]
+      adaptive = args[5]
    end
 
    -- defaults
    thres = thres or 3
    minsize = minsize or 20
    colorize = colorize or false
+   if adaptive == nil then adaptive = true end
 
    -- usage
    if not graph then
       print(xlua.usage('imgraph.segmentmst',
-                       'segment an edge-weighted graph, using a surface adaptive criterion\n'
-                          .. 'on the min-spanning tree of the graph (see Felzenszwalb et al. 2004)',
+                       'segment an edge-weighted graph, by thresholding its mininum spanning tree\n'
+                       ..'(an adaptive threshold is used by default, as in Felzenszwalb et al.)',
                        nil,
                        {type='torch.Tensor', help='input graph', req=true},
                        {type='number', help='base threshold for merging', default=3},
                        {type='number', help='min size: merge components of smaller size', default=20},
                        {type='boolean', help='replace components id by random colors', default=false},
+                       {type='boolean', help='use adaptive threshold (Felzenszwalb trick)', default=true},
                        "",
                        {type='torch.Tensor', help='destination tensor', req=true},
                        {type='torch.Tensor', help='input graph', req=true},
                        {type='number', help='base threshold for merging', default=3},
                        {type='number', help='min size: merge components of smaller size', default=20},
-                       {type='boolean', help='replace components id by random colors', default=false}))
+                       {type='boolean', help='replace components id by random colors', default=false},
+                       {type='boolean', help='use adaptive threshold (Felzenszwalb trick)', default=true}))
       xlua.error('incorrect arguments', 'imgraph.segmentmst')
    end
 
@@ -574,10 +579,10 @@ function imgraph.segmentmst(...)
    local nelts
    if graph:nDimension() == 3 then
       -- dense image graph (input is a KxHxW graph, K=1/2 connexity, nnodes=H*W)
-      nelts = graph.imgraph.segmentmst(dest, graph, thres, minsize, colorize)
+      nelts = graph.imgraph.segmentmst(dest, graph, thres, minsize, adaptive, colorize)
    else
       -- sparse graph (input is a Nx3 graph, nnodes=N, each entry input[i] is an edge: {node1, node2, weight})
-      nelts = graph.imgraph.segmentmstsparse(dest, graph, thres, minsize, colorize)
+      nelts = graph.imgraph.segmentmstsparse(dest, graph, thres, minsize, adaptive, colorize)
    end
 
    -- return image
