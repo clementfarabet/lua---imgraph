@@ -21,6 +21,7 @@ extern "C" {
 #include "lppm2GA.h"
 #include "mcweightgraph.h"
 #include "sjcomptree.h"
+#include "overlap.h"
 }
 
 #include "powerwatershed.h"

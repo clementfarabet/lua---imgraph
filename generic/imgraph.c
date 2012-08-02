@@ -84,7 +84,7 @@ static int imgraph_(graph)(lua_State *L) {
 
     // resize output, and fill it with -1 (which means non-valid edge)
     THTensor_(resize3d)(dst, 2, height, width);
-    THTensor_(fill)(dst, 0);
+    THTensor_(fill)(dst, 0);   
 
     // get raw pointers
     real *src_data = THTensor_(data)(src);
@@ -651,6 +651,36 @@ static struct xvimage * imgraph_(tensor2xv)(THTensor *src, struct xvimage *dst) 
   // return copy
   return dst;
 }
+
+// conversion functions
+static struct xvimage * imgraph_(tensor2xv255)(THTensor *src, struct xvimage *dst) {
+  // create output
+  if (dst == NULL)
+    dst = allocimage((char *)NULL, src->size[1], src->size[0], 1, VFF_TYP_1_BYTE);
+
+  // get pointer to dst
+  uint8_t *dst_data = UCHARDATA(dst);
+
+  // get pointer to src
+  THTensor *src_c = THTensor_(newContiguous)(src);
+  real *src_data = THTensor_(data)(src_c);
+
+  // copy data
+  long i;
+  for (i=0; i<(src->size[0]*src->size[1]); i++) {
+    real val = ((*src_data++));
+    val = (val < 0) ? 0 : val;
+    val = (val > 255) ? 255 : val;
+    *dst_data++ = (uint8_t)val;
+  }
+
+  // cleanup
+  THTensor_(free)(src_c);
+
+  // return copy
+  return dst;
+}
+
 
 static THTensor * imgraph_(xv2tensor)(struct xvimage *src, THTensor *dst) {
   // create/resize output
@@ -1319,9 +1349,7 @@ int imgraph_(tree2components)(lua_State *L) {
         }
       }
     }
-	// }
   }
-  //fprintf(stderr,"la \n");
   // (2) traverse component table to produce final component list
   lua_pushnil(L);
   long id = 0;
@@ -1340,7 +1368,7 @@ int imgraph_(tree2components)(lua_State *L) {
     data[10] = data[8] - data[7] + 1;    // box height
     data[11] = (data[6] + data[5]) / 2;  // box center x
     data[12] = (data[8] + data[7]) / 2;  // box center y
-    // fprintf(stderr,"la 2\n");
+ 
     // (optional) generate masks
     if (getmasks) {
       // create a tensor to hold mask:
@@ -1361,7 +1389,7 @@ int imgraph_(tree2components)(lua_State *L) {
         long mskidx = y*maskw+x; // then generate linear idx in mask
         maskd[mskidx] = 1;       // and set pixel to 1
       }
-      // fprintf(stderr,"la 3 %d\n", id);
+    
       // register mask:
       luaT_pushudata(L, mask, torch_(Tensor_id));
       lua_rawseti(L, table_masks, id+1); // table_masks[id] = mask
@@ -1852,6 +1880,43 @@ int imgraph_(segm2components)(lua_State *L) {
   return 1;
 }
 
+
+int imgraph_(overlap)(lua_State *L) {
+  int i;
+  // get args
+
+   THTensor *segment_ = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+  // make input contiguous
+  THTensor *_segment_ = THTensor_(newContiguous)(segment_);
+  struct xvimage *segment = imgraph_(tensor2xv)(_segment_, NULL);
+
+   THTensor *mask_ = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  // make input contiguous
+  THTensor *_mask_ = THTensor_(newContiguous)(mask_);
+  struct xvimage *mask = imgraph_(tensor2xv255)(_mask_, NULL);
+ 
+  int rs  = lua_tonumber(L, 3);
+  int cs  = lua_tonumber(L, 4);
+  int nb_classes  = lua_tonumber(L, 5);
+ 
+  THTensor *output = THTensor_(newWithSize1d)(nb_classes); 
+  real *data = THTensor_(data)(output);
+  float * dataf = Overlap(segment, mask, nb_classes);    
+  for(i=0;i<nb_classes;i++)
+      data[i]= dataf[i]; // fprintf(stderr,"%f \n",data[i]);
+   
+
+  // store entry
+  luaT_pushudata(L, output, torch_(Tensor_id));
+ 
+  // cleanup
+  free(dataf);
+  THTensor_(free)(_segment_); THTensor_(free)(_mask_);
+  freeimage(segment);freeimage(mask);
+  return 1;
+}
+
+
 static const struct luaL_Reg imgraph_(methods__) [] = {
   {"graph", imgraph_(graph)},
   {"mat2graph", imgraph_(mat2graph)},
@@ -1876,6 +1941,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"adjacencyoftree", imgraph_(adjacencyoftree)},
   {"segm2components", imgraph_(segm2components)},
   {"cuttree", imgraph_(cuttree)},
+  {"overlap", imgraph_(overlap)},
   {NULL, NULL}
 };
 

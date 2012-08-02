@@ -474,6 +474,39 @@ function imgraph.cuttree(...)
 end
 
 ----------------------------------------------------------------------
+-- computes a vector of overlap scores from 2 images 
+--
+function imgraph.overlap(...)
+
+   --get args
+   local args = {...}
+   local image1 = args[1]
+   local image2 = args[2]
+   local nb_classes = args[3]
+
+
+   -- usage
+   if not image2 then
+      print(xlua.usage('imgraph.overlap',
+                       'computes a vector of overlap scores from 2 images', nil,
+                        {type='imgraph.overlap', help='computes a vector of overlap scores from 2 images', req=true}
+                           ))
+      xlua.error('incorrect arguments', 'imgraph.overlap')
+   end
+
+   -- compute overlap
+
+    local overlap_vector = torch.Tensor().imgraph.overlap(image1,image2, image1:size(1), image1:size(2), nb_classes)
+
+
+   -- return cut
+   return overlap_vector
+end
+
+
+
+
+----------------------------------------------------------------------
 -- transform a merge tree back into a graph, for visualization
 --
 function imgraph.tree2graph(...)
