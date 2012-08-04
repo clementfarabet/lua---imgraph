@@ -32,6 +32,7 @@ add_library(pink
 	    mcweightgraph.c
 	    sjcomptree.c
 	    mcsort.c
+	    overlap.c
 )
 	     
 set (CMAKE_C_FLAGS "-fpic -g -DUNIXIO")
