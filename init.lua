@@ -499,8 +499,41 @@ function imgraph.overlap(...)
     local overlap_vector = torch.Tensor().imgraph.overlap(image1,image2, image1:size(1), image1:size(2), nb_classes)
 
 
-   -- return cut
+   -- return overlap vector
    return overlap_vector
+end
+
+----------------------------------------------------------------------
+-- computes 
+--
+function imgraph.decisionSegmentation(...)
+
+   --get args
+   local args = {...}
+   local segments = args[1]
+   local rs = args[2]
+   local cs = args[3]
+   local nb_segments = args[4]
+   local f = args[5]
+   local nb_classes = args[6]
+   local t1 = args[7]
+   local t2 = args[8]
+   local t3 = args[9]
+
+   -- usage
+   if not segments then
+      print(xlua.usage('imgraph.decisionSegmentation',
+                       'Computes the final segmentation from an array of segments with associated overlap scores for different classes of objects', nil,
+                        {type='imgraph.decisionSegmentation', help='Computes the final segmentation from an array of segments with associated overlap scores for different classes of objects', req=true}
+                           ))
+      xlua.error('incorrect arguments', 'imgraph.decisionSegmentation')
+   end
+
+   -- compute final segmentation
+
+   local output_image = torch.Tensor().imgraph.decisionSegmentation(segments, rs,cs,nb_segments, f,  nb_classes, t1,t2,t3)
+
+   return output_image
 end
 
 
