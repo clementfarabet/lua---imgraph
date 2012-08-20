@@ -48,10 +48,14 @@ float * Overlap(struct xvimage * Isegment, struct xvimage * Imask,  int nb_class
 
 
   // first pass to count the nb of different ground truth class intersecting with the segment
+   int cpt_pixels_in_segment=0;
   for (i=0;i<N;i++) 
       if (segment[i]==255)
+	{
+	  cpt_pixels_in_segment ++;
 	  overlaping_class[mask[i]-1]++; // useful for inter
-   
+	}
+
   // second pass to compute the union for each present class
   for (j=0;j<nb_classes;j++) 
     {
@@ -65,7 +69,7 @@ float * Overlap(struct xvimage * Isegment, struct xvimage * Imask,  int nb_class
 		Mrk[i] = true;
 	      }
 	  }
-	union_class[j] = overlaping_class[j];
+	union_class[j] = cpt_pixels_in_segment;
 	while (!LifoVide(LIFO))
 	  {
 	    p = LifoPop(LIFO);
