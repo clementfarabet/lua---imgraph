@@ -86,7 +86,7 @@ function MalisCriterion:forward(input, target, posexample, negexample)
    if self.tree == 'min' then
       self.inputtemp:mul(-1)
    end
-   if self.twoD then -- convert to 3d by inserting a dimension
+   if self.twoD and (target:size():size()==2) then -- convert to 3d by inserting a dimension
       self.inputtemp:resize(input:size(1),1,input:size(2),input:size(3))
       self.targettemp:resize(1,target:size(1),target:size(2))
    end

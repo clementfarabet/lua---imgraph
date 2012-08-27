@@ -120,13 +120,19 @@ static int nn_(MalisCriterion_forward)(lua_State *L)
     if (!pos && !neg) {
       THError("found 0 pairs, aborting... atleast one of 'posexample' or 'negexample' should be true!");
     } else {
+      cout << "MalisCriterion.c: Zero pixel pair error!" << endl;
       for (map<long,long>::iterator it = segSizes.begin(); it != segSizes.end(); ++it) {
         cout << it->first << "," << it->second << endl;
       }
-      THError("found 0 pairs, aborting... (this is a bug, please fix me) pos = %d, neg = %d, nPairPos = %d, nPairNeg = %d, nPairTot = %d", pos, neg, nPairPos, nPairNeg, nPairTot);
+      THError("found 0 pairs, aborting... (this is a bug, please fix me) \n\
+        pos = %d, neg = %d \n\
+        nPairPos = %d, nPairNeg = %d \n\
+        nPairTot = %d, nVert = %d \n",
+        pos, neg,
+        nPairPos, nPairNeg,
+        nPairTot, nVert);
     }
   }
-// cout << "nPairNorm: " << nPairNorm << endl;
 
   // Sort all the edges in increasing order of weight
   vector<long> pqueue( conn_nelts );
