@@ -101,4 +101,32 @@ float * Overlap(struct xvimage * Isegment, struct xvimage * Imask,  int nb_class
 }
 
 
+// Compute overlap percentage of mask within segment per class
+float * Overlap1(struct xvimage *Isegment, struct xvimage *Imask, int nb_classes) {
+  int i,c;
 
+  // get pointer to Isegment and Imask
+  uint8_t *segment = UCHARDATA(Isegment);
+  uint8_t *mask = UCHARDATA(Imask);
+ 
+  int rs = rowsize(Isegment);
+  int cs = colsize(Isegment);
+  int N = rs*cs; 
+
+  float *overlaping_class = (float*)calloc(nb_classes ,sizeof(float));
+  if (overlaping_class == NULL) { fprintf(stderr, "Overlap : malloc failed\n"); exit(0); }
+
+  // count the nb of different ground truth class intersecting with the segment
+  int cpt_pixels_in_segment=0;
+  for (i=0; i<N; ++i) 
+    if (segment[i]==255) {
+      ++cpt_pixels_in_segment;
+      ++overlaping_class[mask[i]-1]; // useful for inter
+    }
+
+  for (c=0; c<nb_classes; ++c) {
+    overlaping_class[c] /= cpt_pixels_in_segment;
+  }
+
+  return overlaping_class;
+}

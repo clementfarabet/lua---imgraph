@@ -1901,7 +1901,7 @@ int imgraph_(overlap)(lua_State *L) {
  
   THTensor *output = THTensor_(newWithSize1d)(nb_classes); 
   real *data = THTensor_(data)(output);
-  float * dataf = Overlap(segment, mask, nb_classes);    
+  float * dataf = Overlap1(segment, mask, nb_classes);    
   for(i=0;i<nb_classes;i++)
       data[i]= dataf[i]; // fprintf(stderr,"%f \n",data[i]);
    
