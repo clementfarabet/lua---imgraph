@@ -1901,7 +1901,7 @@ int imgraph_(overlap)(lua_State *L) {
  
   THTensor *output = THTensor_(newWithSize1d)(nb_classes); 
   real *data = THTensor_(data)(output);
-  float * dataf = Overlap(segment, mask, nb_classes);    
+  float * dataf = Overlap1(segment, mask, nb_classes);    
   for(i=0;i<nb_classes;i++)
       data[i]= dataf[i]; // fprintf(stderr,"%f \n",data[i]);
    
@@ -1915,6 +1915,58 @@ int imgraph_(overlap)(lua_State *L) {
   freeimage(segment);freeimage(mask);
   return 1;
 }
+
+int imgraph_(decisionSegmentation)(lua_State *L) {
+  int i;
+  // get args
+   THTensor *Segments = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+   //  Segments = THTensor_(newContiguous)(Segments);
+   real * Segments_= THTensor_(data)(Segments);
+
+  int rs  = lua_tonumber(L, 2);
+  int cs  = lua_tonumber(L, 3);
+  int nb_segments  = lua_tonumber(L, 4);
+  THTensor *f = (THTensor *)luaT_checkudata(L, 5, torch_(Tensor_id));
+  // f = THTensor_(newContiguous)(f);
+  real * f_= THTensor_(data)(f);
+
+
+  int nb_classes  = lua_tonumber(L, 6);
+  float t1  = lua_tonumber(L, 7);
+  float t2  = lua_tonumber(L, 8);
+  float t3  = lua_tonumber(L, 9);
+  
+ THTensor *output = THTensor_(newWithSize1d)(rs*cs); 
+  real *data = THTensor_(data)(output);
+
+   float *_Segments_ = (float*)malloc(sizeof(float)*rs*cs*nb_segments);
+   for (i=0;i<rs*cs*nb_segments;i++)
+    _Segments_[i] = Segments_[i];
+
+ float *_f_ = (float*)malloc(sizeof(float)*nb_classes*nb_segments);
+   for (i=0;i<nb_classes*nb_segments;i++)
+    _f_[i] = f_[i];
+
+
+  int * dataf = DecisionSegmentation(_Segments_, rs, cs, nb_segments, _f_,  nb_classes, t1, t2, t3);
+    for(i=0;i<rs*cs;i++)
+      {
+      data[i]= dataf[i]; 
+      // fprintf(stderr,"%f \n",dataf[i]);
+      }
+
+  // store entry
+  luaT_pushudata(L, output, torch_(Tensor_id));
+ 
+  // cleanup
+  // free(dataf);
+  free(_Segments_);
+  free(_f_);
+  return 1;
+}
+
+
+
 
 
 static const struct luaL_Reg imgraph_(methods__) [] = {
@@ -1942,6 +1994,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
   {"segm2components", imgraph_(segm2components)},
   {"cuttree", imgraph_(cuttree)},
   {"overlap", imgraph_(overlap)},
+{"decisionSegmentation", imgraph_(decisionSegmentation)},
   {NULL, NULL}
 };
 

@@ -33,6 +33,7 @@ add_library(pink
 	    sjcomptree.c
 	    mcsort.c
 	    overlap.c
+	    decisionSegmentation.c
 )
 	     
 set (CMAKE_C_FLAGS "-fpic -g -DUNIXIO")
