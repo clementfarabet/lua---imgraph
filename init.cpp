@@ -34,12 +34,9 @@ extern "C" {
 #include <boost/pending/disjoint_sets.hpp>
 
 #define torch_(NAME) TH_CONCAT_3(torch_, Real, NAME)
-#define torch_string_(NAME) TH_CONCAT_STRING_3(torch., Real, NAME)
+#define torch_Tensor TH_CONCAT_STRING_3(torch., Real, Tensor)
 #define imgraph_(NAME) TH_CONCAT_3(imgraph_, Real, NAME)
 #define nn_(NAME) TH_CONCAT_3(nn_, Real, NAME)
-
-static const void* torch_FloatTensor_id = NULL;
-static const void* torch_DoubleTensor_id = NULL;
 
 #include "generic/imgraph.c"
 #include "THGenerateFloatTypes.h"
@@ -50,9 +47,6 @@ static const void* torch_DoubleTensor_id = NULL;
 extern "C" {
   DLL_EXPORT int luaopen_libimgraph(lua_State *L)
   {
-    torch_FloatTensor_id = luaT_checktypename2id(L, "torch.FloatTensor");
-    torch_DoubleTensor_id = luaT_checktypename2id(L, "torch.DoubleTensor");
-
     imgraph_FloatInit(L);
     imgraph_DoubleInit(L);
 

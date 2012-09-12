@@ -58,8 +58,8 @@ static inline real imgraph_(ndiff)(real *img,
 
 static int imgraph_(graph)(lua_State *L) {
   // get args
-  THTensor *dst = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
-  THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  THTensor *dst = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
+  THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
   int connex = lua_tonumber(L, 3);
   const char *dist = lua_tostring(L, 4);
   char dt = dist[0];
@@ -168,8 +168,8 @@ static int imgraph_(graph)(lua_State *L) {
 
 static int imgraph_(mat2graph)(lua_State *L) {
   // get args
-  THTensor *dst = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
-  THTensor *src = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *dst = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
+  THTensor *src = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
   int unified_height = lua_tonumber(L, 3);
   int unified_width = lua_tonumber(L, 4);
 
@@ -209,8 +209,8 @@ static int imgraph_(mat2graph)(lua_State *L) {
 
 static int imgraph_(connectedcomponents)(lua_State *L) {
   // get args
-  THTensor *dst = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
-  THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  THTensor *dst = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
+  THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
   real threshold = lua_tonumber(L, 3);
   int color = lua_toboolean(L, 4);
 
@@ -326,8 +326,8 @@ void sort_edges(Edge *data, int N)
 
 static int imgraph_(segmentmst)(lua_State *L) {
   // get args
-  THTensor *dst = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
-  THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  THTensor *dst = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
+  THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
   real thres = lua_tonumber(L, 3);
   int minsize = lua_tonumber(L, 4);
   int adaptivethres = lua_toboolean(L, 5);
@@ -460,8 +460,8 @@ static int imgraph_(segmentmst)(lua_State *L) {
 
 static int imgraph_(segmentmstsparse)(lua_State *L) {
   // get args
-  THTensor *dst = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
-  THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  THTensor *dst = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
+  THTensor *src = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
   real thres = lua_tonumber(L, 3);
   int minsize = lua_tonumber(L, 4);
   int adaptivethres = lua_toboolean(L, 5);
@@ -573,8 +573,8 @@ real imgraph_(max)(real *a, int n) {
 
 static int imgraph_(gradient)(lua_State *L) {
   // get args
-  THTensor *output = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
-  THTensor *input = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  THTensor *output = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
+  THTensor *input = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
 
   // dims
   long nmaps = input->size[0];
@@ -760,8 +760,8 @@ static void inverse(struct xvimage * image) {
 
 static int imgraph_(watershed)(lua_State *L) {
   // get args
-  THTensor *watershed = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
-  THTensor *input = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  THTensor *watershed = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
+  THTensor *input = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
   int minHeight = (lua_tonumber(L, 3)) * 255;
   int connex = lua_tonumber(L, 4);
 
@@ -809,7 +809,7 @@ static int imgraph_(watershed)(lua_State *L) {
 static int imgraph_(mergetree)(lua_State *L) {
 
   // get args
-  THTensor *graph = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *graph = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
 
   graph = THTensor_(newContiguous)(graph);
 
@@ -861,7 +861,7 @@ static int imgraph_(mergetree)(lua_State *L) {
 static int imgraph_(hierarchyGuimaraes)(lua_State *L) {
 
   // get args
-  THTensor *graph = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *graph = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
   graph = THTensor_(newContiguous)(graph);
 
   // convert
@@ -950,7 +950,7 @@ static int imgraph_(hierarchyGuimaraes)(lua_State *L) {
 static int imgraph_(hierarchyArb)(lua_State *L) {
 
   // get args
-  THTensor *graph = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *graph = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
   graph = THTensor_(newContiguous)(graph);
 
   // convert
@@ -1085,7 +1085,7 @@ static int imgraph_(levelsOfTree) (lua_State *L)
 	altitudes[0] = t->tree->CT->tabnodes[i].data;
 	//printf("%d\n",altitudes[0]);
 	// store levels
-	luaT_pushudata(L, levels, torch_(Tensor_id));
+	luaT_pushudata(L, levels, torch_Tensor);
 	lua_rawseti(L, table_comps, i+1); // table_comps[i+1] = entry
     }
   return 1;
@@ -1280,7 +1280,7 @@ int imgraph_(tree2components)(lua_State *L) {
 	    data[8] = y+1;       // bottom_y
 	    
 	    // store entry
-	    luaT_pushudata(L, entry, torch_(Tensor_id));
+	    luaT_pushudata(L, entry, torch_Tensor);
 	    lua_rawseti(L, table_comps, id); // table_comps[id] = entry
 	    
 	    // store pixels ?
@@ -1302,7 +1302,7 @@ int imgraph_(tree2components)(lua_State *L) {
 		// get entry for son
 		long sonid = son->son + 1;
 		lua_rawgeti(L, table_comps, sonid);
-		THTensor *sonentry = (THTensor *)luaT_toudata(L, -1, torch_(Tensor_id));
+		THTensor *sonentry = (THTensor *)luaT_toudata(L, -1, torch_Tensor);
 		lua_pop(L,1);
 		
 		// update parent's structure
@@ -1316,7 +1316,7 @@ int imgraph_(tree2components)(lua_State *L) {
 		    data[4] = id;
 		    
 		    // and store entry
-		    luaT_pushudata(L, entry, torch_(Tensor_id));
+		    luaT_pushudata(L, entry, torch_Tensor);
 		    lua_rawseti(L, table_comps, id); // table_comps[id] = entry
 		  } 
 		else
@@ -1355,7 +1355,7 @@ int imgraph_(tree2components)(lua_State *L) {
   long id = 0;
   while (lua_next(L, table_comps) != 0) {
     // retrieve entry
-    THTensor *entry = (THTensor *)luaT_toudata(L, -1, torch_(Tensor_id)); lua_pop(L,1);
+    THTensor *entry = (THTensor *)luaT_toudata(L, -1, torch_Tensor); lua_pop(L,1);
     real *data = THTensor_(data)(entry);
 
     // normalize cx and cy, by component's size
@@ -1391,7 +1391,7 @@ int imgraph_(tree2components)(lua_State *L) {
       }
     
       // register mask:
-      luaT_pushudata(L, mask, torch_(Tensor_id));
+      luaT_pushudata(L, mask, torch_Tensor);
       lua_rawseti(L, table_masks, id+1); // table_masks[id] = mask
 
       // cleanup
@@ -1412,7 +1412,7 @@ int imgraph_(tree2components)(lua_State *L) {
 static int imgraph_(tree2graph)(lua_State *L) {
   // get args
   MergeTree *t = lua_toMergeTree(L, 1);
-  THTensor *graph = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  THTensor *graph = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
 
   // alloc graph
   struct xvimage *graph_xv = allocGAimage((char *)NULL, t->rs, t->cs, 1, VFF_TYP_GABYTE);
@@ -1429,8 +1429,8 @@ static int imgraph_(tree2graph)(lua_State *L) {
 
 static int imgraph_(graph2map)(lua_State *L) {
   // get args
-  THTensor *rendered = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
-  THTensor *graph = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  THTensor *rendered = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
+  THTensor *graph = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
 
   // render graph using khalimsky representation
   struct xvimage *graph_xv = imgraph_(tensor2xvg)(graph, NULL);
@@ -1447,9 +1447,9 @@ static int imgraph_(graph2map)(lua_State *L) {
 
 int imgraph_(colorize)(lua_State *L) {
   // get args
-  THTensor *output = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
-  THTensor *input = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
-  THTensor *colormap = (THTensor *)luaT_checkudata(L, 3, torch_(Tensor_id));
+  THTensor *output = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
+  THTensor *input = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
+  THTensor *colormap = (THTensor *)luaT_checkudata(L, 3, torch_Tensor);
 
   // dims
   long height = input->size[0];
@@ -1506,7 +1506,7 @@ static inline void setneighbor(lua_State *L, long matrix, long id, long idn) {
 
 int imgraph_(adjacency)(lua_State *L) {
   // get args
-  THTensor *input = THTensor_(newContiguous)((THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id)));
+  THTensor *input = THTensor_(newContiguous)((THTensor *)luaT_checkudata(L, 1, torch_Tensor));
   long matrix = 2;
 
   // dims
@@ -1574,8 +1574,8 @@ int imgraph_(adjacencyoftree)(lua_State *L) {
 
 int imgraph_(histpooling)(lua_State *L) {
   // get args
-  THTensor *vectors = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
-  THTensor *segm = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+  THTensor *vectors = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
+  THTensor *segm = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
   int computeLists = lua_toboolean(L, 3);
   int histmax = lua_toboolean(L, 4);
   real minConfidence = lua_tonumber(L, 5);
@@ -1633,14 +1633,14 @@ int imgraph_(histpooling)(lua_State *L) {
         // for this cluster
         histo = THTensor_(newWithSize1d)(depth);
         THTensor_(zero)(histo);
-        luaT_pushudata(L, histo, torch_(Tensor_id));
+        luaT_pushudata(L, histo, torch_Tensor);
         lua_rawseti(L,table_hists,segm_id); // c[segm_id] = histo
         lua_pushnumber(L, 1);
         lua_rawseti(L,table_sizes,segm_id); // s[segm_id] = 1 (initial size = 1)
         size = 1;
       } else {
         // retrieve histo
-        histo = (THTensor *)luaT_toudata(L, -1, torch_(Tensor_id));
+        histo = (THTensor *)luaT_toudata(L, -1, torch_Tensor);
         lua_pop(L,1);
         // retrieve size
         lua_rawgeti(L,table_sizes,segm_id);   // s[segm_id]
@@ -1699,7 +1699,7 @@ int imgraph_(histpooling)(lua_State *L) {
       real max = -THInf;
       // retrieve histogram
       lua_rawgeti(L,table_hists,segm_id);   // c[segm_id]  (= histo)
-      histo = (THTensor *)luaT_toudata(L, -1, torch_(Tensor_id));
+      histo = (THTensor *)luaT_toudata(L, -1, torch_Tensor);
       lua_pop(L,1);
       // get geometry entry
       lua_pushinteger(L,segm_id);
@@ -1732,11 +1732,11 @@ int imgraph_(histpooling)(lua_State *L) {
 
         // store entry
         lua_pushinteger(L,segm_id);
-        luaT_pushudata(L, entry, torch_(Tensor_id));
+        luaT_pushudata(L, entry, torch_Tensor);
         lua_rawset(L,table_geometry); // g[segm_id] = entry
       } else {
         // retrieve entry
-        THTensor *entry = (THTensor *)luaT_toudata(L, -1, torch_(Tensor_id));
+        THTensor *entry = (THTensor *)luaT_toudata(L, -1, torch_Tensor);
         real *data = THTensor_(data)(entry);
         data[0] += x+1;       // cx + x + 1
         data[1] += y+1;       // cy + y + 1
@@ -1765,7 +1765,7 @@ int imgraph_(histpooling)(lua_State *L) {
     // uses 'key' (at index -2) and 'value' (at index -1)
 
     // normalize cx and cy, by component's size */
-    THTensor *entry = (THTensor *)luaT_toudata(L, -1, torch_(Tensor_id));
+    THTensor *entry = (THTensor *)luaT_toudata(L, -1, torch_Tensor);
     real *data = THTensor_(data)(entry);
     long size = data[2];
     data[0] /= size;  // cx/size
@@ -1785,13 +1785,13 @@ int imgraph_(histpooling)(lua_State *L) {
   THTensor_(free)(segm);
 
   // return two tables: indexed and hashed, plus the confidence map
-  luaT_pushudata(L, confidence, torch_(Tensor_id));
+  luaT_pushudata(L, confidence, torch_Tensor);
   return 3;
 }
 
 int imgraph_(segm2components)(lua_State *L) {
   // get args
-  THTensor *segm = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+  THTensor *segm = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
   real *segm_data = THTensor_(data)(segm);
 
   // check dims
@@ -1836,12 +1836,12 @@ int imgraph_(segm2components)(lua_State *L) {
 
         // store entry
         lua_pushinteger(L,segm_id);
-        luaT_pushudata(L, entry, torch_(Tensor_id));
+        luaT_pushudata(L, entry, torch_Tensor);
         lua_rawset(L,table_hash); // g[segm_id] = entry
 
       } else {
         // retrieve entry
-        THTensor *entry = (THTensor *)luaT_toudata(L, -1, torch_(Tensor_id));
+        THTensor *entry = (THTensor *)luaT_toudata(L, -1, torch_Tensor);
         lua_pop(L,1);
 
         // update content
@@ -1861,7 +1861,7 @@ int imgraph_(segm2components)(lua_State *L) {
   lua_pushnil(L);
   while (lua_next(L, table_hash) != 0) {
     // retrieve entry
-    THTensor *entry = (THTensor *)luaT_toudata(L, -1, torch_(Tensor_id)); lua_pop(L,1);
+    THTensor *entry = (THTensor *)luaT_toudata(L, -1, torch_Tensor); lua_pop(L,1);
     real *data = THTensor_(data)(entry);
 
     // normalize cx and cy, by component's size
@@ -1885,12 +1885,12 @@ int imgraph_(overlap)(lua_State *L) {
   int i;
   // get args
 
-   THTensor *segment_ = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+   THTensor *segment_ = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
   // make input contiguous
   THTensor *_segment_ = THTensor_(newContiguous)(segment_);
   struct xvimage *segment = imgraph_(tensor2xv)(_segment_, NULL);
 
-   THTensor *mask_ = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));
+   THTensor *mask_ = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);
   // make input contiguous
   THTensor *_mask_ = THTensor_(newContiguous)(mask_);
   struct xvimage *mask = imgraph_(tensor2xv255)(_mask_, NULL);
@@ -1907,7 +1907,7 @@ int imgraph_(overlap)(lua_State *L) {
    
 
   // store entry
-  luaT_pushudata(L, output, torch_(Tensor_id));
+  luaT_pushudata(L, output, torch_Tensor);
  
   // cleanup
   free(dataf);
@@ -1947,7 +1947,7 @@ static const struct luaL_Reg imgraph_(methods__) [] = {
 
 static void imgraph_(Init)(lua_State *L)
 {
-  luaT_pushmetaclass(L, torch_(Tensor_id));
+  luaT_pushmetatable(L, torch_Tensor);
   luaT_registeratname(L, imgraph_(methods__), "imgraph");
   lua_pop(L,1);
 

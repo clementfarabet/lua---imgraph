@@ -31,7 +31,7 @@ public:
 static int nn_(MalisCriterion_forward)(lua_State *L)
 {
   // 3d connectivity graph [#edges * height * width]
-  THTensor *conn = (THTensor *)luaT_checkudata(L, 2, torch_(Tensor_id));  
+  THTensor *conn = (THTensor *)luaT_checkudata(L, 2, torch_Tensor);  
   conn = THTensor_(newContiguous)(conn);
   long conn_ndims = THTensor_(nDimension)(conn);
   long conn_nelts = THTensor_(nElement)(conn);
@@ -41,7 +41,7 @@ static int nn_(MalisCriterion_forward)(lua_State *L)
   real *conn_data = THTensor_(data)(conn);
 
   // target segmentation [height * width]
-  THTensor *target = (THTensor *)luaT_checkudata(L, 3, torch_(Tensor_id));  
+  THTensor *target = (THTensor *)luaT_checkudata(L, 3, torch_Tensor);  
   target = THTensor_(newContiguous)(target);
   long target_ndims = THTensor_(nDimension)(target);
   long target_nelts = THTensor_(nElement)(target);
@@ -50,7 +50,7 @@ static int nn_(MalisCriterion_forward)(lua_State *L)
   real *target_data = THTensor_(data)(target);
 
   // graph neighborhood descriptor [#edges * 2]
-  THTensor *nhood = (THTensor *)luaT_getfieldcheckudata(L, 1, "nhood", torch_(Tensor_id));
+  THTensor *nhood = (THTensor *)luaT_getfieldcheckudata(L, 1, "nhood", torch_Tensor);
   long nhood_ndims = THTensor_(nDimension)(nhood);
   long nhood_nelts = THTensor_(nElement)(nhood);
   long nhood_nedges = nhood->size[0];
@@ -64,7 +64,7 @@ static int nn_(MalisCriterion_forward)(lua_State *L)
   int pos = luaT_getfieldcheckboolean(L, 1, "posexample");
 
   // output: gradient wrt connectivity graph
-  THTensor *dloss = (THTensor *)luaT_getfieldcheckudata(L, 1, "gradInput", torch_(Tensor_id));
+  THTensor *dloss = (THTensor *)luaT_getfieldcheckudata(L, 1, "gradInput", torch_Tensor);
   THTensor_(resizeAs)(dloss, conn);
   real *dloss_data = THTensor_(data)(dloss);
   THTensor_(zero)(dloss);
@@ -232,7 +232,7 @@ static const struct luaL_Reg nn_(MalisCriterion__) [] = {
 
 static void nn_(MalisCriterion_init)(lua_State *L)
 {
-  luaT_pushmetaclass(L, torch_(Tensor_id));
+  luaT_pushmetatable(L, torch_Tensor);
   luaT_registeratname(L, nn_(MalisCriterion__), "nn");
   lua_pop(L,1);
 }
