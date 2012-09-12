@@ -1919,14 +1919,14 @@ int imgraph_(overlap)(lua_State *L) {
 int imgraph_(decisionSegmentation)(lua_State *L) {
   int i;
   // get args
-   THTensor *Segments = (THTensor *)luaT_checkudata(L, 1, torch_(Tensor_id));
+   THTensor *Segments = (THTensor *)luaT_checkudata(L, 1, torch_Tensor);
    //  Segments = THTensor_(newContiguous)(Segments);
    real * Segments_= THTensor_(data)(Segments);
 
   int rs  = lua_tonumber(L, 2);
   int cs  = lua_tonumber(L, 3);
   int nb_segments  = lua_tonumber(L, 4);
-  THTensor *f = (THTensor *)luaT_checkudata(L, 5, torch_(Tensor_id));
+  THTensor *f = (THTensor *)luaT_checkudata(L, 5, torch_Tensor);
   // f = THTensor_(newContiguous)(f);
   real * f_= THTensor_(data)(f);
 
@@ -1956,7 +1956,7 @@ int imgraph_(decisionSegmentation)(lua_State *L) {
       }
 
   // store entry
-  luaT_pushudata(L, output, torch_(Tensor_id));
+  luaT_pushudata(L, output, torch_Tensor);
  
   // cleanup
   // free(dataf);
