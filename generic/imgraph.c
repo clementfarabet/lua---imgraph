@@ -799,6 +799,8 @@ static int imgraph_(watershed)(lua_State *L) {
 
   // cleanup
   freeimage(input_xv);
+  freeimage(labels_xv);
+  freeimage(filtered_xv);
   THTensor_(free)(inputc);
 
   // return number of components
