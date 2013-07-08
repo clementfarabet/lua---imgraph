@@ -36,7 +36,7 @@ $ [sudo] make install
 2/ Once Torch7 is available, install this package:
 
 ``` sh
-$ [sudo] torch-pkg install imgraph
+$ [sudo] torch-rocks install imgraph
 ```
 
 ## Use the library
