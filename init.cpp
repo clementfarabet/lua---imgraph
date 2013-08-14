@@ -1,5 +1,7 @@
+extern "C" {
 #include "TH.h"
 #include "luaT.h"
+}
 
 #include "stdint.h"
 
