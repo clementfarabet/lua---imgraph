@@ -45,7 +45,7 @@ imgraph = {}
 require 'libimgraph'
 
 -- external classes:
-dofile(sys.concat(sys.fpath(), 'MalisCriterion.lua'))
+require 'imgraph.MalisCriterion'
 
 ----------------------------------------------------------------------
 -- computes a graph from an 2D or 3D image
