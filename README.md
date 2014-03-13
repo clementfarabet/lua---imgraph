@@ -13,7 +13,7 @@ components...
 Dependencies, on Linux (Ubuntu > 9.04):
 
 ``` sh
-$ apt-get install gcc g++ git libreadline5-dev cmake wget libqt4-core libqt4-gui libqt4-dev
+$ apt-get install gcc g++ git libreadline5-dev cmake wget libqt4-core libqt4-gui libqt4-dev libboost-all-dev
 ```
 
 Dependencies, on Mac OS (Leopard, or more), using [Homebrew](http://mxcl.github.com/homebrew/):
